@@ -1,36 +1,14 @@
 package com.eleyas.expensetracker.ui.vehicle
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocalGasStation
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.eleyas.expensetracker.model.FuelEntry
@@ -92,7 +70,7 @@ fun FuelScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Fuel")
+                        Text("জ্বালানি")
                         Text(
                             text = vehicle.name.ifBlank { vehicle.type },
                             style = MaterialTheme.typography.labelSmall
@@ -103,7 +81,7 @@ fun FuelScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.Default.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "পেছনে"
                         )
                     }
                 },
@@ -115,7 +93,7 @@ fun FuelScreen(
                     ) {
                         Icon(
                             Icons.Default.Add,
-                            contentDescription = "Add Fuel"
+                            contentDescription = "জ্বালানি যোগ করুন"
                         )
                     }
                 }
@@ -142,7 +120,7 @@ fun FuelScreen(
                 )
 
                 Text(
-                    text = "এখনও কোনো Fuel হিসাব নেই",
+                    text = "এখনও কোনো জ্বালানি হিসাব নেই",
                     style = MaterialTheme.typography.titleMedium
                 )
 
@@ -155,7 +133,7 @@ fun FuelScreen(
                         showAddFuel = true
                     }
                 ) {
-                    Text("Fuel যোগ করুন")
+                    Text("জ্বালানি যোগ করুন")
                 }
             }
 
@@ -165,19 +143,13 @@ fun FuelScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    16.dp
-                ),
+                contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(fuelEntries) { entry ->
 
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor =
-                                MaterialTheme.colorScheme.surface
-                        )
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp)
@@ -192,24 +164,35 @@ fun FuelScreen(
                             )
 
                             Text(
-                                text = "${entry.liters} L × ${entry.pricePerLiter}"
+                                text = "জ্বালানি: ${entry.liters} লিটার"
                             )
 
                             Text(
-                                text = "মোট: ${entry.totalCost}"
+                                text = "প্রতি লিটার: ${entry.pricePerLiter}"
+                            )
+
+                            Text(
+                                text = "মোট খরচ: ${entry.totalCost}"
                             )
 
                             if (entry.odometer > 0) {
                                 Text(
                                     text =
-                                        "Odometer: ${entry.odometer} KM"
+                                        "ওডোমিটার: ${entry.odometer} কিমি"
                                 )
                             }
 
                             if (entry.fuelStation.isNotBlank()) {
                                 Text(
                                     text =
-                                        "Station: ${entry.fuelStation}"
+                                        "জ্বালানি স্টেশন: ${entry.fuelStation}"
+                                )
+                            }
+
+                            if (entry.notes.isNotBlank()) {
+                                Text(
+                                    text =
+                                        "মন্তব্য: ${entry.notes}"
                                 )
                             }
                         }
@@ -242,13 +225,13 @@ private fun AddFuelScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text("Fuel যোগ করুন")
+                    Text("জ্বালানি যোগ করুন")
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.Default.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "পেছনে"
                         )
                     }
                 }
@@ -277,6 +260,9 @@ private fun AddFuelScreen(
                     onValueChange = { date = it },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("তারিখ") },
+                    placeholder = {
+                        Text("যেমন: ৩০-০৮-২০২৬")
+                    },
                     singleLine = true
                 )
             }
@@ -284,8 +270,7 @@ private fun AddFuelScreen(
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement =
-                        Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedTextField(
                         value = liters,
@@ -301,17 +286,22 @@ private fun AddFuelScreen(
                             pricePerLiter = it
                         },
                         modifier = Modifier.weight(1f),
-                        label = { Text("প্রতি লিটার") },
+                        label = { Text("প্রতি লিটার দাম") },
                         singleLine = true
                     )
                 }
             }
 
             item {
-                Text(
-                    text = "মোট খরচ: %.2f".format(totalCost),
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "মোট খরচ: %.2f".format(totalCost),
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
             }
 
             item {
@@ -319,7 +309,7 @@ private fun AddFuelScreen(
                     value = odometer,
                     onValueChange = { odometer = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Odometer (KM)") },
+                    label = { Text("ওডোমিটার (কিমি)") },
                     singleLine = true
                 )
             }
@@ -329,7 +319,7 @@ private fun AddFuelScreen(
                     value = fuelStation,
                     onValueChange = { fuelStation = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Fuel Station") },
+                    label = { Text("জ্বালানি স্টেশন") },
                     singleLine = true
                 )
             }
@@ -339,7 +329,7 @@ private fun AddFuelScreen(
                     value = notes,
                     onValueChange = { notes = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Notes") },
+                    label = { Text("মন্তব্য") },
                     minLines = 3
                 )
             }
@@ -370,7 +360,7 @@ private fun AddFuelScreen(
                         onSave(entry)
                     }
                 ) {
-                    Text("Save Fuel")
+                    Text("সংরক্ষণ করুন")
                 }
             }
         }
