@@ -448,6 +448,16 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
                     onClearAdded = { viewModel.clearAddedShoppingItems(context) }
                 )
             }
+
+            if (showVehicleModule) {
+                VehicleModule(
+                    userId = currentUserId,
+                    modifier = Modifier.fillMaxSize(),
+                    onBack = {
+                        showVehicleModule = false
+                    }
+                )
+            }
             
             if (showNotificationScreen) {
                 Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -462,16 +472,6 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
-            }
-
-            if (showVehicleModule) {
-                VehicleModule(
-                    userId = currentUserId,
-                    modifier = Modifier.fillMaxSize(),
-                    onBack = {
-                        showVehicleModule = false
-                    }
-                )
             }
 
             SearchOverlay(
