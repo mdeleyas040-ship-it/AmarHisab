@@ -47,6 +47,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
+import com.eleyas.expensetracker.ui.vehicle.VehicleModule
 
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -158,6 +159,7 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
     var showFamilyDialog by remember { mutableStateOf(false) }
     var showCalculatorScreen by remember { mutableStateOf(false) }
     var showShoppingList by remember { mutableStateOf(false) }
+    var showVehicleModule by remember { mutableStateOf(false) }
     var showVoiceDialog by remember { mutableStateOf(false) }
     var showSplitBillDialog by remember(currentUserId) { mutableStateOf(false) }
     var selectedSplitBill by remember(currentUserId) { mutableStateOf<SplitBillGroup?>(null) }
@@ -237,12 +239,22 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
         }
     }
 
-    BackHandler(enabled = showCalendarScreen || showCalculatorScreen || showShoppingList || showNotificationScreen || settingsSubView != null || selectedTab != 0 || isSearchActive) {
+    BackHandler(
+        enabled = showCalendarScreen ||
+                showCalculatorScreen ||
+                showShoppingList ||
+                showVehicleModule ||
+                showNotificationScreen ||
+                settingsSubView != null ||
+                selectedTab != 0 ||
+                isSearchActive
+    ) {
         when {
             showCalendarScreen -> showCalendarScreen = false
             showCalculatorScreen -> showCalculatorScreen = false
             showShoppingList -> showShoppingList = false
             showNotificationScreen -> showNotificationScreen = false
+            showVehicleModule -> showVehicleModule = false
             settingsSubView != null -> settingsSubView = null
             isSearchActive -> {
                 isSearchActive = false
@@ -360,7 +372,10 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             BirthdayPopupCheck(currentUserId, birthday)
             when (selectedTab) {
-                0 -> HomeScreen(Modifier.fillMaxSize(), currentUserId, viewModel.balance, viewModel.totalIncome, viewModel.totalExpense, viewModel.totalHome, viewModel.totalHomeExpense, viewModel.homeBalance, viewModel.totalLoanReceived, viewModel.totalLoanPaid, viewModel.totalLoanRemaining, viewModel.totalMoneyLent, viewModel.totalMoneyReturned, viewModel.totalMoneyToReceive, birthday, wallets, { viewModel.updateBirthday(context, it) }, { addType = "income"; showAddDialog = true }, { addType = "expense"; showAddDialog = true }, { addType = "home"; showAddDialog = true }, { addType = "home_expense"; showAddDialog = true }, { showWalletDialog = true; selectedWalletForEdit = null }, { selectedWalletForEdit = it; showWalletDialog = true }, { viewModel.getWalletBalance(it) }, onVoiceClick = { showVoiceDialog = true }, onShoppingList = { showShoppingList = true }, transactions = transactions, household = household, onFamilyClick = { showFamilyDialog = true })
+                0 -> HomeScreen(Modifier.fillMaxSize(), currentUserId, viewModel.balance, viewModel.totalIncome, viewModel.totalExpense, viewModel.totalHome, viewModel.totalHomeExpense, viewModel.homeBalance, viewModel.totalLoanReceived, viewModel.totalLoanPaid, viewModel.totalLoanRemaining, viewModel.totalMoneyLent, viewModel.totalMoneyReturned, viewModel.totalMoneyToReceive, birthday, wallets, { viewModel.updateBirthday(context, it) }, { addType = "income"; showAddDialog = true }, { addType = "expense"; showAddDialog = true }, { addType = "home"; showAddDialog = true }, { addType = "home_expense"; showAddDialog = true }, { showWalletDialog = true; selectedWalletForEdit = null }, { selectedWalletForEdit = it; showWalletDialog = true }, { viewModel.getWalletBalance(it) }, onVoiceClick = { showVoiceDialog = true },
+                    onShoppingList = { showShoppingList = true },
+                    onVehicle = { showVehicleModule = true },
+                    transactions = transactions, household = household, onFamilyClick = { showFamilyDialog = true })
                 1 -> IncomeScreen(Modifier.fillMaxSize(), transactions.filter { it.type == "income" }, wallets, usdToBdt, usdToMvr, globalSearchQuery, { addType = "income"; editingTransaction = null; showAddDialog = true }, { editingTransaction = it; showAddDialog = true }, { deletingTransaction = it; showDeleteDialog = true })
                 2 -> ExpenseScreen(Modifier.fillMaxSize(), transactions.filter { it.type == "expense" || it.type == "home" }, wallets, usdToBdt, usdToMvr, globalSearchQuery, { addType = "expense"; editingTransaction = null; showAddDialog = true }, { addType = "home"; editingTransaction = null; showAddDialog = true }, { editingTransaction = it; showAddDialog = true }, { deletingTransaction = it; showDeleteDialog = true }, splitBills = splitBills, onAddSplitBill = { showSplitBillDialog = true }, onSplitBillClick = { selectedSplitBill = it })
                 3 -> ReportScreen(Modifier.fillMaxSize(), transactions, wallets, categoryBudgets, usdToBdt, usdToMvr, { editingTransaction = it; showAddDialog = true }, { deletingTransaction = it; showDeleteDialog = true })
@@ -432,6 +447,15 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
                     onConvert = { cb -> viewModel.convertCheckedToExpenses(context, cb) },
                     onClearAdded = { viewModel.clearAddedShoppingItems(context) }
                 )
+                if (showVehicleModule) {
+                    VehicleModule(
+                        userId = currentUserId,
+                        modifier = Modifier.fillMaxSize(),
+                        onBack = {
+                            showVehicleModule = false
+                        }
+                    )
+                }
             }
             
             if (showNotificationScreen) {

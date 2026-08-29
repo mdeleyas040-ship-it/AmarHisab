@@ -58,6 +58,7 @@ fun HomeScreen(
     getWalletBalance: (String) -> Double,
     onVoiceClick: () -> Unit,
     onShoppingList: () -> Unit = {},
+    onVehicle: () -> Unit = {},
     transactions: List<Transaction> = emptyList(),
     household: Household? = null,
     onFamilyClick: () -> Unit = {},
@@ -209,7 +210,8 @@ fun HomeScreen(
                     Triple(Icons.Default.Home, "বাড়িতে পাঠান", Blue) to onAddHome,
                     Triple(Icons.Default.ReceiptLong, "বাড়ির খরচ", Color(0xFFF59E0B)) to onAddHomeExpense,
                     Triple(Icons.Default.Mic, "ভয়েস এন্ট্রি", Color(0xFF9C27B0)) to onVoiceClick,
-                    Triple(Icons.Default.ShoppingCart, "বাজারের ফর্দ", AccentGreen) to onShoppingList
+                    Triple(Icons.Default.ShoppingCart, "বাজারের ফর্দ", AccentGreen) to onShoppingList,
+                    Triple(Icons.Default.DirectionsCar, "Vehicle & Maintenance", Color(0xFF1565C0)) to onVehicle
                 )
 
                 // Render in 2 columns
