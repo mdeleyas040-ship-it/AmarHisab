@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "12259347539",
+    "project_id": "amar-hisab-587a5",
+    "storage_bucket": "amar-hisab-587a5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12259347539:android:9563ea395578a140890aa6",
+        "android_client_info": {
+          "package_name": "com.eleyas.expensetracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "12259347539-i73rdl2ki7iru73qnivpc78rk3k042g2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.eleyas.expensetracker",
+            "certificate_hash": "f68324edb4ebca231333426a5040402caba73b83"
+          }
+        },
+        {
+          "client_id": "12259347539-n7sc2kkpec7352g0kvm7kar4qof7gais.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.eleyas.expensetracker",
+            "certificate_hash": "f68324edb4ebca231333426a5040420caba73b83"
+          }
+        },
+        {
+          "client_id": "12259347539-bejtr5002jgoho62rkcoiblib53r2c8g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCT-XG9x1yTpDvfZ6j-MUz4tmBCn8Nkr6k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "12259347539-bejtr5002jgoho62rkcoiblib53r2c8g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

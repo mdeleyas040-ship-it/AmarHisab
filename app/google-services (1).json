@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "12259347539",
+    "project_id": "amar-hisab-587a5",
+    "storage_bucket": "amar-hisab-587a5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:12259347539:android:9563ea395578a140890aa6",
+        "android_client_info": {
+          "package_name": "com.eleyas.expensetracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCT-XG9x1yTpDvfZ6j-MUz4tmBCn8Nkr6k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

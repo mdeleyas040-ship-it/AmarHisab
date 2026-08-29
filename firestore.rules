@@ -1,0 +1,37 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users: নিজের profile ও subcollections (transactions, loans ইত্যাদি)
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /{subCollection=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // ফ্যামিলি / Shared Household
+    match /households/{householdId} {
+      // join code দিয়ে খোঁজা ও member হিসেবে পড়া
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+                    && request.resource.data.createdBy == request.auth.uid;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null
+                    && resource.data.createdBy == request.auth.uid;
+
+      // Shared home transactions — পরিবারের সব member পড়তে/লিখতে পারবে
+      match /homeTransactions/{txId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+
+    // App config (version, notice, maintenance)
+    match /config/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+  }
+}
