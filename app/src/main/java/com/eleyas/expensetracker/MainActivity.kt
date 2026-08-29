@@ -447,15 +447,6 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
                     onConvert = { cb -> viewModel.convertCheckedToExpenses(context, cb) },
                     onClearAdded = { viewModel.clearAddedShoppingItems(context) }
                 )
-                if (showVehicleModule) {
-                    VehicleModule(
-                        userId = currentUserId,
-                        modifier = Modifier.fillMaxSize(),
-                        onBack = {
-                            showVehicleModule = false
-                        }
-                    )
-                }
             }
             
             if (showNotificationScreen) {
@@ -471,6 +462,16 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
+            }
+
+            if (showVehicleModule) {
+                VehicleModule(
+                    userId = currentUserId,
+                    modifier = Modifier.fillMaxSize(),
+                    onBack = {
+                        showVehicleModule = false
+                    }
+                )
             }
 
             SearchOverlay(
