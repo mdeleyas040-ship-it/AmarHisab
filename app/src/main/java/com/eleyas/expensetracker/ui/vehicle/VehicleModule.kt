@@ -30,6 +30,14 @@ fun VehicleModule(
         mutableStateOf(false)
     }
 
+    var selectedVehicle by remember {
+        mutableStateOf<Vehicle?>(null)
+    }
+
+    var showFuelScreen by remember {
+        mutableStateOf(false)
+    }
+
     DisposableEffect(userId) {
 
         if (userId.isBlank()) {
@@ -46,7 +54,7 @@ fun VehicleModule(
                 onError = { error ->
                     Toast.makeText(
                         context,
-                        "Vehicle data load failed: ${error.message}",
+                        "গাড়ির তথ্য লোড করা যায়নি: ${error.message}",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -58,6 +66,26 @@ fun VehicleModule(
         }
     }
 
+    // =========================
+    // জ্বালানি স্ক্রিন
+    // =========================
+    if (showFuelScreen && selectedVehicle != null) {
+
+        FuelScreen(
+            userId = userId,
+            vehicle = selectedVehicle!!,
+            onBack = {
+                showFuelScreen = false
+                selectedVehicle = null
+            }
+        )
+
+        return
+    }
+
+    // =========================
+    // গাড়ি যোগ করার স্ক্রিন
+    // =========================
     if (showAddVehicle) {
 
         AddVehicleScreen(
@@ -97,6 +125,9 @@ fun VehicleModule(
 
     } else {
 
+        // =========================
+        // গাড়ির মূল স্ক্রিন
+        // =========================
         VehicleScreen(
             modifier = modifier.fillMaxSize(),
 
@@ -107,19 +138,40 @@ fun VehicleModule(
             },
 
             onVehicleClick = { vehicle ->
-                // Vehicle detail will be connected later.
+                selectedVehicle = vehicle
             },
 
+            // =========================
+            // জ্বালানি
+            // =========================
             onFuelClick = { vehicle ->
-                // Fuel module will be connected next.
+
+                selectedVehicle = vehicle
+                showFuelScreen = true
             },
 
+            // =========================
+            // সার্ভিসিং
+            // =========================
             onServiceClick = { vehicle ->
-                // Service module will be connected next.
+
+                Toast.makeText(
+                    context,
+                    "সার্ভিসিং মডিউল শীঘ্রই আসছে",
+                    Toast.LENGTH_SHORT
+                ).show()
             },
 
+            // =========================
+            // যন্ত্রাংশ
+            // =========================
             onPartsClick = { vehicle ->
-                // Parts module will be connected next.
+
+                Toast.makeText(
+                    context,
+                    "যন্ত্রাংশ মডিউল শীঘ্রই আসছে",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         )
     }
