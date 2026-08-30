@@ -14,13 +14,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eleyas.expensetracker.model.Vehicle
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddVehicleScreen(
     modifier: Modifier = Modifier,
@@ -34,6 +32,9 @@ fun AddVehicleScreen(
 
     var selectedType by remember { mutableStateOf("Bike") }
     var selectedUsage by remember { mutableStateOf("Personal") }
+
+    var nameError by remember { mutableStateOf(false) }
+    var odometerError by remember { mutableStateOf(false) }
 
     val vehicleTypes = listOf(
         "Bike",
@@ -53,7 +54,6 @@ fun AddVehicleScreen(
             .background(MaterialTheme.colorScheme.background)
     ) {
 
-        // Header
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = MaterialTheme.colorScheme.surface,
@@ -62,17 +62,14 @@ fun AddVehicleScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(
-                        horizontal = 12.dp,
-                        vertical = 12.dp
-                    ),
+                    .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
                 IconButton(onClick = onBack) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back"
+                        Icons.Default.ArrowBack,
+                        contentDescription = "পেছনে"
                     )
                 }
 
@@ -80,7 +77,7 @@ fun AddVehicleScreen(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = "Vehicle",
+                        text = "গাড়ি",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -102,9 +99,8 @@ fun AddVehicleScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // Vehicle Type
             Text(
-                text = "Vehicle Type",
+                text = "গাড়ির ধরন",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -113,7 +109,6 @@ fun AddVehicleScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-
                 vehicleTypes.forEach { type ->
 
                     VehicleTypeChip(
@@ -127,15 +122,11 @@ fun AddVehicleScreen(
                 }
             }
 
-            // Vehicle Information
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(22.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 2.dp
                 )
             ) {
 
@@ -159,24 +150,26 @@ fun AddVehicleScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.DirectionsCar,
+                                    Icons.Default.DirectionsCar,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(
+                            modifier = Modifier.width(12.dp)
+                        )
 
                         Column {
                             Text(
-                                text = "Vehicle Information",
+                                text = "গাড়ির তথ্য",
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold
                             )
 
                             Text(
-                                text = "আপনার গাড়ির basic information দিন",
+                                text = "আপনার গাড়ির তথ্য দিন",
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -187,15 +180,19 @@ fun AddVehicleScreen(
                         value = vehicleName,
                         onValueChange = {
                             vehicleName = it
+                            nameError = false
                         },
                         modifier = Modifier.fillMaxWidth(),
                         label = {
-                            Text("Vehicle Name")
-                        },
-                        placeholder = {
-                            Text("যেমন: My Bike")
+                            Text("গাড়ির নাম *")
                         },
                         singleLine = true,
+                        isError = nameError,
+                        supportingText = {
+                            if (nameError) {
+                                Text("গাড়ির নাম দিন")
+                            }
+                        },
                         shape = RoundedCornerShape(14.dp)
                     )
 
@@ -206,10 +203,7 @@ fun AddVehicleScreen(
                         },
                         modifier = Modifier.fillMaxWidth(),
                         label = {
-                            Text("Model")
-                        },
-                        placeholder = {
-                            Text("যেমন: Honda CB Shine")
+                            Text("মডেল")
                         },
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp)
@@ -222,10 +216,7 @@ fun AddVehicleScreen(
                         },
                         modifier = Modifier.fillMaxWidth(),
                         label = {
-                            Text("Registration Number")
-                        },
-                        placeholder = {
-                            Text("যেমন: DHAKA METRO...")
+                            Text("রেজিস্ট্রেশন নম্বর")
                         },
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp)
@@ -239,27 +230,30 @@ fun AddVehicleScreen(
                                 it.all { char -> char.isDigit() }
                             ) {
                                 odometer = it
+                                odometerError = false
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         label = {
-                            Text("Current Odometer")
-                        },
-                        placeholder = {
-                            Text("যেমন: 12500 KM")
+                            Text("বর্তমান মিটার")
                         },
                         suffix = {
                             Text("KM")
                         },
                         singleLine = true,
+                        isError = odometerError,
+                        supportingText = {
+                            if (odometerError) {
+                                Text("মিটারের সঠিক সংখ্যা দিন")
+                            }
+                        },
                         shape = RoundedCornerShape(14.dp)
                     )
                 }
             }
 
-            // Usage Type
             Text(
-                text = "Usage Type",
+                text = "ব্যবহারের ধরন",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -268,7 +262,6 @@ fun AddVehicleScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-
                 usageTypes.forEach { usage ->
 
                     Card(
@@ -323,9 +316,21 @@ fun AddVehicleScreen(
                 }
             }
 
-            // Save
             Button(
                 onClick = {
+
+                    val nameValid = vehicleName.isNotBlank()
+
+                    val odometerValid =
+                        odometer.isBlank() ||
+                                odometer.toDoubleOrNull() != null
+
+                    nameError = !nameValid
+                    odometerError = !odometerValid
+
+                    if (!nameValid || !odometerValid) {
+                        return@Button
+                    }
 
                     val vehicle = Vehicle(
                         name = vehicleName.trim(),
@@ -342,25 +347,28 @@ fun AddVehicleScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                enabled = vehicleName.isNotBlank(),
                 shape = RoundedCornerShape(16.dp)
             ) {
 
                 Icon(
-                    imageVector = Icons.Default.Save,
+                    Icons.Default.Save,
                     contentDescription = null
                 )
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(
+                    modifier = Modifier.width(8.dp)
+                )
 
                 Text(
-                    text = "Save Vehicle",
+                    text = "গাড়ি সংরক্ষণ",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
         }
     }
 }
@@ -376,15 +384,15 @@ private fun VehicleTypeChip(
     Surface(
         modifier = modifier
             .height(48.dp)
-            .clickable { onClick() },
+            .clickable {
+                onClick()
+            },
         shape = RoundedCornerShape(14.dp),
         color =
             if (selected)
                 MaterialTheme.colorScheme.primary
             else
-                MaterialTheme.colorScheme.surface,
-        tonalElevation =
-            if (selected) 2.dp else 0.dp
+                MaterialTheme.colorScheme.surface
     ) {
 
         Box(
