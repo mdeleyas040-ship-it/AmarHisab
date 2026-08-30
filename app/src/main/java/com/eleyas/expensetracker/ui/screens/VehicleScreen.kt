@@ -1,3 +1,4 @@
+// VehicleScreen.kt
 package com.eleyas.expensetracker.ui.screens
 
 import androidx.compose.foundation.background
@@ -7,11 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.LocalGasStation
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,7 +27,8 @@ fun VehicleScreen(
     onVehicleClick: (Vehicle) -> Unit = {},
     onFuelClick: (Vehicle) -> Unit = {},
     onServiceClick: (Vehicle) -> Unit = {},
-    onPartsClick: (Vehicle) -> Unit = {}
+    onPartsClick: (Vehicle) -> Unit = {},
+    onSummaryClick: (Vehicle) -> Unit = {}
 ) {
 
     Column(
@@ -45,10 +43,7 @@ fun VehicleScreen(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                horizontal = 16.dp,
-                vertical = 16.dp
-            ),
+            contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
 
@@ -66,12 +61,14 @@ fun VehicleScreen(
                     Text(
                         text = "আমার গাড়ি",
                         fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        fontWeight = FontWeight.Bold
                     )
                 }
 
-                items(vehicles) { vehicle ->
+                items(
+                    items = vehicles,
+                    key = { it.id }
+                ) { vehicle ->
 
                     VehicleCard(
                         vehicle = vehicle,
@@ -86,6 +83,9 @@ fun VehicleScreen(
                         },
                         onPartsClick = {
                             onPartsClick(vehicle)
+                        },
+                        onSummaryClick = {
+                            onSummaryClick(vehicle)
                         }
                     )
                 }
@@ -127,8 +127,7 @@ private fun VehicleHeader(
                 Text(
                     text = "গাড়ির হিসাব",
                     fontSize = 24.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    fontWeight = FontWeight.ExtraBold
                 )
             }
 
@@ -138,7 +137,7 @@ private fun VehicleHeader(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Add Vehicle"
+                    contentDescription = "গাড়ি যোগ করুন"
                 )
             }
         }
@@ -149,15 +148,10 @@ private fun VehicleHeader(
 private fun EmptyVehicleCard(
     onAddVehicle: () -> Unit
 ) {
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        shape = RoundedCornerShape(24.dp)
     ) {
 
         Column(
@@ -167,27 +161,16 @@ private fun EmptyVehicleCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            Surface(
-                modifier = Modifier.size(76.dp),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.primary.copy(
-                    alpha = 0.10f
-                )
-            ) {
+            Icon(
+                imageVector = Icons.Default.DirectionsCar,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
 
-                Box(
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.DirectionsCar,
-                        contentDescription = null,
-                        modifier = Modifier.size(40.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(
+                modifier = Modifier.height(14.dp)
+            )
 
             Text(
                 text = "কোনো গাড়ি যোগ করা হয়নি",
@@ -195,26 +178,22 @@ private fun EmptyVehicleCard(
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = "আপনার বাইক, গাড়ি বা ব্যবসায়িক যানবাহনের হিসাব রাখুন।",
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            Spacer(
+                modifier = Modifier.height(16.dp)
             )
 
-            Spacer(modifier = Modifier.height(18.dp))
-
             Button(
-                onClick = onAddVehicle,
-                shape = RoundedCornerShape(14.dp)
+                onClick = onAddVehicle
             ) {
+
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = null
                 )
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(
+                    modifier = Modifier.width(8.dp)
+                )
 
                 Text("গাড়ি যোগ করুন")
             }
@@ -228,17 +207,17 @@ private fun VehicleCard(
     onClick: () -> Unit,
     onFuelClick: () -> Unit,
     onServiceClick: () -> Unit,
-    onPartsClick: () -> Unit
+    onPartsClick: () -> Unit,
+    onSummaryClick: () -> Unit
 ) {
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .clickable {
+                onClick()
+            },
         shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 3.dp
         )
@@ -267,13 +246,15 @@ private fun VehicleCard(
                         Icon(
                             imageVector = Icons.Default.DirectionsCar,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(30.dp)
+                            modifier = Modifier.size(30.dp),
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(
+                    modifier = Modifier.width(12.dp)
+                )
 
                 Column(
                     modifier = Modifier.weight(1f)
@@ -289,13 +270,14 @@ private fun VehicleCard(
 
                     Text(
                         text = vehicle.model.ifBlank {
-                            "Model not added"
+                            "মডেল যোগ করা হয়নি"
                         },
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     if (vehicle.registrationNumber.isNotBlank()) {
+
                         Text(
                             text = vehicle.registrationNumber,
                             fontSize = 12.sp,
@@ -306,11 +288,15 @@ private fun VehicleCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(
+                modifier = Modifier.height(14.dp)
+            )
 
             HorizontalDivider()
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -320,7 +306,7 @@ private fun VehicleCard(
                 VehicleAction(
                     modifier = Modifier.weight(1f),
                     icon = Icons.Default.LocalGasStation,
-                    title = "Fuel",
+                    title = "জ্বালানি",
                     color = Color(0xFF1976D2),
                     onClick = onFuelClick
                 )
@@ -328,7 +314,7 @@ private fun VehicleCard(
                 VehicleAction(
                     modifier = Modifier.weight(1f),
                     icon = Icons.Default.Build,
-                    title = "Service",
+                    title = "সার্ভিস",
                     color = Color(0xFF16A05D),
                     onClick = onServiceClick
                 )
@@ -336,16 +322,60 @@ private fun VehicleCard(
                 VehicleAction(
                     modifier = Modifier.weight(1f),
                     icon = Icons.Default.Settings,
-                    title = "Parts",
+                    title = "যন্ত্রাংশ",
                     color = Color(0xFFF59E0B),
                     onClick = onPartsClick
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        onSummaryClick()
+                    },
+                shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.primary.copy(
+                    alpha = 0.10f
+                )
+            ) {
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Assessment,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+
+                    Spacer(
+                        modifier = Modifier.width(8.dp)
+                    )
+
+                    Text(
+                        text = "মোট খরচের হিসাব",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
 
             Text(
-                text = "Odometer: ${"%.0f".format(vehicle.currentOdometer)} KM",
+                text = "মিটার: ${"%.0f".format(vehicle.currentOdometer)} KM",
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -365,7 +395,9 @@ private fun VehicleAction(
     Surface(
         modifier = modifier
             .height(58.dp)
-            .clickable { onClick() },
+            .clickable {
+                onClick()
+            },
         shape = RoundedCornerShape(14.dp),
         color = color.copy(alpha = 0.10f)
     ) {
@@ -382,7 +414,9 @@ private fun VehicleAction(
                 modifier = Modifier.size(21.dp)
             )
 
-            Spacer(modifier = Modifier.height(3.dp))
+            Spacer(
+                modifier = Modifier.height(3.dp)
+            )
 
             Text(
                 text = title,

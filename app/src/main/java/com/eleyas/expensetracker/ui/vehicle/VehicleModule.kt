@@ -43,6 +43,14 @@ fun VehicleModule(
         mutableStateOf(false)
     }
 
+    var showPartsScreen by remember {
+        mutableStateOf(false)
+    }
+
+    var showSummaryScreen by remember {
+        mutableStateOf(false)
+    }
+
     DisposableEffect(userId) {
 
         if (userId.isBlank()) {
@@ -51,23 +59,22 @@ fun VehicleModule(
 
         } else {
 
-            val listener =
-                repository.observeVehicles(
-                    userId = userId,
+            val listener = repository.observeVehicles(
+                userId = userId,
 
-                    onData = { data ->
-                        vehicles = data
-                    },
+                onData = {
+                    vehicles = it
+                },
 
-                    onError = { error ->
+                onError = { error ->
 
-                        Toast.makeText(
-                            context,
-                            "গাড়ির তথ্য লোড করা যায়নি: ${error.message}",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                )
+                    Toast.makeText(
+                        context,
+                        "গাড়ির তথ্য লোড করা যায়নি",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            )
 
             onDispose {
                 listener.remove()
@@ -76,7 +83,29 @@ fun VehicleModule(
     }
 
     // =========================
-    // জ্বালানি স্ক্রিন
+    // মোট হিসাব
+    // =========================
+
+    if (
+        showSummaryScreen &&
+        selectedVehicle != null
+    ) {
+
+        VehicleSummaryScreen(
+            userId = userId,
+            vehicle = selectedVehicle!!,
+
+            onBack = {
+                showSummaryScreen = false
+                selectedVehicle = null
+            }
+        )
+
+        return
+    }
+
+    // =========================
+    // জ্বালানি
     // =========================
 
     if (
@@ -89,7 +118,6 @@ fun VehicleModule(
             vehicle = selectedVehicle!!,
 
             onBack = {
-
                 showFuelScreen = false
                 selectedVehicle = null
             }
@@ -99,7 +127,7 @@ fun VehicleModule(
     }
 
     // =========================
-    // সার্ভিসিং স্ক্রিন
+    // সার্ভিসিং
     // =========================
 
     if (
@@ -113,7 +141,6 @@ fun VehicleModule(
             modifier = modifier.fillMaxSize(),
 
             onBack = {
-
                 showServiceScreen = false
                 selectedVehicle = null
             }
@@ -123,7 +150,30 @@ fun VehicleModule(
     }
 
     // =========================
-    // গাড়ি যোগ করার স্ক্রিন
+    // যন্ত্রাংশ
+    // =========================
+
+    if (
+        showPartsScreen &&
+        selectedVehicle != null
+    ) {
+
+        PartsScreen(
+            userId = userId,
+            vehicle = selectedVehicle!!,
+            modifier = modifier.fillMaxSize(),
+
+            onBack = {
+                showPartsScreen = false
+                selectedVehicle = null
+            }
+        )
+
+        return
+    }
+
+    // =========================
+    // গাড়ি যোগ
     // =========================
 
     if (showAddVehicle) {
@@ -132,7 +182,6 @@ fun VehicleModule(
             modifier = modifier.fillMaxSize(),
 
             onBack = {
-
                 showAddVehicle = false
             },
 
@@ -153,11 +202,11 @@ fun VehicleModule(
                         ).show()
                     },
 
-                    onError = { error ->
+                    onError = {
 
                         Toast.makeText(
                             context,
-                            "গাড়ি যোগ করা যায়নি: ${error.message}",
+                            "গাড়ি যোগ করা যায়নি",
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -167,28 +216,18 @@ fun VehicleModule(
 
     } else {
 
-        // =========================
-        // গাড়ির মূল স্ক্রিন
-        // =========================
-
         VehicleScreen(
             modifier = modifier.fillMaxSize(),
 
             vehicles = vehicles,
 
             onAddVehicle = {
-
                 showAddVehicle = true
             },
 
             onVehicleClick = { vehicle ->
-
                 selectedVehicle = vehicle
             },
-
-            // =========================
-            // জ্বালানি
-            // =========================
 
             onFuelClick = { vehicle ->
 
@@ -196,27 +235,22 @@ fun VehicleModule(
                 showFuelScreen = true
             },
 
-            // =========================
-            // সার্ভিসিং
-            // =========================
-
             onServiceClick = { vehicle ->
 
                 selectedVehicle = vehicle
                 showServiceScreen = true
             },
 
-            // =========================
-            // যন্ত্রাংশ
-            // =========================
-
             onPartsClick = { vehicle ->
 
-                Toast.makeText(
-                    context,
-                    "যন্ত্রাংশ মডিউল শীঘ্রই আসছে",
-                    Toast.LENGTH_SHORT
-                ).show()
+                selectedVehicle = vehicle
+                showPartsScreen = true
+            },
+
+            onSummaryClick = { vehicle ->
+
+                selectedVehicle = vehicle
+                showSummaryScreen = true
             }
         )
     }
