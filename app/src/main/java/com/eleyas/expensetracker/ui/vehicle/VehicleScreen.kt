@@ -1,4 +1,4 @@
-package com.eleyas.expensetracker.ui.screens
+package com.eleyas.expensetracker.ui.vehicle
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -448,7 +449,7 @@ private fun VehicleCard(
 @Composable
 private fun VehicleAction(
     modifier: Modifier = Modifier,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     title: String,
     color: Color,
     onClick: () -> Unit
