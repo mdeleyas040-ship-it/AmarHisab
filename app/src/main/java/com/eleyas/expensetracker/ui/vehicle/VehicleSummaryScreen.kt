@@ -1,7 +1,8 @@
-// VehicleSummaryScreen.kt
 package com.eleyas.expensetracker.ui.vehicle
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -62,96 +63,112 @@ fun VehicleSummaryScreen(
     val grandTotal =
         fuelTotal + serviceTotal + partsTotal
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
 
-        TextButton(
-            onClick = onBack
-        ) {
-            Text("← পেছনে")
-        }
-
-        Text(
-            text = "গাড়ির মোট হিসাব",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(
-            modifier = Modifier.height(6.dp)
-        )
-
-        Text(
-            text = vehicle.name.ifBlank {
-                vehicle.type
-            },
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(
-            modifier = Modifier.height(20.dp)
-        )
-
-        SummaryCard(
-            title = "জ্বালানি",
-            amount = fuelTotal
-        )
-
-        Spacer(
-            modifier = Modifier.height(10.dp)
-        )
-
-        SummaryCard(
-            title = "সার্ভিসিং",
-            amount = serviceTotal
-        )
-
-        Spacer(
-            modifier = Modifier.height(10.dp)
-        )
-
-        SummaryCard(
-            title = "যন্ত্রাংশ",
-            amount = partsTotal
-        )
-
-        Spacer(
-            modifier = Modifier.height(18.dp)
-        )
-
-        HorizontalDivider()
-
-        Spacer(
-            modifier = Modifier.height(18.dp)
-        )
-
-        Card(
-            modifier = Modifier.fillMaxWidth()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
         ) {
 
-            Column(
-                modifier = Modifier.padding(20.dp)
+            TextButton(
+                onClick = onBack
+            ) {
+                Text("← পেছনে")
+            }
+
+            Spacer(
+                modifier = Modifier.height(4.dp)
+            )
+
+            Text(
+                text = "গাড়ির মোট হিসাব",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(
+                modifier = Modifier.height(6.dp)
+            )
+
+            Text(
+                text = vehicle.name.ifBlank {
+                    vehicle.type
+                },
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(
+                modifier = Modifier.height(20.dp)
+            )
+
+            SummaryCard(
+                title = "জ্বালানি",
+                amount = fuelTotal
+            )
+
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
+
+            SummaryCard(
+                title = "সার্ভিসিং",
+                amount = serviceTotal
+            )
+
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
+
+            SummaryCard(
+                title = "যন্ত্রাংশ",
+                amount = partsTotal
+            )
+
+            Spacer(
+                modifier = Modifier.height(18.dp)
+            )
+
+            HorizontalDivider()
+
+            Spacer(
+                modifier = Modifier.height(18.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth()
             ) {
 
-                Text(
-                    text = "সর্বমোট খরচ",
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Column(
+                    modifier = Modifier.padding(20.dp)
+                ) {
 
-                Spacer(
-                    modifier = Modifier.height(8.dp)
-                )
+                    Text(
+                        text = "সর্বমোট খরচ",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
 
-                Text(
-                    text = "৳${formatAmount(grandTotal)}",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
+                    Text(
+                        text = "৳${formatAmount(grandTotal)}",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
+
+            Spacer(
+                modifier = Modifier.height(20.dp)
+            )
         }
     }
 }
@@ -169,8 +186,7 @@ private fun SummaryCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(18.dp),
-            horizontalArrangement =
-                Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
 
             Text(
