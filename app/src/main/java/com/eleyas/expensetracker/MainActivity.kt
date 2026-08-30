@@ -1,4 +1,4 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 
 package com.eleyas.expensetracker
 
@@ -81,6 +81,7 @@ fun AuthGate() {
     }
 }
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
     val context = LocalContext.current
@@ -258,27 +259,14 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
                                 IconButton(onClick = { showTopMenu = true }) {
                                     Icon(Icons.Default.Menu, contentDescription = "Main menu")
                                 }
-                                DropdownMenu(
+                                AmarHisabTopMenu(
                                     expanded = showTopMenu,
-                                    onDismissRequest = { showTopMenu = false }
-                                ) {
-                                    DropdownMenuItem(
-                                        text = { Text("পরিবার শেয়ার") },
-                                        onClick = { showTopMenu = false; showFamilyDialog = true }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text("ক্যালেন্ডার") },
-                                        onClick = { showTopMenu = false; showCalendarScreen = true }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text("বাজারের ফর্দ") },
-                                        onClick = { showTopMenu = false; showShoppingList = true }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text("সেটিংস") },
-                                        onClick = { showTopMenu = false; showSettingsScreen = true }
-                                    )
-                                }
+                                    onDismiss = { showTopMenu = false },
+                                    onFamilyShare = { showFamilyDialog = true },
+                                    onCalendar = { showCalendarScreen = true },
+                                    onShoppingList = { showShoppingList = true },
+                                    onSettings = { showSettingsScreen = true }
+                                )
                             }
                         },
                         title = {
@@ -418,5 +406,22 @@ fun DailyTipPopupCheck(userId: String) {
     var showTip by remember(userId) { mutableStateOf(DailyFinancialTips.shouldShowDailyTip(context, userId)) }
     if (showTip) {
         DailyTipDialog(onDismiss = { DailyFinancialTips.markDailyTipShown(context, userId); showTip = false })
+    }
+}
+
+@Composable
+fun AmarHisabTopMenu(
+    expanded: Boolean,
+    onDismiss: () -> Unit,
+    onFamilyShare: () -> Unit,
+    onCalendar: () -> Unit,
+    onShoppingList: () -> Unit,
+    onSettings: () -> Unit
+) {
+    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        DropdownMenuItem(text = { Text("পরিবার শেয়ার") }, onClick = { onDismiss(); onFamilyShare() })
+        DropdownMenuItem(text = { Text("ক্যালেন্ডার") }, onClick = { onDismiss(); onCalendar() })
+        DropdownMenuItem(text = { Text("বাজারের ফর্দ") }, onClick = { onDismiss(); onShoppingList() })
+        DropdownMenuItem(text = { Text("সেটিংস") }, onClick = { onDismiss(); onSettings() })
     }
 }
