@@ -1,6 +1,9 @@
 package com.eleyas.expensetracker.ui.vehicle
 
 import android.widget.Toast
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +31,14 @@ fun VehicleModule(
     }
 
     var showAddVehicle by remember {
+        mutableStateOf(false)
+    }
+
+    var showEditVehicle by remember {
+        mutableStateOf(false)
+    }
+
+    var showDeleteDialog by remember {
         mutableStateOf(false)
     }
 
@@ -66,8 +77,7 @@ fun VehicleModule(
                     vehicles = it
                 },
 
-                onError = { error ->
-
+                onError = {
                     Toast.makeText(
                         context,
                         "গাড়ির তথ্য লোড করা যায়নি",
@@ -80,6 +90,138 @@ fun VehicleModule(
                 listener.remove()
             }
         }
+    }
+
+    // =========================
+    // এডিট গাড়ি
+    // =========================
+
+    if (
+        showEditVehicle &&
+        selectedVehicle != null
+    ) {
+
+        EditVehicleScreen(
+            vehicle = selectedVehicle!!,
+            modifier = modifier.fillMaxSize(),
+
+            onBack = {
+                showEditVehicle = false
+                selectedVehicle = null
+            },
+
+            onSave = { updatedVehicle ->
+
+                repository.updateVehicle(
+                    userId = userId,
+                    vehicle = updatedVehicle,
+
+                    onSuccess = {
+
+                        showEditVehicle = false
+                        selectedVehicle = null
+
+                        Toast.makeText(
+                            context,
+                            "গাড়ির তথ্য পরিবর্তন হয়েছে",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    },
+
+                    onError = {
+
+                        Toast.makeText(
+                            context,
+                            "গাড়ির তথ্য পরিবর্তন করা যায়নি",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                )
+            }
+        )
+
+        return
+    }
+
+    // =========================
+    // ডিলিট confirmation
+    // =========================
+
+    if (
+        showDeleteDialog &&
+        selectedVehicle != null
+    ) {
+
+        AlertDialog(
+
+            onDismissRequest = {
+                showDeleteDialog = false
+                selectedVehicle = null
+            },
+
+            title = {
+                Text("গাড়ি ডিলিট করবেন?")
+            },
+
+            text = {
+                Text(
+                    "এই গাড়ির তথ্য ডিলিট হয়ে যাবে। আপনি কি নিশ্চিত?"
+                )
+            },
+
+            confirmButton = {
+
+                TextButton(
+                    onClick = {
+
+                        val vehicle = selectedVehicle!!
+
+                        repository.deleteVehicle(
+                            userId = userId,
+                            vehicleId = vehicle.id,
+
+                            onSuccess = {
+
+                                showDeleteDialog = false
+                                selectedVehicle = null
+
+                                Toast.makeText(
+                                    context,
+                                    "গাড়ি ডিলিট হয়েছে",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            },
+
+                            onError = {
+
+                                Toast.makeText(
+                                    context,
+                                    "গাড়ি ডিলিট করা যায়নি",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        )
+                    }
+                ) {
+                    Text("ডিলিট")
+                }
+            },
+
+            dismissButton = {
+
+                TextButton(
+                    onClick = {
+
+                        showDeleteDialog = false
+                        selectedVehicle = null
+                    }
+                ) {
+                    Text("বাতিল")
+                }
+            }
+        )
+
+        return
     }
 
     // =========================
@@ -251,6 +393,18 @@ fun VehicleModule(
 
                 selectedVehicle = vehicle
                 showSummaryScreen = true
+            },
+
+            onEditVehicle = { vehicle ->
+
+                selectedVehicle = vehicle
+                showEditVehicle = true
+            },
+
+            onDeleteVehicle = { vehicle ->
+
+                selectedVehicle = vehicle
+                showDeleteDialog = true
             }
         )
     }

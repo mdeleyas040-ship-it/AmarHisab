@@ -1,4 +1,3 @@
-// VehicleScreen.kt
 package com.eleyas.expensetracker.ui.screens
 
 import androidx.compose.foundation.background
@@ -28,7 +27,9 @@ fun VehicleScreen(
     onFuelClick: (Vehicle) -> Unit = {},
     onServiceClick: (Vehicle) -> Unit = {},
     onPartsClick: (Vehicle) -> Unit = {},
-    onSummaryClick: (Vehicle) -> Unit = {}
+    onSummaryClick: (Vehicle) -> Unit = {},
+    onEditVehicle: (Vehicle) -> Unit = {},
+    onDeleteVehicle: (Vehicle) -> Unit = {}
 ) {
 
     Column(
@@ -72,20 +73,33 @@ fun VehicleScreen(
 
                     VehicleCard(
                         vehicle = vehicle,
+
                         onClick = {
                             onVehicleClick(vehicle)
                         },
+
                         onFuelClick = {
                             onFuelClick(vehicle)
                         },
+
                         onServiceClick = {
                             onServiceClick(vehicle)
                         },
+
                         onPartsClick = {
                             onPartsClick(vehicle)
                         },
+
                         onSummaryClick = {
                             onSummaryClick(vehicle)
+                        },
+
+                        onEditClick = {
+                            onEditVehicle(vehicle)
+                        },
+
+                        onDeleteClick = {
+                            onDeleteVehicle(vehicle)
                         }
                     )
                 }
@@ -98,6 +112,7 @@ fun VehicleScreen(
 private fun VehicleHeader(
     onAddVehicle: () -> Unit
 ) {
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
@@ -135,6 +150,7 @@ private fun VehicleHeader(
                 onClick = onAddVehicle,
                 modifier = Modifier.size(48.dp)
             ) {
+
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "গাড়ি যোগ করুন"
@@ -208,7 +224,9 @@ private fun VehicleCard(
     onFuelClick: () -> Unit,
     onServiceClick: () -> Unit,
     onPartsClick: () -> Unit,
-    onSummaryClick: () -> Unit
+    onSummaryClick: () -> Unit,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit
 ) {
 
     Card(
@@ -379,6 +397,50 @@ private fun VehicleCard(
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+
+                OutlinedButton(
+                    onClick = onEditClick,
+                    modifier = Modifier.weight(1f)
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null
+                    )
+
+                    Spacer(
+                        modifier = Modifier.width(6.dp)
+                    )
+
+                    Text("এডিট")
+                }
+
+                OutlinedButton(
+                    onClick = onDeleteClick,
+                    modifier = Modifier.weight(1f)
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null
+                    )
+
+                    Spacer(
+                        modifier = Modifier.width(6.dp)
+                    )
+
+                    Text("ডিলিট")
+                }
+            }
         }
     }
 }
