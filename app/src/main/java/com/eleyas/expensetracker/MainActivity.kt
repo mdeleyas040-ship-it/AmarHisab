@@ -93,7 +93,6 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
         RecapNotificationManager.scheduleWeeklyRecap(context)
         RecapNotificationManager.scheduleMonthlyRecap(context)
     }
-    
     LaunchedEffect(Unit) {
         com.eleyas.expensetracker.util.SMSReceiver.setSMSSuggestionCallback {
             com.eleyas.expensetracker.util.SMSSuggestionHolder.updateSuggestions(context)
@@ -116,7 +115,6 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
     val rateLoading = viewModel.rateLoading
     val rateError = viewModel.rateError
 
-    // টিভি নিউজ শিরোনামের মতো চলমান টিকার মেসেজ-তালিকা (ইনসাইট আর টিপস আলাদাভাবে ঘুরবে, ট্যাপে বিস্তারিত খোলে)
     val tickerInsight = remember(transactions) { FinancialInsights.generateInsight(transactions) }
     val tickerTip = remember { DailyFinancialTips.getTodayTip() }
     val tickerMessages = remember(tickerInsight, tickerTip) {
@@ -125,8 +123,7 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
             "📜 আজকের টিপস: ${tickerTip.quote}${if (tickerTip.author.isNullOrBlank()) "" else "  — ${tickerTip.author}"}"
         )
     }
-    
-    // UI-only states
+
     var selectedTab by remember(currentUserId) { mutableIntStateOf(0) }
     var showNotificationScreen by remember { mutableStateOf(false) }
     var showBudgetDialog by remember(currentUserId) { mutableStateOf(false) }
@@ -170,6 +167,7 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
     var showMaintenanceDialog by remember { mutableStateOf(false) }
     var showEditName by remember { mutableStateOf(false) }
     var settingsSubView by remember { mutableStateOf<String?>(null) }
+    var showSettingsScreen by remember { mutableStateOf(false) }
     var profilePhotoUri by remember(currentUserId) { mutableStateOf(prefs.getString("profile_photo_uri", null)) }
     var smsSuggestions by remember { SMSSuggestionHolder.suggestions }
 
@@ -192,7 +190,6 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
     val exportBackupLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.CreateDocument("application/json")) { uri: Uri? ->
         uri?.let { if (exportBackupToUri(context, it, transactions, usdToBdt, usdToMvr, loans, loanPayments, lendings, lendingReturns, wallets)) Toast.makeText(context, "Backup exported", Toast.LENGTH_SHORT).show() }
     }
-
     val importBackupLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         uri?.let {
             val backup = importBackupFromUri(context, it)
@@ -202,15 +199,12 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
             }
         }
     }
-
     val pdfExportLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.CreateDocument("application/pdf")) { uri: Uri? ->
         uri?.let { ReportExporter.exportToPdf(context, it, transactions, viewModel.totalIncome, viewModel.totalExpense, viewModel.balance) }
     }
-
     val csvExportLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.CreateDocument("text/csv")) { uri: Uri? ->
         uri?.let { viewModel.exportTransactionsCsv(context, it) }
     }
-
     val loanPdfExportLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.CreateDocument("application/pdf")) { uri: Uri? ->
         uri?.let {
             sharingLoanPdf?.let { loan ->
@@ -219,7 +213,6 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
             }
         }
     }
-
     val lendingPdfExportLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.CreateDocument("application/pdf")) { uri: Uri? ->
         uri?.let {
             sharingLendingPdf?.let { lending ->
@@ -228,26 +221,15 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
             }
         }
     }
-
     var sharingSearchQuery by remember { mutableStateOf<String?>(null) }
-
     val searchPdfExportLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.CreateDocument("application/pdf")) { uri: Uri? ->
         uri?.let {
-            sharingSearchQuery?.let { query ->
-                viewModel.exportSearchResultsPdf(context, it, query)
-            }
+            sharingSearchQuery?.let { query -> viewModel.exportSearchResultsPdf(context, it, query) }
         }
     }
 
     BackHandler(
-        enabled = showCalendarScreen ||
-                showCalculatorScreen ||
-                showShoppingList ||
-                showVehicleModule ||
-                showNotificationScreen ||
-                settingsSubView != null ||
-                selectedTab != 0 ||
-                isSearchActive
+        enabled = showCalendarScreen || showCalculatorScreen || showShoppingList || showVehicleModule || showNotificationScreen || showSettingsScreen || settingsSubView != null || selectedTab != 0 || isSearchActive
     ) {
         when {
             showCalendarScreen -> showCalendarScreen = false
@@ -256,112 +238,104 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
             showNotificationScreen -> showNotificationScreen = false
             showVehicleModule -> showVehicleModule = false
             settingsSubView != null -> settingsSubView = null
-            isSearchActive -> {
-                isSearchActive = false
-                globalSearchQuery = ""
-            }
+            showSettingsScreen -> showSettingsScreen = false
+            isSearchActive -> { isSearchActive = false; globalSearchQuery = "" }
             selectedTab != 0 -> selectedTab = 0
         }
     }
 
     val topBarScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    
+
     Scaffold(
         modifier = Modifier.nestedScroll(topBarScrollBehavior.nestedScrollConnection),
         topBar = {
-        if (!showCalendarScreen && !showCalculatorScreen && !showShoppingList && !showNotificationScreen && !isSearchActive) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-            CenterAlignedTopAppBar(
-                    scrollBehavior = topBarScrollBehavior,
-                    navigationIcon = {
-                        Box {
-                            IconButton(onClick = { showTopMenu = true }) {
-                                Icon(Icons.Default.Menu, contentDescription = "Main menu")
+            if (!showCalendarScreen && !showCalculatorScreen && !showShoppingList && !showNotificationScreen && !showSettingsScreen && !isSearchActive) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    CenterAlignedTopAppBar(
+                        scrollBehavior = topBarScrollBehavior,
+                        navigationIcon = {
+                            Box {
+                                IconButton(onClick = { showTopMenu = true }) {
+                                    Icon(Icons.Default.Menu, contentDescription = "Main menu")
+                                }
+                                DropdownMenu(
+                                    expanded = showTopMenu,
+                                    onDismissRequest = { showTopMenu = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("পরিবার শেয়ার") },
+                                        onClick = { showTopMenu = false; showFamilyDialog = true }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("ক্যালেন্ডার") },
+                                        onClick = { showTopMenu = false; showCalendarScreen = true }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("বাজারের ফর্দ") },
+                                        onClick = { showTopMenu = false; showShoppingList = true }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("সেটিংস") },
+                                        onClick = { showTopMenu = false; showSettingsScreen = true }
+                                    )
+                                }
                             }
-                            DropdownMenu(
-                                expanded = showTopMenu,
-                                onDismissRequest = { showTopMenu = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("পরিবার শেয়ার") },
-                                    onClick = {
-                                        showTopMenu = false
-                                        showFamilyDialog = true
+                        },
+                        title = {
+                            Text(
+                                text = when (selectedTab) {
+                                    0 -> "Amar Hisab"
+                                    1 -> "আমার আয়"
+                                    2 -> "আমার খরচ"
+                                    3 -> "আমার রিপোর্ট"
+                                    4 -> "ঋণ ও ধার"
+                                    else -> "Amar Hisab"
+                                },
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        },
+                        actions = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (selectedTab == 4) {
+                                    IconButton(onClick = { showCalculatorScreen = true }) {
+                                        Icon(Icons.Default.Calculate, contentDescription = "Calculator")
                                     }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("ক্যালেন্ডার") },
-                                    onClick = {
-                                        showTopMenu = false
-                                        showCalendarScreen = true
+                                }
+                                IconButton(onClick = { isSearchActive = !isSearchActive }) {
+                                    Icon(if (isSearchActive) Icons.Default.Clear else Icons.Default.Search, contentDescription = "Search")
+                                }
+                                if (selectedTab == 0) {
+                                    IconButton(onClick = { showNotificationScreen = true }) {
+                                        BadgedBox(badge = { if (notifications.any { !it.isRead }) Badge() }) {
+                                            Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                                        }
                                     }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("বাজারের ফর্দ") },
-                                    onClick = {
-                                        showTopMenu = false
-                                        showShoppingList = true
-                                    }
-                                )
+                                }
                             }
-                        }
-                    },
-                    title = {
-                        Text(
-                            text = when (selectedTab) {
-                                0 -> "Amar Hisab"
-                                1 -> "আমার আয়"
-                                2 -> "আমার খরচ"
-                                3 -> "আমার রিপোর্ট"
-                                4 -> "ঋণ ও ধার"
-                                5 -> "সেটিংস"
-                                else -> "Amar Hisab"
-                            },
-                            fontWeight = FontWeight.ExtraBold
+                        },
+                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            titleContentColor = MaterialTheme.colorScheme.primary
                         )
-                    },
-                    actions = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (selectedTab == 4) {
-                                IconButton(onClick = { showCalculatorScreen = true }) {
-                                    Icon(Icons.Default.Calculate, contentDescription = "Calculator")
-                                }
-                            }
-                            IconButton(onClick = { isSearchActive = !isSearchActive }) {
-                                Icon(if (isSearchActive) Icons.Default.Clear else Icons.Default.Search, contentDescription = "Search")
-                            }
-                            if (selectedTab == 0) {
-                                IconButton(onClick = { showNotificationScreen = true }) {
-                                    BadgedBox(badge = { if (notifications.any { !it.isRead }) Badge() }) {
-                                        Icon(Icons.Default.Notifications, contentDescription = "Notifications")
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.primary
                     )
-                )
-                NewsTickerBar(
-                    messages = tickerMessages,
-                    backgroundColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    onTickerClick = { showTickerDetail = true }
-                )
+                    NewsTickerBar(
+                        messages = tickerMessages,
+                        backgroundColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        onTickerClick = { showTickerDetail = true }
+                    )
                 }
             }
         },
         bottomBar = {
-        if (!showCalendarScreen && !showCalculatorScreen && !showShoppingList && !showNotificationScreen && !isSearchActive) {
-            AnimatedVisibility(
+            if (!showCalendarScreen && !showCalculatorScreen && !showShoppingList && !showNotificationScreen && !showSettingsScreen && !isSearchActive) {
+                AnimatedVisibility(
                     visible = topBarScrollBehavior.state.collapsedFraction < 0.5f,
                     enter = slideInVertically(initialOffsetY = { it }),
                     exit = slideOutVertically(targetOffsetY = { it })
                 ) {
-                    AnimatedBottomNavigation(selectedTab = selectedTab, onTabSelected = { 
-                        selectedTab = it
+                    AnimatedBottomNavigation(selectedTab = selectedTab, onTabSelected = {
+                        selectedTab = it.coerceIn(0, 4)
                         isSearchActive = false
                         globalSearchQuery = ""
                     })
@@ -372,230 +346,59 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             BirthdayPopupCheck(currentUserId, birthday)
             when (selectedTab) {
-                0 -> HomeScreen(Modifier.fillMaxSize(), currentUserId, viewModel.balance, viewModel.totalIncome, viewModel.totalExpense, viewModel.totalHome, viewModel.totalHomeExpense, viewModel.homeBalance, viewModel.totalLoanReceived, viewModel.totalLoanPaid, viewModel.totalLoanRemaining, viewModel.totalMoneyLent, viewModel.totalMoneyReturned, viewModel.totalMoneyToReceive, birthday, wallets, { viewModel.updateBirthday(context, it) }, { addType = "income"; showAddDialog = true }, { addType = "expense"; showAddDialog = true }, { addType = "home"; showAddDialog = true }, { addType = "home_expense"; showAddDialog = true }, { showWalletDialog = true; selectedWalletForEdit = null }, { selectedWalletForEdit = it; showWalletDialog = true }, { viewModel.getWalletBalance(it) }, onVoiceClick = { showVoiceDialog = true },
-                    onShoppingList = { showShoppingList = true },
-                    onVehicle = { showVehicleModule = true },
-                    transactions = transactions, household = household, onFamilyClick = { showFamilyDialog = true })
+                0 -> HomeScreen(Modifier.fillMaxSize(), currentUserId, viewModel.balance, viewModel.totalIncome, viewModel.totalExpense, viewModel.totalHome, viewModel.totalHomeExpense, viewModel.homeBalance, viewModel.totalLoanReceived, viewModel.totalLoanPaid, viewModel.totalLoanRemaining, viewModel.totalMoneyLent, viewModel.totalMoneyReturned, viewModel.totalMoneyToReceive, birthday, wallets, { viewModel.updateBirthday(context, it) }, { addType = "income"; showAddDialog = true }, { addType = "expense"; showAddDialog = true }, { addType = "home"; showAddDialog = true }, { addType = "home_expense"; showAddDialog = true }, { showWalletDialog = true; selectedWalletForEdit = null }, { selectedWalletForEdit = it; showWalletDialog = true }, { viewModel.getWalletBalance(it) }, onVoiceClick = { showVoiceDialog = true }, onShoppingList = { showShoppingList = true }, onVehicle = { showVehicleModule = true }, transactions = transactions, household = household, onFamilyClick = { showFamilyDialog = true })
                 1 -> IncomeScreen(Modifier.fillMaxSize(), transactions.filter { it.type == "income" }, wallets, usdToBdt, usdToMvr, globalSearchQuery, { addType = "income"; editingTransaction = null; showAddDialog = true }, { editingTransaction = it; showAddDialog = true }, { deletingTransaction = it; showDeleteDialog = true })
                 2 -> ExpenseScreen(Modifier.fillMaxSize(), transactions.filter { it.type == "expense" || it.type == "home" }, wallets, usdToBdt, usdToMvr, globalSearchQuery, { addType = "expense"; editingTransaction = null; showAddDialog = true }, { addType = "home"; editingTransaction = null; showAddDialog = true }, { editingTransaction = it; showAddDialog = true }, { deletingTransaction = it; showDeleteDialog = true }, splitBills = splitBills, onAddSplitBill = { showSplitBillDialog = true }, onSplitBillClick = { selectedSplitBill = it })
                 3 -> ReportScreen(Modifier.fillMaxSize(), transactions, wallets, categoryBudgets, usdToBdt, usdToMvr, { editingTransaction = it; showAddDialog = true }, { deletingTransaction = it; showDeleteDialog = true })
-                4 -> LoansScreen(Modifier.fillMaxSize(), loans, loanPayments, lendings, lendingReturns, { showLoanDialog = true }, { selectedLoan = it; showLoanPaymentDialog = true }, { editingLoan = it; showLoanDialog = true }, { loan, borrowing -> editingBorrowing = loan to borrowing }, { loan, borrowing -> deletingBorrowing = loan to borrowing }, { showLendingDialog = true }, { selectedLending = it; showLendingReturnDialog = true }, loanInterestTerms, onShowCalculator = { showCalculatorScreen = true }, onShareLoan = { loan, isPdf -> 
-                    if (isPdf) { sharingLoanPdf = loan; loanPdfExportLauncher.launch("Statement_${loan.name.replace(" ", "_")}.pdf") }
-                    else {
-                        val text = viewModel.getLoanStatement(loan)
-                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                            type = "text/plain"; putExtra(android.content.Intent.EXTRA_TEXT, text)
-                        }
-                        context.startActivity(android.content.Intent.createChooser(intent, "Share via"))
-                    }
-                }, onShareLending = { lending, isPdf ->
-                    if (isPdf) { sharingLendingPdf = lending; lendingPdfExportLauncher.launch("Statement_${lending.person.replace(" ", "_")}.pdf") }
-                    else {
-                        val text = viewModel.getLendingStatement(lending)
-                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                            type = "text/plain"; putExtra(android.content.Intent.EXTRA_TEXT, text)
-                        }
-                        context.startActivity(android.content.Intent.createChooser(intent, "Share via"))
-                    }
-                }, searchQuery = globalSearchQuery)
-                5 -> SettingsScreen(Modifier.fillMaxSize(), currentUserId, usdToBdt, usdToMvr, rateLoading, rateError, settingsSubView, profilePhotoUri, isAdminUnlocked, { photoLauncher.launch("image/*") }, { isAdminUnlocked = true }, { settingsSubView = it }, { viewModel.refreshRate() }, { viewModel.saveAutoBackup(context); Toast.makeText(context, "✅ Auto backup updated", Toast.LENGTH_SHORT).show() }, {
+                4 -> LoansScreen(Modifier.fillMaxSize(), loans, loanPayments, lendings, lendingReturns, { showLoanDialog = true }, { selectedLoan = it; showLoanPaymentDialog = true }, { editingLoan = it; showLoanDialog = true }, { loan, borrowing -> editingBorrowing = loan to borrowing }, { loan, borrowing -> deletingBorrowing = loan to borrowing }, { showLendingDialog = true }, { selectedLending = it; showLendingReturnDialog = true }, loanInterestTerms, onShowCalculator = { showCalculatorScreen = true }, onShareLoan = { loan, isPdf -> if (isPdf) { sharingLoanPdf = loan; loanPdfExportLauncher.launch("Statement_${loan.name.replace(" ", "_")}.pdf") } else { val text = viewModel.getLoanStatement(loan); val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(android.content.Intent.EXTRA_TEXT, text) }; context.startActivity(android.content.Intent.createChooser(intent, "Share via")) } }, onShareLending = { lending, isPdf -> if (isPdf) { sharingLendingPdf = lending; lendingPdfExportLauncher.launch("Statement_${lending.person.replace(" ", "_")}.pdf") } else { val text = viewModel.getLendingStatement(lending); val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(android.content.Intent.EXTRA_TEXT, text) }; context.startActivity(android.content.Intent.createChooser(intent, "Share via")) } }, searchQuery = globalSearchQuery)
+            }
+
+            if (showSettingsScreen) {
+                SettingsScreen(Modifier.fillMaxSize(), currentUserId, usdToBdt, usdToMvr, rateLoading, rateError, settingsSubView, profilePhotoUri, isAdminUnlocked, { photoLauncher.launch("image/*") }, { isAdminUnlocked = true }, { settingsSubView = it }, { viewModel.refreshRate() }, { viewModel.saveAutoBackup(context); Toast.makeText(context, "✅ Auto backup updated", Toast.LENGTH_SHORT).show() }, {
                     val restored = loadAutoBackup(context, currentUserId)
-                    if (restored != null) {
-                        viewModel.updateCloudData(restored.transactions, restored.loans, restored.loanPayments, restored.lendings, restored.lendingReturns)
-                        Toast.makeText(context, "✅ Auto backup restore হয়েছে", Toast.LENGTH_SHORT).show()
-                    } else Toast.makeText(context, "❌ কোনো Auto Backup পাওয়া যায়নি", Toast.LENGTH_SHORT).show()
+                    if (restored != null) { viewModel.updateCloudData(restored.transactions, restored.loans, restored.loanPayments, restored.lendings, restored.lendingReturns); Toast.makeText(context, "✅ Auto backup restore হয়েছে", Toast.LENGTH_SHORT).show() }
+                    else Toast.makeText(context, "❌ কোনো Auto Backup পাওয়া যায়নি", Toast.LENGTH_SHORT).show()
                 }, { exportBackupLauncher.launch("AmarHisab_Backup.json") }, { importBackupLauncher.launch(arrayOf("application/json", "text/plain", "*/*")) }, { pdfExportLauncher.launch("AmarHisab_Report_${SimpleDateFormat("MMM_yyyy", Locale.getDefault()).format(Date())}.pdf") }, { csvExportLauncher.launch("AmarHisab_Export_${SimpleDateFormat("dd_MM_yyyy", Locale.getDefault()).format(Date())}.csv") }, {
                     val text = "আমার হিসাব\nআয়: ৳${formatMoney(viewModel.totalIncome)}\nখরচ: ৳${formatMoney(viewModel.totalExpense)}\nব্যালেন্স: ৳${formatMoney(viewModel.balance)}"
                     (context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("আমার হিসাব", text))
-                }, { showBudgetDialog = true }, { viewModel.resetCurrentAccountData(context) { } }, { showEditName = true }, { 
+                }, { showBudgetDialog = true }, { viewModel.resetCurrentAccountData(context) { } }, { showEditName = true }, {
                     firestore.collection("config").document("app_version").get().addOnSuccessListener { doc ->
                         if (doc.exists()) {
                             val latest = doc.getLong("latestVersionCode") ?: 1L
-                            val current = try { 
-                                val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) pInfo.longVersionCode else pInfo.versionCode.toLong()
-                            } catch (e: Exception) { 1L }
-                            if (latest > current) { updateInfo = doc.data; showUpdateDialog = true }
-                            else Toast.makeText(context, "আপনার অ্যাপটি লেটেস্ট ভার্সনে আছে", Toast.LENGTH_SHORT).show()
+                            val current = try { val pInfo = context.packageManager.getPackageInfo(context.packageName, 0); if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) pInfo.longVersionCode else pInfo.versionCode.toLong() } catch (e: Exception) { 1L }
+                            if (latest > current) { updateInfo = doc.data; showUpdateDialog = true } else Toast.makeText(context, "আপনার অ্যাপটি লেটেস্ট ভার্সনে আছে", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }, { showAdminConsole = true }, {
                     val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
                     val vCode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) pInfo.longVersionCode else pInfo.versionCode.toLong()
-                    firestore.collection("config").document("app_version").set(mapOf("latestVersionCode" to vCode, "updateMessage" to "নতুন ভার্সন ${pInfo.versionName} এসেছে। এখনই আপডেট করে নিন!"), com.google.firebase.firestore.SetOptions.merge())
-                        .addOnSuccessListener { Toast.makeText(context, "আপডেট সফলভাবে পাবলিশ হয়েছে!", Toast.LENGTH_LONG).show() }
+                    firestore.collection("config").document("app_version").set(mapOf("latestVersionCode" to vCode, "updateMessage" to "নতুন ভার্সন ${pInfo.versionName} এসেছে। এখনই আপডেট করে নিন!"), com.google.firebase.firestore.SetOptions.merge()).addOnSuccessListener { Toast.makeText(context, "আপডেট সফলভাবে পাবলিশ হয়েছে!", Toast.LENGTH_LONG).show() }
                 }, onLogout)
             }
 
-            if (showCalendarScreen) {
-                CalendarScreen(Modifier.fillMaxSize(), transactions = transactions)
-            }
-            
-            if (showCalculatorScreen) {
-                CalculatorScreen(onBack = { showCalculatorScreen = false })
-            }
-
-            if (showShoppingList) {
-                ShoppingListScreen(
-                    Modifier.fillMaxSize(),
-                    items = viewModel.shoppingItems,
-                    onBack = { showShoppingList = false },
-                    onAdd = { n, a, cu, c, nt -> viewModel.addShoppingItem(context, n, a, cu, c, nt) },
-                    onToggle = { id -> viewModel.toggleShoppingItem(context, id) },
-                    onRemove = { item -> viewModel.removeShoppingItem(context, item) },
-                    onEdit = { item -> viewModel.updateShoppingItem(context, item) },
-                    onConvert = { cb -> viewModel.convertCheckedToExpenses(context, cb) },
-                    onClearAdded = { viewModel.clearAddedShoppingItems(context) }
-                )
-            }
-
-            if (showVehicleModule) {
-                VehicleModule(
-                    userId = currentUserId,
-                    modifier = Modifier.fillMaxSize(),
-                    onBack = {
-                        showVehicleModule = false
-                    }
-                )
-            }
-            
+            if (showCalendarScreen) CalendarScreen(Modifier.fillMaxSize(), transactions = transactions)
+            if (showCalculatorScreen) CalculatorScreen(onBack = { showCalculatorScreen = false })
+            if (showShoppingList) ShoppingListScreen(Modifier.fillMaxSize(), items = viewModel.shoppingItems, onBack = { showShoppingList = false }, onAdd = { n, a, cu, c, nt -> viewModel.addShoppingItem(context, n, a, cu, c, nt) }, onToggle = { id -> viewModel.toggleShoppingItem(context, id) }, onRemove = { item -> viewModel.removeShoppingItem(context, item) }, onEdit = { item -> viewModel.updateShoppingItem(context, item) }, onConvert = { cb -> viewModel.convertCheckedToExpenses(context, cb) }, onClearAdded = { viewModel.clearAddedShoppingItems(context) })
+            if (showVehicleModule) VehicleModule(userId = currentUserId, modifier = Modifier.fillMaxSize(), onBack = { showVehicleModule = false })
             if (showNotificationScreen) {
                 Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-                    NotificationScreen(
-                        notifications = notifications,
-                        onNotificationClick = { /* Handle click */ }
-                    )
-                    IconButton(
-                        onClick = { showNotificationScreen = false },
-                        modifier = Modifier.padding(16.dp).align(Alignment.TopStart)
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
+                    NotificationScreen(notifications = notifications, onNotificationClick = { /* Handle click */ })
+                    IconButton(onClick = { showNotificationScreen = false }, modifier = Modifier.padding(16.dp).align(Alignment.TopStart)) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
                 }
             }
-
-            SearchOverlay(
-                active = isSearchActive,
-                searchScope = selectedTab,
-                transactions = transactions,
-                loans = loans,
-                lendings = lendings,
-                loanPayments = loanPayments,
-                lendingReturns = lendingReturns,
-                wallets = wallets,
-                usdToBdt = usdToBdt,
-                usdToMvr = usdToMvr,
-                onEditTransaction = { 
-                    editingTransaction = it
-                    showAddDialog = true
-                },
-                onDeleteTransaction = {
-                    deletingTransaction = it
-                    showDeleteDialog = true
-                },
-                onShareResults = { query, isPdf ->
-                    if (isPdf) {
-                        sharingSearchQuery = query
-                        searchPdfExportLauncher.launch("Report_${query.replace(" ", "_")}.pdf")
-                    } else {
-                        val text = viewModel.generateSearchStatement(query)
-                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                            type = "text/plain"; putExtra(android.content.Intent.EXTRA_TEXT, text)
-                        }
-                        context.startActivity(android.content.Intent.createChooser(intent, "Share Search Results"))
-                    }
-                },
-                onClose = { 
-                    isSearchActive = false 
-                    globalSearchQuery = ""
-                }
-            )
+            SearchOverlay(active = isSearchActive, searchScope = selectedTab, transactions = transactions, loans = loans, lendings = lendings, loanPayments = loanPayments, lendingReturns = lendingReturns, wallets = wallets, usdToBdt = usdToBdt, usdToMvr = usdToMvr, onEditTransaction = { editingTransaction = it; showAddDialog = true }, onDeleteTransaction = { deletingTransaction = it; showDeleteDialog = true }, onShareResults = { query, isPdf -> if (isPdf) { sharingSearchQuery = query; searchPdfExportLauncher.launch("Report_${query.replace(" ", "_")}.pdf") } else { val text = viewModel.generateSearchStatement(query); val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(android.content.Intent.EXTRA_TEXT, text) }; context.startActivity(android.content.Intent.createChooser(intent, "Share Search Results")) } }, onClose = { isSearchActive = false; globalSearchQuery = "" })
         }
     }
 
-    if (showVoiceDialog) {
-        VoiceInputDialog(
-            onDismiss = { showVoiceDialog = false },
-            onResult = { result ->
-                addType = result.type
-                editingTransaction = Transaction(
-                    id = 0,
-                    type = result.type,
-                    amount = result.amount ?: 0.0,
-                    currency = "BDT",
-                    category = result.category,
-                    reason = result.originalText,
-                    date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
-                )
-                showAddDialog = true
-                showVoiceDialog = false
-            }
-        )
-    }
-
-    if (smsSuggestions.isNotEmpty()) {
-        SMSSuggestionDialog(
-            suggestions = smsSuggestions,
-            onAddTransaction = { suggestion ->
-                editingTransaction = Transaction(
-                    id = 0,
-                    type = suggestion.transactionType,
-                    amount = suggestion.amount,
-                    currency = "BDT",
-                    category = suggestion.category,
-                    reason = suggestion.description,
-                    date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date()),
-                    walletId = "default_cash"
-                )
-                addType = suggestion.transactionType
-                showAddDialog = true
-                com.eleyas.expensetracker.util.SMSReceiver.removeSuggestion(context, suggestion.id)
-                com.eleyas.expensetracker.util.SMSSuggestionHolder.updateSuggestions(context)
-            },
-            onDismiss = { suggestion ->
-                com.eleyas.expensetracker.util.SMSReceiver.removeSuggestion(context, suggestion.id)
-                com.eleyas.expensetracker.util.SMSSuggestionHolder.updateSuggestions(context)
-            },
-            onDismissAll = {
-                com.eleyas.expensetracker.util.SMSSuggestionHolder.suggestions.value = emptyList()
-            }
-        )
-    }
-
+    if (showVoiceDialog) VoiceInputDialog(onDismiss = { showVoiceDialog = false }, onResult = { result -> addType = result.type; editingTransaction = Transaction(id = 0, type = result.type, amount = result.amount ?: 0.0, currency = "BDT", category = result.category, reason = result.originalText, date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())); showAddDialog = true; showVoiceDialog = false })
+    if (smsSuggestions.isNotEmpty()) SMSSuggestionDialog(suggestions = smsSuggestions, onAddTransaction = { suggestion -> editingTransaction = Transaction(id = 0, type = suggestion.transactionType, amount = suggestion.amount, currency = "BDT", category = suggestion.category, reason = suggestion.description, date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date()), walletId = "default_cash"); addType = suggestion.transactionType; showAddDialog = true; com.eleyas.expensetracker.util.SMSReceiver.removeSuggestion(context, suggestion.id); com.eleyas.expensetracker.util.SMSSuggestionHolder.updateSuggestions(context) }, onDismiss = { suggestion -> com.eleyas.expensetracker.util.SMSReceiver.removeSuggestion(context, suggestion.id); com.eleyas.expensetracker.util.SMSSuggestionHolder.updateSuggestions(context) }, onDismissAll = { com.eleyas.expensetracker.util.SMSSuggestionHolder.suggestions.value = emptyList() })
     if (showAdminConsole) AdminConsoleDialog(onDismiss = { showAdminConsole = false })
     if (showMaintenanceDialog) AlertDialog(onDismissRequest = { }, title = { Text("Maintenance Mode") }, text = { Text("অ্যাপটি বর্তমানে আপগ্রেড করা হচ্ছে।") }, confirmButton = { })
-    if (showUpdateDialog && updateInfo != null) {
-        val force = updateInfo!!["forceUpdate"] as? Boolean ?: false
-        AlertDialog(onDismissRequest = { if (!force) showUpdateDialog = false }, title = { Text("Update Available") }, text = { Text(updateInfo!!["updateMessage"] as? String ?: "") }, confirmButton = { Button(onClick = { try { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(updateInfo!!["updateUrl"] as? String ?: ""))) } catch (e: Exception) { } }) { Text("Update Now") } })
-    }
-    if (showEditName) {
-        val user = FirebaseAuth.getInstance().currentUser
-        var newName by remember { mutableStateOf(user?.displayName ?: "") }
-        AlertDialog(onDismissRequest = { showEditName = false }, title = { Text("Edit Name") }, text = { OutlinedTextField(value = newName, onValueChange = { newName = it }, label = { Text("Full Name") }) }, confirmButton = { Button(onClick = { user?.updateProfile(com.google.firebase.auth.UserProfileChangeRequest.Builder().setDisplayName(newName).build())?.addOnSuccessListener { showEditName = false } }) { Text("Update") } })
-    }
+    if (showUpdateDialog && updateInfo != null) { val force = updateInfo!!["forceUpdate"] as? Boolean ?: false; AlertDialog(onDismissRequest = { if (!force) showUpdateDialog = false }, title = { Text("Update Available") }, text = { Text(updateInfo!!["updateMessage"] as? String ?: "") }, confirmButton = { Button(onClick = { try { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(updateInfo!!["updateUrl"] as? String ?: ""))) } catch (e: Exception) { } }) { Text("Update Now") } }) }
+    if (showEditName) { val user = FirebaseAuth.getInstance().currentUser; var newName by remember { mutableStateOf(user?.displayName ?: "") }; AlertDialog(onDismissRequest = { showEditName = false }, title = { Text("Edit Name") }, text = { OutlinedTextField(value = newName, onValueChange = { newName = it }, label = { Text("Full Name") }) }, confirmButton = { Button(onClick = { user?.updateProfile(com.google.firebase.auth.UserProfileChangeRequest.Builder().setDisplayName(newName).build())?.addOnSuccessListener { showEditName = false } }) { Text("Update") } }) }
     if (showWalletDialog) WalletDialog(onDismiss = { showWalletDialog = false; selectedWalletForEdit = null }, existingWallet = selectedWalletForEdit, onSave = { n, t, b, c, cl -> if (selectedWalletForEdit != null) viewModel.updateWallet(context, selectedWalletForEdit!!.copy(name = n, type = t, initialBalance = b, currency = c, color = cl)) else viewModel.addWallet(context, n, t, b, c, cl); showWalletDialog = false; selectedWalletForEdit = null }, onDelete = { if (selectedWalletForEdit != null) { viewModel.deleteWallet(context, selectedWalletForEdit!!.id); showWalletDialog = false; selectedWalletForEdit = null } })
-    if (showAddDialog) AddTransactionDialog(addType, editingTransaction, loans, loanPayments, wallets, customCategories, { newCategory ->
-        val normalized = newCategory.trim().replace(Regex("\\s+"), " ")
-        if (normalized.isNotBlank()) {
-            customCategories = (customCategories + normalized).distinct().sortedBy { it.lowercase() }
-            saveCustomCategories(prefs, customCategories)
-        }
-    }, { showAddDialog = false; editingTransaction = null }, { a, c, cat, r, d, w, i -> 
-        if (editingTransaction != null && editingTransaction!!.id != 0L) {
-            viewModel.updateTransaction(context, editingTransaction!!.copy(amount = a, currency = c, category = cat, reason = r, date = d, walletId = w, receiptImage = i))
-        } else {
-            viewModel.saveTransaction(context, a, c, cat, r, d, addType, w, i) { showAddDialog = false } 
-        }
-        showAddDialog = false
-        editingTransaction = null
-    }, { id, a, d -> loans.firstOrNull { it.id == id }?.let { viewModel.addLoanPayment(context, it, a, d, "বাড়িতে পাঠানো টাকা থেকে Loan payment", true) } })
-    if (showBudgetDialog) CategoryBudgetDialog(categoryBudgets, customCategories, { showBudgetDialog = false }, { viewModel.saveCategoryBudgetAction(context, it); showBudgetDialog = false }, { newCategory ->
-        val normalized = newCategory.trim().replace(Regex("\\s+"), " ")
-        if (normalized.isNotBlank()) {
-            customCategories = (customCategories + normalized).distinct().sortedBy { it.lowercase() }
-            saveCustomCategories(prefs, customCategories)
-        }
-    })
+    if (showAddDialog) AddTransactionDialog(addType, editingTransaction, loans, loanPayments, wallets, customCategories, { newCategory -> val normalized = newCategory.trim().replace(Regex("\\s+"), " "); if (normalized.isNotBlank()) { customCategories = (customCategories + normalized).distinct().sortedBy { it.lowercase() }; saveCustomCategories(prefs, customCategories) } }, { showAddDialog = false; editingTransaction = null }, { a, c, cat, r, d, w, i -> if (editingTransaction != null && editingTransaction!!.id != 0L) viewModel.updateTransaction(context, editingTransaction!!.copy(amount = a, currency = c, category = cat, reason = r, date = d, walletId = w, receiptImage = i)) else viewModel.saveTransaction(context, a, c, cat, r, d, addType, w, i) { showAddDialog = false }; showAddDialog = false; editingTransaction = null }, { id, a, d -> loans.firstOrNull { it.id == id }?.let { viewModel.addLoanPayment(context, it, a, d, "বাড়িতে পাঠানো টাকা থেকে Loan payment", true) } })
+    if (showBudgetDialog) CategoryBudgetDialog(categoryBudgets, customCategories, { showBudgetDialog = false }, { viewModel.saveCategoryBudgetAction(context, it); showBudgetDialog = false }, { newCategory -> val normalized = newCategory.trim().replace(Regex("\\s+"), " "); if (normalized.isNotBlank()) { customCategories = (customCategories + normalized).distinct().sortedBy { it.lowercase() }; saveCustomCategories(prefs, customCategories) } })
     if (editingBorrowing != null) BorrowingDialog(editingBorrowing!!.second, { editingBorrowing = null }, { a, d, n -> viewModel.updateBorrowing(context, editingBorrowing!!.first, editingBorrowing!!.second, a, d, n); editingBorrowing = null })
     if (deletingBorrowing != null) AlertDialog(onDismissRequest = { deletingBorrowing = null }, title = { Text("ঋণের entry মুছবেন?") }, text = { Text("৳${formatMoney(deletingBorrowing!!.second.amount)} — ${displayLoanDate(deletingBorrowing!!.second.date)}") }, confirmButton = { Button(onClick = { viewModel.deleteBorrowing(context, deletingBorrowing!!.first, deletingBorrowing!!.second); deletingBorrowing = null }, colors = ButtonDefaults.buttonColors(containerColor = ExpenseRed)) { Text("মুছে ফেলুন") } }, dismissButton = { TextButton(onClick = { deletingBorrowing = null }) { Text("বাতিল") } })
     if (showLoanDialog) LoanDialog({ showLoanDialog = false; editingLoan = null }, editingLoan, loans.map { it.name }.distinct(), { n, s, p, m, d, nt, dd -> if (editingLoan != null) viewModel.updateLoan(context, editingLoan!!, n, s, p, m, d, nt, dd) else viewModel.addLoan(context, n, s, p, m, d, nt, dd); showLoanDialog = false })
@@ -603,77 +406,17 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
     if (showLendingDialog) LendingDialog({ showLendingDialog = false }, { p, a, d, n, dd -> viewModel.addLending(context, p, a, d, n, dd); showLendingDialog = false })
     if (showLendingReturnDialog && selectedLending != null) LendingReturnDialog(selectedLending!!, { selectedLending = null; showLendingReturnDialog = false }, { a, d, n -> viewModel.addLendingReturn(context, selectedLending!!, a, d, n); selectedLending = null; showLendingReturnDialog = false })
     if (showDeleteDialog && deletingTransaction != null) AlertDialog(onDismissRequest = { showDeleteDialog = false; deletingTransaction = null }, title = { Text("লেনদেন মুছে ফেলবেন?") }, text = { Text("${deletingTransaction!!.reason.ifBlank { deletingTransaction!!.category }} — ${deletingTransaction!!.currency} ${formatMoney(deletingTransaction!!.amount)}") }, confirmButton = { Button(onClick = { viewModel.deleteTransaction(context, deletingTransaction!!); showDeleteDialog = false; deletingTransaction = null }, colors = ButtonDefaults.buttonColors(containerColor = ExpenseRed)) { Text("মুছে ফেলুন") } }, dismissButton = { TextButton(onClick = { showDeleteDialog = false; deletingTransaction = null }) { Text("বাতিল") } })
-
-    if (showSplitBillDialog) {
-        SplitBillDialog(
-            onDismiss = { showSplitBillDialog = false },
-            onSave = { newSplit ->
-                splitBills = splitBills + newSplit
-                SplitBillStorage.saveSplits(context, currentUserId, splitBills)
-                showSplitBillDialog = false
-                Toast.makeText(context, "✅ স্প্লিট বিল সংরক্ষণ করা হয়েছে", Toast.LENGTH_SHORT).show()
-            }
-        )
-    }
-
-    if (selectedSplitBill != null) {
-        SplitBillDetailDialog(
-            split = selectedSplitBill!!,
-            onDismiss = { selectedSplitBill = null },
-            onDelete = { splitToDelete ->
-                splitBills = splitBills.filter { it.id != splitToDelete.id }
-                SplitBillStorage.saveSplits(context, currentUserId, splitBills)
-                selectedSplitBill = null
-                Toast.makeText(context, "🗑️ স্প্লিট বিল মুছে ফেলা হয়েছে", Toast.LENGTH_SHORT).show()
-            }
-        )
-    }
-if (showFamilyDialog) {
-        FamilyDialog(
-            household = household,
-            busy = viewModel.householdBusy,
-            onDismiss = { showFamilyDialog = false },
-            onCreate = { name ->
-                viewModel.createHousehold(context, name) { ok, msg ->
-                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
-                }
-            },
-            onJoin = { code ->
-                viewModel.joinHousehold(context, code) { ok, msg ->
-                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
-                }
-            },
-            onLeave = {
-                viewModel.leaveHousehold(context) { ok, msg ->
-                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
-                }
-            }
-        )
-    }
-
-    if (showTickerDetail) {
-        TickerDetailDialog(
-            insight = tickerInsight,
-            tip = tickerTip,
-            onDismiss = { showTickerDetail = false }
-        )
-    }
+    if (showSplitBillDialog) SplitBillDialog(onDismiss = { showSplitBillDialog = false }, onSave = { newSplit -> splitBills = splitBills + newSplit; SplitBillStorage.saveSplits(context, currentUserId, splitBills); showSplitBillDialog = false; Toast.makeText(context, "✅ স্প্লিট বিল সংরক্ষণ করা হয়েছে", Toast.LENGTH_SHORT).show() })
+    if (selectedSplitBill != null) SplitBillDetailDialog(split = selectedSplitBill!!, onDismiss = { selectedSplitBill = null }, onDelete = { splitToDelete -> splitBills = splitBills.filter { it.id != splitToDelete.id }; SplitBillStorage.saveSplits(context, currentUserId, splitBills); selectedSplitBill = null; Toast.makeText(context, "🗑️ স্প্লিট বিল মুছে ফেলা হয়েছে", Toast.LENGTH_SHORT).show() })
+    if (showFamilyDialog) FamilyDialog(household = household, busy = viewModel.householdBusy, onDismiss = { showFamilyDialog = false }, onCreate = { name -> viewModel.createHousehold(context, name) { ok, msg -> Toast.makeText(context, msg, Toast.LENGTH_LONG).show() } }, onJoin = { code -> viewModel.joinHousehold(context, code) { ok, msg -> Toast.makeText(context, msg, Toast.LENGTH_LONG).show() } }, onLeave = { viewModel.leaveHousehold(context) { ok, msg -> Toast.makeText(context, msg, Toast.LENGTH_LONG).show() } })
+    if (showTickerDetail) TickerDetailDialog(insight = tickerInsight, tip = tickerTip, onDismiss = { showTickerDetail = false })
 }
 
 @Composable
 fun DailyTipPopupCheck(userId: String) {
     val context = LocalContext.current
-    var showTip by remember(userId) {
-        mutableStateOf(DailyFinancialTips.shouldShowDailyTip(context, userId))
-    }
-
+    var showTip by remember(userId) { mutableStateOf(DailyFinancialTips.shouldShowDailyTip(context, userId)) }
     if (showTip) {
-        DailyTipDialog(
-            onDismiss = {
-                DailyFinancialTips.markDailyTipShown(context, userId)
-                showTip = false
-            }
-        )
+        DailyTipDialog(onDismiss = { DailyFinancialTips.markDailyTipShown(context, userId); showTip = false })
     }
 }
-
