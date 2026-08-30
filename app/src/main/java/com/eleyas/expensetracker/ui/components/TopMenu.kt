@@ -1,0 +1,51 @@
+package com.eleyas.expensetracker.ui.components
+
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+
+@Composable
+fun AmarHisabTopMenu(
+    expanded: Boolean,
+    onDismiss: () -> Unit,
+    onFamilyShare: () -> Unit,
+    onCalendar: () -> Unit,
+    onShoppingList: () -> Unit,
+    onSettings: () -> Unit
+) {
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismiss
+    ) {
+        DropdownMenuItem(
+            leadingIcon = { Icon(Icons.Default.Groups, contentDescription = null, modifier = Modifier.size(22.dp)) },
+            text = { Text("পরিবার শেয়ার") },
+            onClick = { onDismiss(); onFamilyShare() }
+        )
+        DropdownMenuItem(
+            leadingIcon = { Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(22.dp)) },
+            text = { Text("ক্যালেন্ডার") },
+            onClick = { onDismiss(); onCalendar() }
+        )
+        DropdownMenuItem(
+            leadingIcon = { Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(22.dp)) },
+            text = { Text("বাজারের ফর্দ") },
+            onClick = { onDismiss(); onShoppingList() }
+        )
+        DropdownMenuItem(
+            leadingIcon = { Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(22.dp)) },
+            text = { Text("সেটিংস") },
+            onClick = { onDismiss(); onSettings() }
+        )
+    }
+}
