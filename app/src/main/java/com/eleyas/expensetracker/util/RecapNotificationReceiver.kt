@@ -8,7 +8,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.eleyas.expensetracker.MainActivity
-import com.eleyas.expensetracker.NotificationItem
+import com.eleyas.expensetracker.model.NotificationItem
 import com.eleyas.expensetracker.NotificationStorage
 import com.google.firebase.auth.FirebaseAuth
 

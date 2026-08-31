@@ -11,8 +11,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -20,7 +18,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Calculate
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
@@ -29,11 +26,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -48,15 +43,32 @@ import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
 import com.eleyas.expensetracker.ui.vehicle.VehicleModule
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.os.Build
 
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        createNotificationChannel()
         setContent {
             AmarHisabTheme {
                 AuthGate()
                 AppUpdateDialog(context = LocalContext.current)
             }
+        }
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = "Financial Reminders"
+            val descriptionText = "Notifications for daily tips and financial recaps"
+            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val channel = NotificationChannel("financial_reminders", name, importance).apply {
+                description = descriptionText
+            }
+            val notificationManager: NotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
         }
     }
 }
@@ -126,6 +138,9 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
     }
 
     var selectedTab by remember(currentUserId) { mutableIntStateOf(0) }
+    var reminderTransactionId by remember(currentUserId) {
+        mutableStateOf<Long?>(null)
+    }
     var showNotificationScreen by remember { mutableStateOf(false) }
     var showBudgetDialog by remember(currentUserId) { mutableStateOf(false) }
     var customCategories by remember(currentUserId) { mutableStateOf(loadCustomCategories(prefs)) }
@@ -334,9 +349,20 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             BirthdayPopupCheck(currentUserId, birthday)
             when (selectedTab) {
-                0 -> HomeScreen(Modifier.fillMaxSize(), currentUserId, viewModel.balance, viewModel.totalIncome, viewModel.totalExpense, viewModel.totalHome, viewModel.totalHomeExpense, viewModel.homeBalance, viewModel.totalLoanReceived, viewModel.totalLoanPaid, viewModel.totalLoanRemaining, viewModel.totalMoneyLent, viewModel.totalMoneyReturned, viewModel.totalMoneyToReceive, birthday, wallets, { viewModel.updateBirthday(context, it) }, { addType = "income"; showAddDialog = true }, { addType = "expense"; showAddDialog = true }, { addType = "home"; showAddDialog = true }, { addType = "home_expense"; showAddDialog = true }, { showWalletDialog = true; selectedWalletForEdit = null }, { selectedWalletForEdit = it; showWalletDialog = true }, { viewModel.getWalletBalance(it) }, onVoiceClick = { showVoiceDialog = true }, onShoppingList = { showShoppingList = true }, onVehicle = { showVehicleModule = true }, transactions = transactions, household = household, onFamilyClick = { showFamilyDialog = true })
-                1 -> IncomeScreen(Modifier.fillMaxSize(), transactions.filter { it.type == "income" }, wallets, usdToBdt, usdToMvr, globalSearchQuery, { addType = "income"; editingTransaction = null; showAddDialog = true }, { editingTransaction = it; showAddDialog = true }, { deletingTransaction = it; showDeleteDialog = true })
-                2 -> ExpenseScreen(Modifier.fillMaxSize(), transactions.filter { it.type == "expense" || it.type == "home" }, wallets, usdToBdt, usdToMvr, globalSearchQuery, { addType = "expense"; editingTransaction = null; showAddDialog = true }, { addType = "home"; editingTransaction = null; showAddDialog = true }, { editingTransaction = it; showAddDialog = true }, { deletingTransaction = it; showDeleteDialog = true }, splitBills = splitBills, onAddSplitBill = { showSplitBillDialog = true }, onSplitBillClick = { selectedSplitBill = it })
+                0 -> HomeScreen(Modifier.fillMaxSize(), currentUserId, viewModel.balance, viewModel.totalIncome, viewModel.totalExpense, viewModel.totalHome, viewModel.totalHomeExpense, viewModel.homeBalance, viewModel.totalLoanReceived, viewModel.totalLoanPaid, viewModel.totalLoanRemaining, viewModel.totalMoneyLent, viewModel.totalMoneyReturned, viewModel.totalMoneyToReceive, birthday, wallets, { viewModel.updateBirthday(context, it) }, { addType = "income"; showAddDialog = true }, { addType = "expense"; showAddDialog = true }, { addType = "home"; showAddDialog = true }, { addType = "home_expense"; showAddDialog = true }, { showWalletDialog = true; selectedWalletForEdit = null }, { selectedWalletForEdit = it; showWalletDialog = true }, { viewModel.getWalletBalance(it) }, onVoiceClick = { showVoiceDialog = true }, onShoppingList = { showShoppingList = true }, onVehicle = { showVehicleModule = true },transactions = transactions,
+                    household = household,
+                    onFamilyClick = { showFamilyDialog = true },
+                    onReminderClick = { reminder ->
+                        reminderTransactionId = reminder.transactionId
+
+                        selectedTab = when {
+                            transactions.firstOrNull { it.id == reminder.transactionId }?.type == "income" -> 1
+                            else -> 2
+                        }
+                    },
+
+                    ) 1 -> IncomeScreen(Modifier.fillMaxSize(), transactions.filter { it.type == "income" }, wallets, usdToBdt, usdToMvr, globalSearchQuery, { addType = "income"; editingTransaction = null; showAddDialog = true }, { editingTransaction = it; showAddDialog = true }, { deletingTransaction = it; showDeleteDialog = true },targetTransactionId = reminderTransactionId)
+                2 -> ExpenseScreen(Modifier.fillMaxSize(), transactions.filter { it.type == "expense" || it.type == "home" }, wallets, usdToBdt, usdToMvr, globalSearchQuery, { addType = "expense"; editingTransaction = null; showAddDialog = true }, { addType = "home"; editingTransaction = null; showAddDialog = true }, { editingTransaction = it; showAddDialog = true }, { deletingTransaction = it; showDeleteDialog = true }, splitBills = splitBills, onAddSplitBill = { showSplitBillDialog = true }, onSplitBillClick = { selectedSplitBill = it },targetTransactionId = reminderTransactionId)
                 3 -> ReportScreen(Modifier.fillMaxSize(), transactions, wallets, categoryBudgets, usdToBdt, usdToMvr, { editingTransaction = it; showAddDialog = true }, { deletingTransaction = it; showDeleteDialog = true })
                 4 -> LoansScreen(Modifier.fillMaxSize(), loans, loanPayments, lendings, lendingReturns, { showLoanDialog = true }, { selectedLoan = it; showLoanPaymentDialog = true }, { editingLoan = it; showLoanDialog = true }, { loan, borrowing -> editingBorrowing = loan to borrowing }, { loan, borrowing -> deletingBorrowing = loan to borrowing }, { showLendingDialog = true }, { selectedLending = it; showLendingReturnDialog = true }, loanInterestTerms, onShowCalculator = { showCalculatorScreen = true }, onShareLoan = { loan, isPdf -> if (isPdf) { sharingLoanPdf = loan; loanPdfExportLauncher.launch("Statement_${loan.name.replace(" ", "_")}.pdf") } else { val text = viewModel.getLoanStatement(loan); val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(android.content.Intent.EXTRA_TEXT, text) }; context.startActivity(android.content.Intent.createChooser(intent, "Share via")) } }, onShareLending = { lending, isPdf -> if (isPdf) { sharingLendingPdf = lending; lendingPdfExportLauncher.launch("Statement_${lending.person.replace(" ", "_")}.pdf") } else { val text = viewModel.getLendingStatement(lending); val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(android.content.Intent.EXTRA_TEXT, text) }; context.startActivity(android.content.Intent.createChooser(intent, "Share via")) } }, searchQuery = globalSearchQuery)
             }

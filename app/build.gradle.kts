@@ -99,6 +99,8 @@ dependencies {
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
 
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
+
     // Firebase
     implementation(
         platform(

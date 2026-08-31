@@ -38,7 +38,8 @@ fun ExpenseScreen(
     onDelete: (Transaction) -> Unit,
     splitBills: List<SplitBillGroup> = emptyList(),
     onAddSplitBill: () -> Unit = {},
-    onSplitBillClick: (SplitBillGroup) -> Unit = {}
+    onSplitBillClick: (SplitBillGroup) -> Unit = {},
+            targetTransactionId: Long? = null
 ) {
     val filteredTransactions = transactions.filter {
         it.reason.contains(searchQuery, ignoreCase = true) || 
@@ -46,6 +47,33 @@ fun ExpenseScreen(
     }
 
     val groupedTransactions = groupTransactionsByDate(filteredTransactions)
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+    LaunchedEffect(targetTransactionId, groupedTransactions) {
+        if (targetTransactionId != null) {
+            var index = 2
+
+            if (splitBills.isNotEmpty()) {
+                index += 2
+                index += splitBills.size
+            }
+
+            for ((_, list) in groupedTransactions) {
+                index += 1
+
+                val targetIndex = list.indexOfFirst {
+                    it.id == targetTransactionId
+                }
+
+                if (targetIndex >= 0) {
+                    listState.animateScrollToItem(index + targetIndex)
+                    break
+                }
+
+                index += list.size
+            }
+        }
+    }
 
     fun convertToBdt(amount: Double, currency: String): Double = when (currency) {
         "BDT" -> amount
@@ -58,6 +86,7 @@ fun ExpenseScreen(
     val totalHome = transactions.filter { it.type == "home" }.sumOf { convertToBdt(it.amount, it.currency) }
 
     LazyColumn(
+        state = listState,
         modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)

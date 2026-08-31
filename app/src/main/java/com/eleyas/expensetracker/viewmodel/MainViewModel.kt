@@ -11,7 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.eleyas.expensetracker.NotificationItem
+import com.eleyas.expensetracker.model.NotificationItem
 import com.eleyas.expensetracker.NotificationStorage
 import com.eleyas.expensetracker.*
 import com.eleyas.expensetracker.model.*

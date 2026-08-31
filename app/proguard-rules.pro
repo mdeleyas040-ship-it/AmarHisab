@@ -17,4 +17,4 @@
 -keep class com.eleyas.expensetracker.LendingReturn { *; }
 -keep class com.eleyas.expensetracker.CategoryBudget { *; }
 -keep class com.eleyas.expensetracker.BackupData { *; }
--keep class com.eleyas.expensetracker.NotificationItem { *; }
+-keep class com.eleyas.expensetracker.model.NotificationItem { *; }

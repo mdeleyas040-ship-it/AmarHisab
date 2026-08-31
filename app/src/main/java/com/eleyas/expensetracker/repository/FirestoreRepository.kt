@@ -1,8 +1,8 @@
-package com.eleyas.expensetracker
+package com.eleyas.expensetracker.repository
 
+import com.eleyas.expensetracker.model.Transaction
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.eleyas.expensetracker.model.Transaction
 
 object FirestoreRepository {
 

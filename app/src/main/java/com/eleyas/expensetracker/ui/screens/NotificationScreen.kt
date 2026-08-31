@@ -1,4 +1,4 @@
-package com.eleyas.expensetracker
+package com.eleyas.expensetracker.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.eleyas.expensetracker.model.NotificationItem
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date

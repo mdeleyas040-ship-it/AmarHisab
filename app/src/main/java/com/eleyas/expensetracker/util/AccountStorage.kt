@@ -1,3 +1,5 @@
+package com.eleyas.expensetracker.util
+
 import android.content.Context
 import com.google.firebase.auth.FirebaseAuth
 
@@ -79,7 +81,7 @@ object AccountStorage {
 
         // এই legacy data এখন এই UID-এর।
         ownerPrefs.edit().putString(OWNER_UID_KEY, currentUid).apply()
-        
+
         // লিগ্যাসি ফাইলটি খালি করে দেওয়া ভালো যাতে ভবিষ্যতে কোনো confusion না হয়।
         // legacyPrefs.edit().clear().apply() // ঐচ্ছিক: user যদি পরে guest mode-এ দেখতে চায়।
     }

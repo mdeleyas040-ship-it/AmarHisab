@@ -1,4 +1,4 @@
-package com.eleyas.expensetracker
+package com.eleyas.expensetracker.model
 
 data class NotificationItem(
     val id: Long = System.currentTimeMillis(),

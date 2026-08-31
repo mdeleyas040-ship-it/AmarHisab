@@ -1,4 +1,4 @@
-package com.eleyas.expensetracker
+package com.eleyas.expensetracker.ui.screens
 
 import android.util.Base64
 import androidx.compose.animation.AnimatedVisibility
@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
+import com.eleyas.expensetracker.repository.FirestoreRepository
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException

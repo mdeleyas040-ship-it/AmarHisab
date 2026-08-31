@@ -8,11 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
-import androidx.core.app.NotificationCompat
-import com.eleyas.expensetracker.MainActivity
-import com.eleyas.expensetracker.NotificationItem
-import com.eleyas.expensetracker.NotificationStorage
-import com.google.firebase.auth.FirebaseAuth
 import java.text.SimpleDateFormat
 import java.util.*
 

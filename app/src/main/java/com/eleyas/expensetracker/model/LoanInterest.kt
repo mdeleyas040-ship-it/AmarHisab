@@ -1,6 +1,5 @@
-package com.eleyas.expensetracker
+package com.eleyas.expensetracker.model
 
-import com.eleyas.expensetracker.model.*
 import android.content.SharedPreferences
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +16,8 @@ import java.util.Date
 import java.util.Locale
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * Amar Hisab — আলাদা Loan Interest module.
@@ -40,11 +41,11 @@ fun saveLoanInterestPayments(
     prefs: SharedPreferences,
     payments: List<LoanInterestPayment>
 ) {
-    val array = org.json.JSONArray()
+    val array = JSONArray()
 
     payments.forEach { payment ->
         array.put(
-            org.json.JSONObject().apply {
+            JSONObject().apply {
                 put("id", payment.id)
                 put("loanId", payment.loanId)
                 put("amount", payment.amount)
@@ -66,7 +67,7 @@ fun loadLoanInterestPayments(
         ?: return emptyList()
 
     return try {
-        val array = org.json.JSONArray(saved)
+        val array = JSONArray(saved)
 
         List(array.length()) { index ->
             val obj = array.getJSONObject(index)

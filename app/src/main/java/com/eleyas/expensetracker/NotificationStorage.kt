@@ -1,6 +1,7 @@
 package com.eleyas.expensetracker
 
 import android.content.Context
+import com.eleyas.expensetracker.model.NotificationItem
 import org.json.JSONArray
 import org.json.JSONObject
 

@@ -33,7 +33,8 @@ fun IncomeScreen(
     searchQuery: String = "",
     onAdd: () -> Unit,
     onEdit: (Transaction) -> Unit,
-    onDelete: (Transaction) -> Unit
+    onDelete: (Transaction) -> Unit,
+    targetTransactionId: Long? = null
 ) {
     val filteredTransactions = transactions.filter {
         it.reason.contains(searchQuery, ignoreCase = true) || 
@@ -41,6 +42,28 @@ fun IncomeScreen(
     }
 
     val groupedTransactions = groupTransactionsByDate(filteredTransactions)
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+    LaunchedEffect(targetTransactionId, groupedTransactions) {
+        if (targetTransactionId != null) {
+            var index = 2
+
+            for ((_, list) in groupedTransactions) {
+                index += 1
+
+                val targetIndex = list.indexOfFirst {
+                    it.id == targetTransactionId
+                }
+
+                if (targetIndex >= 0) {
+                    listState.animateScrollToItem(index + targetIndex)
+                    break
+                }
+
+                index += list.size
+            }
+        }
+    }
 
     fun convertToBdt(amount: Double, currency: String): Double = when (currency) {
         "BDT" -> amount
@@ -51,6 +74,7 @@ fun IncomeScreen(
     val totalIncome = transactions.sumOf { convertToBdt(it.amount, it.currency) }
 
     LazyColumn(
+        state = listState,
         modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(horizontal = ScreenHorizontalPadding, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(SectionSpacing)

@@ -1,8 +1,7 @@
-package com.eleyas.expensetracker
+package com.eleyas.expensetracker.ui.screens
 
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -14,13 +13,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
+import com.eleyas.expensetracker.repository.FirestoreRepository
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
@@ -223,7 +223,7 @@ private suspend fun handleGoogleLogin(
             onError("Google credential পাওয়া যায়নি।")
         }
 
-    } catch (e: androidx.credentials.exceptions.GetCredentialException) {
+    } catch (e: GetCredentialException) {
         onError(
             "Google Login failed: ${e.message}"
         )

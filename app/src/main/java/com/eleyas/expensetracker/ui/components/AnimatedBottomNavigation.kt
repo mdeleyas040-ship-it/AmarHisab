@@ -1,4 +1,4 @@
-package com.eleyas.expensetracker
+package com.eleyas.expensetracker.ui.components
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
