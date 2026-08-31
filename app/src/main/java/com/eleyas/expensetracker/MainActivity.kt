@@ -46,6 +46,8 @@ import com.eleyas.expensetracker.ui.vehicle.VehicleModule
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import android.Manifest
+import androidx.core.app.ActivityCompat
 
 class MainActivity : FragmentActivity() {
 
@@ -58,6 +60,18 @@ class MainActivity : FragmentActivity() {
         openOnThisDay = shouldOpenOnThisDay(intent)
 
         createNotificationChannel()
+
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                1001
+            )
+        }
 
         setContent {
             AmarHisabTheme {
@@ -99,7 +113,8 @@ class MainActivity : FragmentActivity() {
             val channel = NotificationChannel("financial_reminders", name, importance).apply {
                 description = descriptionText
             }
-            val notificationManager: NotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager: NotificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
     }
@@ -1291,3 +1306,4 @@ fun AmarHisabApp(
         }
     }
 }
+

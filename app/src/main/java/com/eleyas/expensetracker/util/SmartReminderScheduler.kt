@@ -14,6 +14,9 @@ object SmartReminderScheduler {
     const val ACTION_SMART_REMINDER =
         "com.eleyas.expensetracker.ACTION_SMART_REMINDER"
 
+    const val ACTION_SMART_REMINDER_TEST =
+        "com.eleyas.expensetracker.ACTION_SMART_REMINDER_TEST"
+
     const val CHANNEL_ID =
         "smart_reminder_channel"
 
@@ -24,6 +27,9 @@ object SmartReminderScheduler {
         "smart_reminder_transaction_type"
 
     private const val REQUEST_CODE = 3001
+
+    // Separate request code for manual testing.
+    private const val TEST_REQUEST_CODE = 3002
 
     fun createNotificationChannel(context: Context) {
 
@@ -127,5 +133,113 @@ object SmartReminderScheduler {
                 pendingIntent
             )
         }
+    }
+
+    /**
+     * Manual test:
+     * Android Studio থেকে এই function call করলে
+     * 1 মিনিটের মধ্যে SmartReminderReceiver চলবে।
+     *
+     * এটি production daily schedule পরিবর্তন করে না।
+     */
+    fun scheduleTest(
+        context: Context,
+        delayMinutes: Int = 1
+    ) {
+
+        createNotificationChannel(context)
+
+        val alarmManager =
+            context.getSystemService(
+                Context.ALARM_SERVICE
+            ) as AlarmManager
+
+        val intent =
+            Intent(
+                context,
+                SmartReminderReceiver::class.java
+            ).apply {
+                action = ACTION_SMART_REMINDER
+            }
+
+        val flags =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_UPDATE_CURRENT or
+                        PendingIntent.FLAG_IMMUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+
+        val pendingIntent =
+            PendingIntent.getBroadcast(
+                context,
+                TEST_REQUEST_CODE,
+                intent,
+                flags
+            )
+
+        val triggerAt =
+            System.currentTimeMillis() +
+                    delayMinutes * 60_000L
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+            alarmManager.setAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                triggerAt,
+                pendingIntent
+            )
+
+        } else {
+
+            alarmManager.set(
+                AlarmManager.RTC_WAKEUP,
+                triggerAt,
+                pendingIntent
+            )
+        }
+    }
+
+    /**
+     * Cancel the manual test alarm only.
+     */
+    fun cancelTest(
+        context: Context
+    ) {
+
+        val alarmManager =
+            context.getSystemService(
+                Context.ALARM_SERVICE
+            ) as AlarmManager
+
+        val intent =
+            Intent(
+                context,
+                SmartReminderReceiver::class.java
+            ).apply {
+                action = ACTION_SMART_REMINDER
+            }
+
+        val flags =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_UPDATE_CURRENT or
+                        PendingIntent.FLAG_IMMUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+
+        val pendingIntent =
+            PendingIntent.getBroadcast(
+                context,
+                TEST_REQUEST_CODE,
+                intent,
+                flags
+            )
+
+        alarmManager.cancel(
+            pendingIntent
+        )
+
+        pendingIntent.cancel()
     }
 }

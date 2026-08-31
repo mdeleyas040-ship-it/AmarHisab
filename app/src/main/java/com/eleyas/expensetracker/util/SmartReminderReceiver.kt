@@ -31,6 +31,11 @@ class SmartReminderReceiver : BroadcastReceiver() {
                 )
             }
 
+            SmartReminderScheduler.ACTION_SMART_REMINDER_TEST -> {
+
+                showTestNotification(context)
+            }
+
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED -> {
 
@@ -100,6 +105,25 @@ class SmartReminderReceiver : BroadcastReceiver() {
             message = message,
             transactionId =
                 firstReminder.transactionId
+        )
+    }
+
+    /*
+     * শুধু development/testing-এর জন্য।
+     * Historical transaction না থাকলেও notification
+     * দেখাবে এবং tap করলে On This Day screen খুলবে।
+     */
+    private fun showTestNotification(
+        context: Context
+    ) {
+
+        showNotification(
+            context = context,
+            title = "🔔 Amar Hisab Test Reminder",
+            message =
+                "Notification system ঠিকমতো কাজ করছে। " +
+                        "ট্যাপ করে “এই দিনে” হিসাবের screen দেখুন।",
+            transactionId = -1L
         )
     }
 
