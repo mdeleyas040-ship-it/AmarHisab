@@ -16,6 +16,7 @@
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
+
     <uses-feature
         android:name="android.hardware.telephony"
         android:required="false" />
@@ -35,9 +36,11 @@
             android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
+
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
+
         </provider>
 
         <activity
@@ -57,37 +60,75 @@
 
         </activity>
 
+        <!-- Daily Reminder -->
         <receiver
             android:name=".util.DailyReminderReceiver"
             android:enabled="true"
             android:exported="false">
+
             <intent-filter>
+
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+
                 <action android:name="com.eleyas.expensetracker.ACTION_DAILY_REMINDER" />
+
             </intent-filter>
+
         </receiver>
 
+        <!-- Weekly / Monthly Recap -->
         <receiver
             android:name=".util.RecapNotificationReceiver"
             android:enabled="true"
             android:exported="false">
+
             <intent-filter>
+
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+
                 <action android:name="com.eleyas.expensetracker.ACTION_WEEKLY_RECAP" />
+
                 <action android:name="com.eleyas.expensetracker.ACTION_MONTHLY_RECAP" />
+
             </intent-filter>
+
         </receiver>
 
+        <!-- Smart Transaction Reminder -->
+        <receiver
+            android:name=".util.SmartReminderReceiver"
+            android:enabled="true"
+            android:exported="false">
+
+            <intent-filter>
+
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+
+                <action android:name="com.eleyas.expensetracker.ACTION_SMART_REMINDER" />
+
+            </intent-filter>
+
+        </receiver>
+
+        <!-- SMS Receiver -->
         <receiver
             android:name=".util.SMSReceiver"
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.BROADCAST_SMS">
+
             <intent-filter>
+
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+
             </intent-filter>
+
         </receiver>
 
     </application>

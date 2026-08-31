@@ -102,9 +102,14 @@ fun AmarHisabApp(currentUserId: String, onLogout: () -> Unit) {
 
     LaunchedEffect(currentUserId) {
         viewModel.init(context, currentUserId, prefs)
+
         DailyReminderManager.scheduleDailyReminder(context)
+
         RecapNotificationManager.scheduleWeeklyRecap(context)
+
         RecapNotificationManager.scheduleMonthlyRecap(context)
+
+        SmartReminderScheduler.scheduleNext(context)
     }
     LaunchedEffect(Unit) {
         com.eleyas.expensetracker.util.SMSReceiver.setSMSSuggestionCallback {

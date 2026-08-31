@@ -66,6 +66,8 @@ import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.random.Random
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 fun saveCategoryBudgets(prefs: SharedPreferences, budgets: List<CategoryBudget>) {
     val array = JSONArray(); budgets.forEach { array.put(JSONObject().apply { put("month", it.month); put("category", it.category); put("limit", it.limit) }) }
