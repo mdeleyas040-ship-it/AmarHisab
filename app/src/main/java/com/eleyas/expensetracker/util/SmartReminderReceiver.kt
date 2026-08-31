@@ -10,6 +10,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.eleyas.expensetracker.MainActivity
+import com.eleyas.expensetracker.R
 import com.google.firebase.auth.FirebaseAuth
 
 class SmartReminderReceiver : BroadcastReceiver() {
@@ -22,23 +23,31 @@ class SmartReminderReceiver : BroadcastReceiver() {
         when (intent.action) {
 
             SmartReminderScheduler.ACTION_SMART_REMINDER -> {
-                showSmartReminders(context)
-                SmartReminderScheduler.scheduleNext(context)
+
+                showOnThisDayNotification(context)
+
+                SmartReminderScheduler.scheduleNext(
+                    context
+                )
             }
 
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED -> {
-                SmartReminderScheduler.scheduleNext(context)
+
+                SmartReminderScheduler.scheduleNext(
+                    context
+                )
             }
         }
     }
 
-    private fun showSmartReminders(
+    private fun showOnThisDayNotification(
         context: Context
     ) {
 
         val userId =
-            FirebaseAuth.getInstance()
+            FirebaseAuth
+                .getInstance()
                 .currentUser
                 ?.uid
                 ?: "guest"
@@ -54,43 +63,62 @@ class SmartReminderReceiver : BroadcastReceiver() {
 
         val reminders =
             SmartReminderManager
-                .getTransactionReminders(transactions)
-
-        if (reminders.isEmpty()) return
-
-        reminders.forEach { reminder ->
-
-            if (
-                SmartReminderStorage.hasBeenSent(
-                    context,
-                    userId,
-                    reminder.transactionId
+                .getTransactionReminders(
+                    transactions
                 )
-            ) {
-                return@forEach
+
+        if (reminders.isEmpty()) {
+            return
+        }
+
+        /*
+         * একই দিনে পাওয়া সব historical
+         * transaction এক notification-এ।
+         */
+        val firstReminder =
+            reminders.first()
+
+        val transactionCount =
+            reminders.size
+
+        val message =
+            if (transactionCount == 1) {
+
+                firstReminder.message
+
+            } else {
+
+                "আজকের দিনে আগের বছরগুলোতে " +
+                        "$transactionCount টি " +
+                        "লেনদেন করেছিলেন। " +
+                        "বিস্তারিত দেখতে ট্যাপ করুন।"
             }
 
-            showNotification(
-                context,
-                reminder
-            )
-
-            SmartReminderStorage.markAsSent(
-                context,
-                userId,
-                reminder.transactionId
-            )
-        }
+        showNotification(
+            context = context,
+            title = "📅 এই দিনে আপনার হিসাব",
+            message = message,
+            transactionId =
+                firstReminder.transactionId
+        )
     }
 
     private fun showNotification(
         context: Context,
-        reminder: SmartReminder
+        title: String,
+        message: String,
+        transactionId: Long
     ) {
 
         SmartReminderScheduler
-            .createNotificationChannel(context)
+            .createNotificationChannel(
+                context
+            )
 
+        /*
+         * Notification-এ tap করলে MainActivity খুলবে।
+         * তারপর MainActivity onThisDay screen দেখাবে।
+         */
         val intent =
             Intent(
                 context,
@@ -103,28 +131,36 @@ class SmartReminderReceiver : BroadcastReceiver() {
                             Intent.FLAG_ACTIVITY_SINGLE_TOP
 
                 putExtra(
-                    SmartReminderScheduler.EXTRA_TRANSACTION_ID,
-                    reminder.transactionId
+                    SmartReminderScheduler
+                        .EXTRA_TRANSACTION_ID,
+                    transactionId
                 )
 
                 putExtra(
-                    SmartReminderScheduler.EXTRA_TRANSACTION_TYPE,
-                    reminder.type
+                    SmartReminderScheduler
+                        .EXTRA_TRANSACTION_TYPE,
+                    "on_this_day"
                 )
             }
 
         val pendingFlags =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (
+                Build.VERSION.SDK_INT >=
+                Build.VERSION_CODES.M
+            ) {
+
                 PendingIntent.FLAG_UPDATE_CURRENT or
                         PendingIntent.FLAG_IMMUTABLE
+
             } else {
+
                 PendingIntent.FLAG_UPDATE_CURRENT
             }
 
         val pendingIntent =
             PendingIntent.getActivity(
                 context,
-                reminder.transactionId.hashCode(),
+                9001,
                 intent,
                 pendingFlags
             )
@@ -135,17 +171,18 @@ class SmartReminderReceiver : BroadcastReceiver() {
                 SmartReminderScheduler.CHANNEL_ID
             )
                 .setSmallIcon(
-                    android.R.drawable.ic_dialog_info
+                    android.R.drawable
+                        .ic_dialog_info
                 )
                 .setContentTitle(
-                    reminder.title
+                    title
                 )
                 .setContentText(
-                    reminder.message
+                    message
                 )
                 .setStyle(
                     NotificationCompat.BigTextStyle()
-                        .bigText(reminder.message)
+                        .bigText(message)
                 )
                 .setPriority(
                     NotificationCompat.PRIORITY_DEFAULT
@@ -169,15 +206,17 @@ class SmartReminderReceiver : BroadcastReceiver() {
             if (
                 ContextCompat.checkSelfPermission(
                     context,
-                    android.Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
+                    android.Manifest.permission
+                        .POST_NOTIFICATIONS
+                ) !=
+                PackageManager.PERMISSION_GRANTED
             ) {
                 return
             }
         }
 
         manager.notify(
-            reminder.transactionId.hashCode(),
+            9001,
             notification
         )
     }

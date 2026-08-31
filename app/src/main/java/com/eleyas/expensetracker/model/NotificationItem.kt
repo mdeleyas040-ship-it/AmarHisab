@@ -6,5 +6,8 @@ data class NotificationItem(
     val message: String,
     val type: String = "budget",
     val timestamp: Long = System.currentTimeMillis(),
-    val isRead: Boolean = false
+    val isRead: Boolean = false,
+
+    // Smart / On This Day notification-এর source transaction
+    val transactionId: Long? = null
 )
