@@ -14,7 +14,8 @@ object SmartReminderScheduler {
     const val ACTION_SMART_REMINDER =
         "com.eleyas.expensetracker.ACTION_SMART_REMINDER"
 
-    const val CHANNEL_ID = "smart_reminder_channel_v2"
+    // New channel so Android uses the updated channel name instead of the old one.
+    const val CHANNEL_ID = "smart_reminder_channel_v3"
 
     const val EXTRA_TRANSACTION_ID = "smart_reminder_transaction_id"
     const val EXTRA_TRANSACTION_TYPE = "smart_reminder_transaction_type"
@@ -27,10 +28,10 @@ object SmartReminderScheduler {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "স্মার্ট রিমাইন্ডার",
+                "পুরোনো হিসাবের স্মৃতি",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "লেনদেন ও হিসাবের স্মার্ট রিমাইন্ডার"
+                description = "এই দিনে আগের বছরের লেনদেনের স্মরণ করিয়ে দেয়"
             }
 
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
