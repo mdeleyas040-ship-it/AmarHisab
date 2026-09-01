@@ -1145,19 +1145,57 @@ fun AmarHisabApp(
                     dd
                 ) else viewModel.addLoan(context, n, s, p, m, d, nt, dd); showLoanDialog = false
             })
-        if (showLoanPaymentDialog && selectedLoan != null) LoanPaymentDialog(
-            selectedLoan!!,
-            { selectedLoan = null; showLoanPaymentDialog = false },
-            { a, d, n ->
-                viewModel.addLoanPayment(
-                    context,
+        if (showLoanPaymentDialog && selectedLoan != null) {
+            if (selectedLoan!!.sourceType == "person") {
+
+                PersonalLoanPaymentDialog(
+                    loan = selectedLoan!!,
+                    payments = loanPayments,
+                    onDismiss = {
+                        selectedLoan = null
+                        showLoanPaymentDialog = false
+                    },
+                    onSavePayment = { amount, date, note ->
+
+                        viewModel.addLoanPayment(
+                            context,
+                            selectedLoan!!,
+                            amount,
+                            date,
+                            note,
+                            false
+                        )
+
+                        selectedLoan = null
+                        showLoanPaymentDialog = false
+                    }
+                )
+
+            } else {
+
+                LoanPaymentDialog(
                     selectedLoan!!,
-                    a,
-                    d,
-                    n,
-                    false
-                ); selectedLoan = null; showLoanPaymentDialog = false
-            })
+                    {
+                        selectedLoan = null
+                        showLoanPaymentDialog = false
+                    },
+                    { a, d, n ->
+
+                        viewModel.addLoanPayment(
+                            context,
+                            selectedLoan!!,
+                            a,
+                            d,
+                            n,
+                            false
+                        )
+
+                        selectedLoan = null
+                        showLoanPaymentDialog = false
+                    }
+                )
+            }
+        }
         if (showLendingDialog) LendingDialog(
             { showLendingDialog = false },
             { p, a, d, n, dd ->

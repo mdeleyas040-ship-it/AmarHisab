@@ -26,6 +26,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.eleyas.expensetracker.ui.theme.*
 import com.eleyas.expensetracker.util.DailyReminderManager
 import com.eleyas.expensetracker.util.AppLanguageManager
+import com.eleyas.expensetracker.ui.components.SmartReminderSettingsCard
 
 @Composable
 fun SettingsScreen(
@@ -60,16 +61,16 @@ fun SettingsScreen(
 ) {
     var showLogout by remember { mutableStateOf(false) }
     var showReset by remember { mutableStateOf(false) }
-    
-    val isAdminAccount = currentUserId == "ibauSvNkMnQoZY4u1j84sd2PYZg1" || 
-                         FirebaseAuth.getInstance().currentUser?.email == "mdeleyas040@gmail.com"
+
+    val isAdminAccount = currentUserId == "ibauSvNkMnQoZY4u1j84sd2PYZg1" ||
+            FirebaseAuth.getInstance().currentUser?.email == "mdeleyas040@gmail.com"
 
     var adminTapCount by remember { mutableStateOf(0) }
     val context = LocalContext.current
     val surface = MaterialTheme.colorScheme.surface
     val onSurface = MaterialTheme.colorScheme.onSurface
     val secondary = MaterialTheme.colorScheme.onSurfaceVariant
-    
+
     val currentVersionName = remember {
         try {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName
@@ -83,7 +84,11 @@ fun SettingsScreen(
     }
 
     if (subView != null) {
-        Column(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.surface,
@@ -113,7 +118,13 @@ fun SettingsScreen(
             Box(modifier = Modifier.weight(1f)) {
                 when (subView) {
                     "personal" -> PersonalInformationContent(onEditName)
-                    "currency" -> CurrencySettingsContent(rateLoading, usdToBdt, usdToMvr, rateError, onRefreshRate)
+                    "currency" -> CurrencySettingsContent(
+                        rateLoading,
+                        usdToBdt,
+                        usdToMvr,
+                        rateError,
+                        onRefreshRate
+                    )
                     "backup" -> BackupSettingsContent(onBackup, onRestore)
                     "json_backup" -> FileBackupContent(onExport, onImport)
                 }
@@ -132,7 +143,8 @@ fun SettingsScreen(
             val authUser = FirebaseAuth.getInstance().currentUser
             val isAdminUID = currentUserId == "ibauSvNkMnQoZY4u1j84sd2PYZg1"
             val displayName = when {
-                authUser?.displayName != null && authUser.displayName!!.isNotBlank() -> authUser.displayName
+                authUser?.displayName != null && authUser.displayName!!.isNotBlank() ->
+                    authUser.displayName
                 isAdminUID -> "Owner / Admin"
                 authUser?.phoneNumber != null -> "Phone User"
                 else -> "User Account"
@@ -156,7 +168,11 @@ fun SettingsScreen(
                                 adminTapCount++
                                 if (adminTapCount >= 5) {
                                     onUnlockAdmin()
-                                    Toast.makeText(context, "👑 Admin Panel Activated", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        context,
+                                        "👑 Admin Panel Activated",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                             }
                             onPhotoClick()
@@ -164,13 +180,24 @@ fun SettingsScreen(
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             if (profilePhotoUri != null) {
-                                Icon(Icons.Default.Photo, contentDescription = null, modifier = Modifier.size(35.dp), tint = Green)
+                                Icon(
+                                    Icons.Default.Photo,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(35.dp),
+                                    tint = Green
+                                )
                             } else {
-                                Icon(if (isAdminAccount) Icons.Default.AdminPanelSettings else Icons.Default.Person, contentDescription = null, modifier = Modifier.size(35.dp), tint = Green)
+                                Icon(
+                                    if (isAdminAccount) Icons.Default.AdminPanelSettings
+                                    else Icons.Default.Person,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(35.dp),
+                                    tint = Green
+                                )
                             }
                         }
                     }
-                    
+
                     Surface(
                         modifier = Modifier.size(28.dp),
                         shape = CircleShape,
@@ -179,22 +206,46 @@ fun SettingsScreen(
                         onClick = onPhotoClick
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                            Icon(
+                                Icons.Default.CameraAlt,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
+                            )
                         }
                     }
                 }
-                
+
                 Spacer(Modifier.height(14.dp))
-                Text(text = displayName!!, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = onSurface)
-                Text(text = contactInfo, fontSize = 14.sp, color = secondary)
+                Text(
+                    text = displayName!!,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = onSurface
+                )
+                Text(
+                    text = contactInfo,
+                    fontSize = 14.sp,
+                    color = secondary
+                )
                 Spacer(Modifier.height(8.dp))
-                Surface(shape = RoundedCornerShape(8.dp), color = Color(0xFFFBC02D).copy(alpha = 0.15f)) {
-                    Text("PREMIUM VERSION", modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFFD4A017))
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color(0xFFFBC02D).copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        "PREMIUM VERSION",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color(0xFFD4A017)
+                    )
                 }
             }
         }
 
         item { SettingsSectionHeader("Account Center") }
+
         item {
             SettingsItemRow(
                 icon = Icons.Default.Person,
@@ -205,8 +256,15 @@ fun SettingsScreen(
         }
 
         item { SettingsSectionHeader("Preferences") }
+
         item {
-            var dailyTipEnabled by remember { mutableStateOf(com.eleyas.expensetracker.util.DailyFinancialTips.isDailyTipEnabled(context)) }
+            var dailyTipEnabled by remember {
+                mutableStateOf(
+                    com.eleyas.expensetracker.util.DailyFinancialTips
+                        .isDailyTipEnabled(context)
+                )
+            }
+
             SettingsItemRowWithSwitch(
                 icon = Icons.Default.Lightbulb,
                 title = "দৈনিক ফিন্যান্সিয়াল টিপস (Daily Tip)",
@@ -214,15 +272,26 @@ fun SettingsScreen(
                 checked = dailyTipEnabled,
                 onCheckedChange = { isChecked: Boolean ->
                     dailyTipEnabled = isChecked
-                    com.eleyas.expensetracker.util.DailyFinancialTips.setDailyTipEnabled(context, isChecked)
+                    com.eleyas.expensetracker.util.DailyFinancialTips
+                        .setDailyTipEnabled(context, isChecked)
+
                     if (isChecked) {
-                        Toast.makeText(context, "✅ দৈনিক ফিন্যান্সিয়াল টিপস চালু করা হয়েছে", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "✅ দৈনিক ফিন্যান্সিয়াল টিপস চালু করা হয়েছে",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     } else {
-                        Toast.makeText(context, "❌ দৈনিক ফিন্যান্সিয়াল টিপস বন্ধ করা হয়েছে", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "❌ দৈনিক ফিন্যান্সিয়াল টিপস বন্ধ করা হয়েছে",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             )
         }
+
         item {
             SettingsItemRow(
                 icon = Icons.Default.FormatQuote,
@@ -231,8 +300,12 @@ fun SettingsScreen(
                 onClick = onDailyTipClick
             )
         }
+
         item {
-            var reminderEnabled by remember { mutableStateOf(DailyReminderManager.isReminderEnabled(context)) }
+            var reminderEnabled by remember {
+                mutableStateOf(DailyReminderManager.isReminderEnabled(context))
+            }
+
             SettingsItemRowWithSwitch(
                 icon = Icons.Default.NotificationsActive,
                 title = "দৈনিক খরচ রিমাইন্ডার",
@@ -241,16 +314,37 @@ fun SettingsScreen(
                 onCheckedChange = { isChecked: Boolean ->
                     reminderEnabled = isChecked
                     DailyReminderManager.setReminderEnabled(context, isChecked)
+
                     if (isChecked) {
-                        Toast.makeText(context, "✅ দৈনিক রিমাইন্ডার চালু করা হয়েছে (রাত ৯:০০)", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "✅ দৈনিক রিমাইন্ডার চালু করা হয়েছে (রাত ৯:০০)",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     } else {
-                        Toast.makeText(context, "❌ দৈনিক রিমাইন্ডার বন্ধ করা হয়েছে", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "❌ দৈনিক রিমাইন্ডার বন্ধ করা হয়েছে",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             )
         }
+
+        // IMPORTANT: Smart Reminder is a separate LazyColumn item.
         item {
-            var weeklyEnabled by remember { mutableStateOf(com.eleyas.expensetracker.util.RecapNotificationManager.isWeeklyRecapEnabled(context)) }
+            SmartReminderSettingsCard()
+        }
+
+        item {
+            var weeklyEnabled by remember {
+                mutableStateOf(
+                    com.eleyas.expensetracker.util.RecapNotificationManager
+                        .isWeeklyRecapEnabled(context)
+                )
+            }
+
             SettingsItemRowWithSwitch(
                 icon = Icons.Default.DateRange,
                 title = "সাপ্তাহিক খরচের সারসংক্ষেপ",
@@ -258,17 +352,34 @@ fun SettingsScreen(
                 checked = weeklyEnabled,
                 onCheckedChange = { isChecked: Boolean ->
                     weeklyEnabled = isChecked
-                    com.eleyas.expensetracker.util.RecapNotificationManager.setWeeklyRecapEnabled(context, isChecked)
+                    com.eleyas.expensetracker.util.RecapNotificationManager
+                        .setWeeklyRecapEnabled(context, isChecked)
+
                     if (isChecked) {
-                        Toast.makeText(context, "✅ সাপ্তাহিক সারসংক্ষেপ চালু করা হয়েছে", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "✅ সাপ্তাহিক সারসংক্ষেপ চালু করা হয়েছে",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     } else {
-                        Toast.makeText(context, "❌ সাপ্তাহিক সারসংক্ষেপ বন্ধ করা হয়েছে", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "❌ সাপ্তাহিক সারসংক্ষেপ বন্ধ করা হয়েছে",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             )
         }
+
         item {
-            var monthlyEnabled by remember { mutableStateOf(com.eleyas.expensetracker.util.RecapNotificationManager.isMonthlyRecapEnabled(context)) }
+            var monthlyEnabled by remember {
+                mutableStateOf(
+                    com.eleyas.expensetracker.util.RecapNotificationManager
+                        .isMonthlyRecapEnabled(context)
+                )
+            }
+
             SettingsItemRowWithSwitch(
                 icon = Icons.Default.EventNote,
                 title = "মাসিক খরচের সারসংক্ষেপ",
@@ -276,17 +387,34 @@ fun SettingsScreen(
                 checked = monthlyEnabled,
                 onCheckedChange = { isChecked: Boolean ->
                     monthlyEnabled = isChecked
-                    com.eleyas.expensetracker.util.RecapNotificationManager.setMonthlyRecapEnabled(context, isChecked)
+                    com.eleyas.expensetracker.util.RecapNotificationManager
+                        .setMonthlyRecapEnabled(context, isChecked)
+
                     if (isChecked) {
-                        Toast.makeText(context, "✅ মাসিক সারসংক্ষেপ চালু করা হয়েছে", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "✅ মাসিক সারসংক্ষেপ চালু করা হয়েছে",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     } else {
-                        Toast.makeText(context, "❌ মাসিক সারসংক্ষেপ বন্ধ করা হয়েছে", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "❌ মাসিক সারসংক্ষেপ বন্ধ করা হয়েছে",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             )
         }
+
         item {
-            var soundHapticEnabled by remember { mutableStateOf(com.eleyas.expensetracker.util.SoundHapticHelper.isSoundHapticEnabled(context)) }
+            var soundHapticEnabled by remember {
+                mutableStateOf(
+                    com.eleyas.expensetracker.util.SoundHapticHelper
+                        .isSoundHapticEnabled(context)
+                )
+            }
+
             SettingsItemRowWithSwitch(
                 icon = Icons.AutoMirrored.Filled.VolumeUp,
                 title = "সাউন্ড ও ভাইব্রেশন",
@@ -294,13 +422,24 @@ fun SettingsScreen(
                 checked = soundHapticEnabled,
                 onCheckedChange = { isChecked: Boolean ->
                     soundHapticEnabled = isChecked
-                    com.eleyas.expensetracker.util.SoundHapticHelper.setSoundHapticEnabled(context, isChecked)
+                    com.eleyas.expensetracker.util.SoundHapticHelper
+                        .setSoundHapticEnabled(context, isChecked)
+
                     if (isChecked) {
-                        // চালু করার সাথে সাথে একটা demo feedback বাজবে
-                        com.eleyas.expensetracker.util.SoundHapticHelper.playTransactionSavedFeedback(context)
-                        Toast.makeText(context, "✅ সাউন্ড ও ভাইব্রেশন চালু করা হয়েছে", Toast.LENGTH_SHORT).show()
+                        com.eleyas.expensetracker.util.SoundHapticHelper
+                            .playTransactionSavedFeedback(context)
+
+                        Toast.makeText(
+                            context,
+                            "✅ সাউন্ড ও ভাইব্রেশন চালু করা হয়েছে",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     } else {
-                        Toast.makeText(context, "❌ সাউন্ড ও ভাইব্রেশন বন্ধ করা হয়েছে", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "❌ সাউন্ড ও ভাইব্রেশন বন্ধ করা হয়েছে",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             )
@@ -310,10 +449,14 @@ fun SettingsScreen(
             SettingsItemRow(
                 icon = Icons.Default.Language,
                 title = "Currency & Exchange Rate",
-                subtitle = if (usdToBdt > 0) "1 USD = ৳${"%.2f".format(usdToBdt)}" else "Set rates",
+                subtitle = if (usdToBdt > 0)
+                    "1 USD = ৳${"%.2f".format(usdToBdt)}"
+                else
+                    "Set rates",
                 onClick = { onSubViewChange("currency") }
             )
         }
+
         item {
             SettingsItemRow(
                 icon = Icons.Default.Assessment,
@@ -322,6 +465,7 @@ fun SettingsScreen(
                 onClick = onBudget
             )
         }
+
         item {
             SettingsItemRow(
                 icon = Icons.Default.ContentCopy,
@@ -332,6 +476,7 @@ fun SettingsScreen(
         }
 
         item { SettingsSectionHeader("Backup & Export") }
+
         item {
             SettingsItemRow(
                 icon = Icons.Default.CloudUpload,
@@ -340,6 +485,7 @@ fun SettingsScreen(
                 onClick = { onSubViewChange("backup") }
             )
         }
+
         item {
             SettingsItemRow(
                 icon = Icons.Default.FolderZip,
@@ -348,6 +494,7 @@ fun SettingsScreen(
                 onClick = { onSubViewChange("json_backup") }
             )
         }
+
         item {
             SettingsItemRow(
                 icon = Icons.Default.TableChart,
@@ -357,6 +504,7 @@ fun SettingsScreen(
                 tint = Color(0xFF2E7D32)
             )
         }
+
         item {
             SettingsItemRow(
                 icon = Icons.Default.PictureAsPdf,
@@ -369,6 +517,7 @@ fun SettingsScreen(
 
         if (isAdminAccount && isAdminUnlocked) {
             item { SettingsSectionHeader("Admin Control Panel") }
+
             item {
                 SettingsItemRow(
                     icon = Icons.Default.Build,
@@ -378,6 +527,7 @@ fun SettingsScreen(
                     tint = AccentGreen
                 )
             }
+
             item {
                 SettingsItemRow(
                     icon = Icons.Default.AdminPanelSettings,
@@ -388,8 +538,9 @@ fun SettingsScreen(
                 )
             }
         }
-        
+
         item { SettingsSectionHeader("Others") }
+
         item {
             SettingsItemRow(
                 icon = Icons.Default.SystemUpdate,
@@ -398,6 +549,7 @@ fun SettingsScreen(
                 onClick = onCheckUpdate
             )
         }
+
         item {
             SettingsItemRow(
                 icon = Icons.Default.Logout,
@@ -406,11 +558,14 @@ fun SettingsScreen(
                 onClick = { showLogout = !showLogout },
                 titleColor = ExpenseRed
             )
+
             if (showLogout) {
                 LogoutContent(onLogout)
             }
         }
+
         item { SettingsSectionHeader("Danger Zone") }
+
         item {
             SettingsItemRow(
                 icon = Icons.Default.DeleteForever,
@@ -419,6 +574,7 @@ fun SettingsScreen(
                 onClick = { showReset = !showReset },
                 titleColor = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
             if (showReset) {
                 ResetDataContent(onReset) { showReset = false }
             }
@@ -426,13 +582,30 @@ fun SettingsScreen(
 
         item {
             Column(
-                modifier = Modifier.fillMaxWidth().padding(top = 40.dp, bottom = 20.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 40.dp, bottom = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Amar Hisab - Income & Expense Tracker", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = secondary)
-                Text("Version $currentVersionName", fontSize = 11.sp, color = secondary.copy(alpha = 0.7f))
+                Text(
+                    "Amar Hisab - Income & Expense Tracker",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = secondary
+                )
+                Text(
+                    "Version $currentVersionName",
+                    fontSize = 11.sp,
+                    color = secondary.copy(alpha = 0.7f)
+                )
                 Spacer(Modifier.height(4.dp))
-                Text("আপনার আয়, খরচ ও বাড়িতে পাঠানো টাকা সহজে ট্র্যাক করার জন্য।", fontSize = 11.sp, color = secondary.copy(alpha = 0.6f), textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(horizontal = 40.dp))
+                Text(
+                    "আপনার আয়, খরচ ও বাড়িতে পাঠানো টাকা সহজে ট্র্যাক করার জন্য।",
+                    fontSize = 11.sp,
+                    color = secondary.copy(alpha = 0.6f),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 40.dp)
+                )
             }
         }
     }
@@ -443,7 +616,7 @@ fun PersonalInformationContent(
     onEditName: () -> Unit
 ) {
     val authUser = FirebaseAuth.getInstance().currentUser
-    
+
     Column(
         Modifier
             .fillMaxSize()
@@ -453,36 +626,66 @@ fun PersonalInformationContent(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(Modifier.padding(16.dp)) {
-                InfoMiniActionRow("আপনার নাম", authUser?.displayName ?: "সেট করা নেই", onEditName)
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
-                
-                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                    Text("ইমেইল অ্যাড্রেস", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                InfoMiniActionRow(
+                    "আপনার নাম",
+                    authUser?.displayName ?: "সেট করা নেই",
+                    onEditName
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    thickness = 0.5.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                ) {
+                    Text(
+                        "ইমেইল অ্যাড্রেস",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                     Spacer(Modifier.height(2.dp))
-                    Text(authUser?.email ?: "সেট করা নেই", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        authUser?.email ?: "সেট করা নেই",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         }
-        
+
         Spacer(Modifier.height(20.dp))
-        
+
         Text(
             text = "আপনার অ্যাকাউন্টটি গুগল-এর সাথে যুক্ত। তাই পাসওয়ার্ড ও ইমেইল গুগল থেকেই নিয়ন্ত্রিত হয়।",
             fontSize = 12.sp,
             lineHeight = 18.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp)
         )
     }
 }
 
 @Composable
-fun InfoMiniActionRow(label: String, value: String, onEdit: () -> Unit) {
+fun InfoMiniActionRow(
+    label: String,
+    value: String,
+    onEdit: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -491,18 +694,36 @@ fun InfoMiniActionRow(label: String, value: String, onEdit: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
-            Text(label, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+            Text(
+                label,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.primary
+            )
             Spacer(Modifier.height(2.dp))
-            Text(value, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            Text(
+                value,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
+
         Button(
             onClick = onEdit,
             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
             modifier = Modifier.height(30.dp),
             shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Green.copy(alpha = 0.1f), contentColor = Green)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Green.copy(alpha = 0.1f),
+                contentColor = Green
+            )
         ) {
-            Text("পরিবর্তন", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "পরিবর্তন",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
@@ -544,12 +765,17 @@ fun SettingsItemRow(
                 color = (tint ?: MaterialTheme.colorScheme.secondary).copy(alpha = 0.1f)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(icon, contentDescription = null, tint = tint ?: MaterialTheme.colorScheme.secondary, modifier = Modifier.size(20.dp))
+                    Icon(
+                        icon,
+                        contentDescription = null,
+                        tint = tint ?: MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
-            
+
             Spacer(Modifier.width(16.dp))
-            
+
             Column(Modifier.weight(1f)) {
                 Text(
                     text = title,
@@ -563,10 +789,15 @@ fun SettingsItemRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            
-            Text("〉", fontSize = 14.sp, color = MaterialTheme.colorScheme.outline)
+
+            Text(
+                "〉",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.outline
+            )
         }
     }
+
     HorizontalDivider(
         modifier = Modifier.padding(start = 76.dp),
         thickness = 0.5.dp,
@@ -575,7 +806,13 @@ fun SettingsItemRow(
 }
 
 @Composable
-fun CurrencySettingsContent(loading: Boolean, bdt: Double, mvr: Double, error: String, onRefresh: () -> Unit) {
+fun CurrencySettingsContent(
+    loading: Boolean,
+    bdt: Double,
+    mvr: Double,
+    error: String,
+    onRefresh: () -> Unit
+) {
     Column(
         Modifier
             .fillMaxSize()
@@ -585,42 +822,75 @@ fun CurrencySettingsContent(loading: Boolean, bdt: Double, mvr: Double, error: S
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("লাইভ এক্সচেঞ্জ রেট", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Column(
+                Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "লাইভ এক্সচেঞ্জ রেট",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
                 Spacer(Modifier.height(16.dp))
-                
+
                 if (loading) {
-                    CircularProgressIndicator(modifier = Modifier.size(30.dp), strokeWidth = 3.dp, color = Green)
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(30.dp),
+                        strokeWidth = 3.dp,
+                        color = Green
+                    )
                     Spacer(Modifier.height(8.dp))
-                    Text("রেট আপডেট হচ্ছে...", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        "রেট আপডেট হচ্ছে...",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 } else if (bdt > 0) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
                         RateBox("🇺🇸 1 USD", "৳${"%.2f".format(bdt)}")
-                        RateBox("🇲🇻 1 MVR", "৳${"%.4f".format(bdt/mvr)}")
+                        RateBox("🇲🇻 1 MVR", "৳${"%.4f".format(bdt / mvr)}")
                     }
                 }
-                
+
                 if (error.isNotEmpty()) {
-                    Text("❌ $error", color = ExpenseRed, fontSize = 12.sp, modifier = Modifier.padding(top = 10.dp))
+                    Text(
+                        "❌ $error",
+                        color = ExpenseRed,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 10.dp)
+                    )
                 }
-                
+
                 Spacer(Modifier.height(20.dp))
-                
+
                 Button(
                     onClick = onRefresh,
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Green)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Green
+                    )
                 ) {
-                    Text("🔄 রিফ্রেশ রেট", fontWeight = FontWeight.Bold)
+                    Text(
+                        "🔄 রিফ্রেশ রেট",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
-        
+
         Spacer(Modifier.height(16.dp))
+
         Text(
             "সর্বশেষ আপডেটেড রেট অনুযায়ী আপনার হিসাবের কনভার্সন করা হবে। ইন্টারনেট সংযোগ চালু রাখুন।",
             fontSize = 12.sp,
@@ -656,12 +926,17 @@ fun SettingsItemRowWithSwitch(
                 color = (tint ?: MaterialTheme.colorScheme.secondary).copy(alpha = 0.1f)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(icon, contentDescription = null, tint = tint ?: MaterialTheme.colorScheme.secondary, modifier = Modifier.size(20.dp))
+                    Icon(
+                        icon,
+                        contentDescription = null,
+                        tint = tint ?: MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
-            
+
             Spacer(Modifier.width(16.dp))
-            
+
             Column(Modifier.weight(1f)) {
                 Text(
                     text = title,
@@ -675,14 +950,16 @@ fun SettingsItemRowWithSwitch(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            
+
             Spacer(Modifier.width(8.dp))
+
             Switch(
                 checked = checked,
                 onCheckedChange = onCheckedChange
             )
         }
     }
+
     HorizontalDivider(
         modifier = Modifier.padding(start = 76.dp),
         thickness = 0.5.dp,
@@ -693,8 +970,17 @@ fun SettingsItemRowWithSwitch(
 @Composable
 fun RateBox(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Green)
+        Text(
+            label,
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            value,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Green
+        )
     }
 }
 
@@ -706,13 +992,20 @@ fun SecuritySettingsContent(onChangePassword: () -> Unit) {
             .background(MaterialTheme.colorScheme.background)
             .padding(20.dp)
     ) {
-        Text("Login & Security", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Text(
+            "Login & Security",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
         Spacer(Modifier.height(10.dp))
-        
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(Modifier.padding(16.dp)) {
@@ -722,9 +1015,13 @@ fun SecuritySettingsContent(onChangePassword: () -> Unit) {
                     subtitle = "Recommended to change every 6 months",
                     onClick = onChangePassword
                 )
-                
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
-                
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    thickness = 0.5.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+
                 SettingsSubRow(
                     icon = "🛡️",
                     title = "Two-Factor Authentication",
@@ -733,23 +1030,42 @@ fun SecuritySettingsContent(onChangePassword: () -> Unit) {
                 )
             }
         }
-        
+
         Spacer(Modifier.height(20.dp))
-        Text("Login Activity", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+
+        Text(
+            "Login Activity",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
         Spacer(Modifier.height(10.dp))
-        
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text("📱", fontSize = 24.sp)
                 Spacer(Modifier.width(12.dp))
                 Column {
-                    Text("This Device", fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                    Text("Last active: Just now", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        "This Device",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "Last active: Just now",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
@@ -757,7 +1073,12 @@ fun SecuritySettingsContent(onChangePassword: () -> Unit) {
 }
 
 @Composable
-fun SettingsSubRow(icon: String, title: String, subtitle: String, onClick: () -> Unit) {
+fun SettingsSubRow(
+    icon: String,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -767,16 +1088,33 @@ fun SettingsSubRow(icon: String, title: String, subtitle: String, onClick: () ->
     ) {
         Text(icon, fontSize = 20.sp)
         Spacer(Modifier.width(12.dp))
+
         Column(Modifier.weight(1f)) {
-            Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-            Text(subtitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                title,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                subtitle,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
-        Text("〉", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+
+        Text(
+            "〉",
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.outline
+        )
     }
 }
 
 @Composable
-fun BackupSettingsContent(onBackup: () -> Unit, onRestore: () -> Unit) {
+fun BackupSettingsContent(
+    onBackup: () -> Unit,
+    onRestore: () -> Unit
+) {
     Column(
         Modifier
             .fillMaxSize()
@@ -786,19 +1124,54 @@ fun BackupSettingsContent(onBackup: () -> Unit, onRestore: () -> Unit) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
         ) {
             Column(Modifier.padding(20.dp)) {
-                Text("ক্লাউড ব্যাকআপ ও রিস্টোর", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    "ক্লাউড ব্যাকআপ ও রিস্টোর",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
                 Spacer(Modifier.height(8.dp))
-                Text("আপনার সব লেনদেনের তথ্য ক্লাউডে নিরাপদ রাখুন যাতে ফোন পরিবর্তন করলেও ডাটা ফিরে পান।", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                Text(
+                    "আপনার সব লেনদেনের তথ্য ক্লাউডে নিরাপদ রাখুন যাতে ফোন পরিবর্তন করলেও ডাটা ফিরে পান।",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Spacer(Modifier.height(20.dp))
-                Button(onClick = onBackup, modifier = Modifier.fillMaxWidth().height(48.dp), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Green)) {
-                    Text("💾 এখনই ব্যাকআপ নিন", fontWeight = FontWeight.Bold)
+
+                Button(
+                    onClick = onBackup,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Green
+                    )
+                ) {
+                    Text(
+                        "💾 এখনই ব্যাকআপ নিন",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
+
                 Spacer(Modifier.height(12.dp))
-                OutlinedButton(onClick = onRestore, modifier = Modifier.fillMaxWidth().height(48.dp), shape = RoundedCornerShape(12.dp)) {
-                    Text("♻️ অটো ব্যাকআপ রিস্টোর", fontWeight = FontWeight.Bold)
+
+                OutlinedButton(
+                    onClick = onRestore,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        "♻️ অটো ব্যাকআপ রিস্টোর",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
@@ -806,7 +1179,10 @@ fun BackupSettingsContent(onBackup: () -> Unit, onRestore: () -> Unit) {
 }
 
 @Composable
-fun FileBackupContent(onExport: () -> Unit, onImport: () -> Unit) {
+fun FileBackupContent(
+    onExport: () -> Unit,
+    onImport: () -> Unit
+) {
     Column(
         Modifier
             .fillMaxSize()
@@ -816,19 +1192,54 @@ fun FileBackupContent(onExport: () -> Unit, onImport: () -> Unit) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
         ) {
             Column(Modifier.padding(20.dp)) {
-                Text("ফাইল এক্সপোর্ট ও ইমপোর্ট", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    "ফাইল এক্সপোর্ট ও ইমপোর্ট",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
                 Spacer(Modifier.height(8.dp))
-                Text("পুরো হিসাবের ডাটা JSON ফাইল হিসেবে আপনার মেমোরিতে সেভ করে রাখতে পারেন।", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                Text(
+                    "পুরো হিসাবের ডাটা JSON ফাইল হিসেবে আপনার মেমোরিতে সেভ করে রাখতে পারেন।",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Spacer(Modifier.height(20.dp))
-                Button(onClick = onExport, modifier = Modifier.fillMaxWidth().height(48.dp), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Green)) {
-                    Text("📤 ফাইল এক্সপোর্ট করুন", fontWeight = FontWeight.Bold)
+
+                Button(
+                    onClick = onExport,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Green
+                    )
+                ) {
+                    Text(
+                        "📤 ফাইল এক্সপোর্ট করুন",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
+
                 Spacer(Modifier.height(12.dp))
-                OutlinedButton(onClick = onImport, modifier = Modifier.fillMaxWidth().height(48.dp), shape = RoundedCornerShape(12.dp)) {
-                    Text("📥 ফাইল ইমপোর্ট করুন", fontWeight = FontWeight.Bold)
+
+                OutlinedButton(
+                    onClick = onImport,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        "📥 ফাইল ইমপোর্ট করুন",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
@@ -836,7 +1247,10 @@ fun FileBackupContent(onExport: () -> Unit, onImport: () -> Unit) {
 }
 
 @Composable
-fun ResetDataContent(onReset: () -> Unit, onCancel: () -> Unit) {
+fun ResetDataContent(
+    onReset: () -> Unit,
+    onCancel: () -> Unit
+) {
     Column(
         Modifier
             .fillMaxSize()
@@ -846,45 +1260,74 @@ fun ResetDataContent(onReset: () -> Unit, onCancel: () -> Unit) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
         ) {
-            Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Surface(
                     modifier = Modifier.size(60.dp),
                     shape = CircleShape,
                     color = ExpenseRed.copy(alpha = 0.1f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.DeleteForever, contentDescription = null, tint = ExpenseRed, modifier = Modifier.size(30.dp))
+                        Icon(
+                            Icons.Default.DeleteForever,
+                            contentDescription = null,
+                            tint = ExpenseRed,
+                            modifier = Modifier.size(30.dp)
+                        )
                     }
                 }
-                
+
                 Spacer(Modifier.height(16.dp))
-                
-                Text("ডাটা রিসেট নিশ্চিত করুন", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = ExpenseRed)
+
+                Text(
+                    "ডাটা রিসেট নিশ্চিত করুন",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = ExpenseRed
+                )
                 Spacer(Modifier.height(10.dp))
+
                 Text(
                     "সাবধান! এটি এই অ্যাকাউন্টের সব লেনদেন, ঋণ ও ধারের ডাটা চিরতরে মুছে ফেলবে। ক্লাউড এবং লোকাল—উভয় জায়গা থেকেই ডাটা ডিলিট হয়ে যাবে। এই কাজ আর ফিরিয়ে আনা সম্ভব নয়।",
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
-                
+
                 Spacer(Modifier.height(24.dp))
-                
+
                 Button(
                     onClick = onReset,
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = ExpenseRed)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ExpenseRed
+                    )
                 ) {
-                    Text("হ্যাঁ, সব মুছে ফেলুন", fontWeight = FontWeight.Bold)
+                    Text(
+                        "হ্যাঁ, সব মুছে ফেলুন",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-                
+
                 Spacer(Modifier.height(10.dp))
-                
-                TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
-                    Text("বাতিল করুন", color = MaterialTheme.colorScheme.onSurface)
+
+                TextButton(
+                    onClick = onCancel,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        "বাতিল করুন",
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         }
@@ -902,39 +1345,61 @@ fun LogoutContent(onLogout: () -> Unit) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
         ) {
-            Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Surface(
                     modifier = Modifier.size(60.dp),
                     shape = CircleShape,
                     color = Green.copy(alpha = 0.1f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.Logout, contentDescription = null, tint = Green, modifier = Modifier.size(30.dp))
+                        Icon(
+                            Icons.Default.Logout,
+                            contentDescription = null,
+                            tint = Green,
+                            modifier = Modifier.size(30.dp)
+                        )
                     }
                 }
-                
+
                 Spacer(Modifier.height(16.dp))
-                
-                Text("লগআউট নিশ্চিত করুন", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+
+                Text(
+                    "লগআউট নিশ্চিত করুন",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
                 Spacer(Modifier.height(10.dp))
+
                 Text(
                     "আপনি কি নিশ্চিতভাবে আপনার অ্যাকাউন্ট থেকে লগআউট করতে চান?",
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
-                
+
                 Spacer(Modifier.height(24.dp))
-                
+
                 Button(
                     onClick = onLogout,
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = ExpenseRed)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ExpenseRed
+                    )
                 ) {
-                    Text("লগআউট করুন", fontWeight = FontWeight.Bold)
+                    Text(
+                        "লগআউট করুন",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
