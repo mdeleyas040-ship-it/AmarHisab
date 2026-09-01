@@ -10,7 +10,6 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.eleyas.expensetracker.MainActivity
-import com.eleyas.expensetracker.R
 import com.google.firebase.auth.FirebaseAuth
 
 class SmartReminderReceiver : BroadcastReceiver() {
@@ -19,11 +18,8 @@ class SmartReminderReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent
     ) {
-
         when (intent.action) {
-
             SmartReminderScheduler.ACTION_SMART_REMINDER -> {
-
                 showOnThisDayNotification(context)
 
                 SmartReminderScheduler.scheduleNext(
@@ -32,13 +28,11 @@ class SmartReminderReceiver : BroadcastReceiver() {
             }
 
             SmartReminderScheduler.ACTION_SMART_REMINDER_TEST -> {
-
                 showTestNotification(context)
             }
 
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED -> {
-
                 SmartReminderScheduler.scheduleNext(
                     context
                 )
@@ -49,7 +43,6 @@ class SmartReminderReceiver : BroadcastReceiver() {
     private fun showOnThisDayNotification(
         context: Context
     ) {
-
         val userId =
             FirebaseAuth
                 .getInstance()
@@ -76,10 +69,6 @@ class SmartReminderReceiver : BroadcastReceiver() {
             return
         }
 
-        /*
-         * একই দিনে পাওয়া সব historical
-         * transaction এক notification-এ।
-         */
         val firstReminder =
             reminders.first()
 
@@ -88,11 +77,8 @@ class SmartReminderReceiver : BroadcastReceiver() {
 
         val message =
             if (transactionCount == 1) {
-
                 firstReminder.message
-
             } else {
-
                 "আজকের দিনে আগের বছরগুলোতে " +
                         "$transactionCount টি " +
                         "লেনদেন করেছিলেন। " +
@@ -108,15 +94,9 @@ class SmartReminderReceiver : BroadcastReceiver() {
         )
     }
 
-    /*
-     * শুধু development/testing-এর জন্য।
-     * Historical transaction না থাকলেও notification
-     * দেখাবে এবং tap করলে On This Day screen খুলবে।
-     */
     private fun showTestNotification(
         context: Context
     ) {
-
         showNotification(
             context = context,
             title = "🔔 Amar Hisab Test Reminder",
@@ -133,22 +113,16 @@ class SmartReminderReceiver : BroadcastReceiver() {
         message: String,
         transactionId: Long
     ) {
-
         SmartReminderScheduler
             .createNotificationChannel(
                 context
             )
 
-        /*
-         * Notification-এ tap করলে MainActivity খুলবে।
-         * তারপর MainActivity onThisDay screen দেখাবে।
-         */
         val intent =
             Intent(
                 context,
                 MainActivity::class.java
             ).apply {
-
                 flags =
                     Intent.FLAG_ACTIVITY_NEW_TASK or
                             Intent.FLAG_ACTIVITY_CLEAR_TOP or
@@ -172,12 +146,9 @@ class SmartReminderReceiver : BroadcastReceiver() {
                 Build.VERSION.SDK_INT >=
                 Build.VERSION_CODES.M
             ) {
-
                 PendingIntent.FLAG_UPDATE_CURRENT or
                         PendingIntent.FLAG_IMMUTABLE
-
             } else {
-
                 PendingIntent.FLAG_UPDATE_CURRENT
             }
 
@@ -195,26 +166,19 @@ class SmartReminderReceiver : BroadcastReceiver() {
                 SmartReminderScheduler.CHANNEL_ID
             )
                 .setSmallIcon(
-                    android.R.drawable
-                        .ic_dialog_info
+                    android.R.drawable.ic_dialog_info
                 )
-                .setContentTitle(
-                    title
-                )
-                .setContentText(
-                    message
-                )
+                .setContentTitle(title)
+                .setContentText(message)
                 .setStyle(
                     NotificationCompat.BigTextStyle()
                         .bigText(message)
                 )
                 .setPriority(
-                    NotificationCompat.PRIORITY_DEFAULT
+                    NotificationCompat.PRIORITY_HIGH
                 )
                 .setAutoCancel(true)
-                .setContentIntent(
-                    pendingIntent
-                )
+                .setContentIntent(pendingIntent)
                 .build()
 
         val manager =
@@ -226,14 +190,11 @@ class SmartReminderReceiver : BroadcastReceiver() {
             Build.VERSION.SDK_INT >=
             Build.VERSION_CODES.TIRAMISU
         ) {
-
             if (
                 ContextCompat.checkSelfPermission(
                     context,
-                    android.Manifest.permission
-                        .POST_NOTIFICATIONS
-                ) !=
-                PackageManager.PERMISSION_GRANTED
+                    android.Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
             ) {
                 return
             }

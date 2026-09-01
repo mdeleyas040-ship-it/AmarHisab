@@ -18,7 +18,7 @@ object SmartReminderScheduler {
         "com.eleyas.expensetracker.ACTION_SMART_REMINDER_TEST"
 
     const val CHANNEL_ID =
-        "smart_reminder_channel"
+        "smart_reminder_channel_v2"
 
     const val EXTRA_TRANSACTION_ID =
         "smart_reminder_transaction_id"
@@ -27,21 +27,16 @@ object SmartReminderScheduler {
         "smart_reminder_transaction_type"
 
     private const val REQUEST_CODE = 3001
-
-    // Separate request code for manual testing.
     private const val TEST_REQUEST_CODE = 3002
 
     fun createNotificationChannel(context: Context) {
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "স্মার্ট রিমাইন্ডার",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description =
-                    "লেনদেন ও হিসাবের স্মার্ট রিমাইন্ডার"
+                description = "লেনদেন ও হিসাবের স্মার্ট রিমাইন্ডার"
             }
 
             val manager =
@@ -58,7 +53,6 @@ object SmartReminderScheduler {
         hour: Int = 21,
         minute: Int = 0
     ) {
-
         createNotificationChannel(context)
 
         val alarmManager =
@@ -92,41 +86,31 @@ object SmartReminderScheduler {
 
         val calendar =
             Calendar.getInstance().apply {
-
                 set(Calendar.HOUR_OF_DAY, hour)
                 set(Calendar.MINUTE, minute)
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
 
-                if (
-                    timeInMillis <=
-                    System.currentTimeMillis()
-                ) {
+                if (timeInMillis <= System.currentTimeMillis()) {
                     add(Calendar.DAY_OF_YEAR, 1)
                 }
             }
 
         try {
-
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-
                 alarmManager.setAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
                     calendar.timeInMillis,
                     pendingIntent
                 )
-
             } else {
-
                 alarmManager.set(
                     AlarmManager.RTC_WAKEUP,
                     calendar.timeInMillis,
                     pendingIntent
                 )
             }
-
         } catch (_: SecurityException) {
-
             alarmManager.set(
                 AlarmManager.RTC_WAKEUP,
                 calendar.timeInMillis,
@@ -136,17 +120,13 @@ object SmartReminderScheduler {
     }
 
     /**
-     * Manual test:
-     * Android Studio থেকে এই function call করলে
-     * 1 মিনিটের মধ্যে SmartReminderReceiver চলবে।
-     *
-     * এটি production daily schedule পরিবর্তন করে না।
+     * Development test.
+     * Schedules the same receiver with the dedicated test action.
      */
     fun scheduleTest(
         context: Context,
         delayMinutes: Int = 1
     ) {
-
         createNotificationChannel(context)
 
         val alarmManager =
@@ -159,7 +139,7 @@ object SmartReminderScheduler {
                 context,
                 SmartReminderReceiver::class.java
             ).apply {
-                action = ACTION_SMART_REMINDER
+                action = ACTION_SMART_REMINDER_TEST
             }
 
         val flags =
@@ -183,15 +163,12 @@ object SmartReminderScheduler {
                     delayMinutes * 60_000L
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-
             alarmManager.setAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
                 triggerAt,
                 pendingIntent
             )
-
         } else {
-
             alarmManager.set(
                 AlarmManager.RTC_WAKEUP,
                 triggerAt,
@@ -200,13 +177,7 @@ object SmartReminderScheduler {
         }
     }
 
-    /**
-     * Cancel the manual test alarm only.
-     */
-    fun cancelTest(
-        context: Context
-    ) {
-
+    fun cancelTest(context: Context) {
         val alarmManager =
             context.getSystemService(
                 Context.ALARM_SERVICE
@@ -217,7 +188,7 @@ object SmartReminderScheduler {
                 context,
                 SmartReminderReceiver::class.java
             ).apply {
-                action = ACTION_SMART_REMINDER
+                action = ACTION_SMART_REMINDER_TEST
             }
 
         val flags =
@@ -236,10 +207,7 @@ object SmartReminderScheduler {
                 flags
             )
 
-        alarmManager.cancel(
-            pendingIntent
-        )
-
+        alarmManager.cancel(pendingIntent)
         pendingIntent.cancel()
     }
 }

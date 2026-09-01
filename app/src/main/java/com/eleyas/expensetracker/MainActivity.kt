@@ -61,6 +61,9 @@ class MainActivity : FragmentActivity() {
 
         createNotificationChannel()
 
+        // Ensure the Smart Reminder channel exists as soon as the app starts.
+        SmartReminderScheduler.createNotificationChannel(this)
+
         if (
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
