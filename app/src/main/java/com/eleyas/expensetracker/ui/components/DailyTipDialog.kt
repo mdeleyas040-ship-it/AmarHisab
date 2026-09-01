@@ -14,11 +14,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FormatQuote
@@ -44,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -63,6 +67,7 @@ fun DailyTipDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
     var currentTip by remember { mutableStateOf(initialTip) }
 
     Dialog(
@@ -72,6 +77,7 @@ fun DailyTipDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth(0.92f)
+                .heightIn(max = configuration.screenHeightDp.dp * 0.88f)
                 .padding(16.dp),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
@@ -82,10 +88,10 @@ fun DailyTipDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Top Header Row with Icon and Close
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -106,7 +112,9 @@ fun DailyTipDialog(
                                 )
                             }
                         }
+
                         Spacer(Modifier.width(10.dp))
+
                         Column {
                             Text(
                                 text = "আজকের ফিন্যান্সিয়াল টিপস",
@@ -114,6 +122,7 @@ fun DailyTipDialog(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
+
                             Text(
                                 text = currentTip.category,
                                 fontSize = 11.sp,
@@ -137,7 +146,6 @@ fun DailyTipDialog(
 
                 Spacer(Modifier.height(18.dp))
 
-                // Quote Container Box
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -198,13 +206,11 @@ fun DailyTipDialog(
 
                 Spacer(Modifier.height(18.dp))
 
-                // Bottom Action Buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Refresh / Next Tip
                     OutlinedButton(
                         onClick = {
                             currentTip = DailyFinancialTips.getRandomTip(currentTip.id)
@@ -221,7 +227,6 @@ fun DailyTipDialog(
                         Text("অন্য টিপস", fontSize = 12.sp)
                     }
 
-                    // Share Button
                     OutlinedButton(
                         onClick = {
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -236,7 +241,12 @@ fun DailyTipDialog(
                                 }
                                 putExtra(Intent.EXTRA_TEXT, textToShare)
                             }
-                            context.startActivity(Intent.createChooser(shareIntent, "টিপস শেয়ার করুন"))
+                            context.startActivity(
+                                Intent.createChooser(
+                                    shareIntent,
+                                    "টিপস শেয়ার করুন"
+                                )
+                            )
                         },
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.weight(1f)
@@ -253,12 +263,13 @@ fun DailyTipDialog(
 
                 Spacer(Modifier.height(10.dp))
 
-                // Primary Dismiss Button
                 Button(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentGreen)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AccentGreen
+                    )
                 ) {
                     Text(
                         text = "ধন্যবাদ, বন্ধ করুন",
