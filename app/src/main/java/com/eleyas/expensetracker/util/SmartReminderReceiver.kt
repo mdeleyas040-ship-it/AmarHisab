@@ -18,21 +18,38 @@ class SmartReminderReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent
     ) {
+
         when (intent.action) {
+
             SmartReminderScheduler.ACTION_SMART_REMINDER -> {
-                showOnThisDayNotification(context)
 
-                SmartReminderScheduler.scheduleNext(
-                    context
-                )
-            }
+                val isTest =
+                    intent.getBooleanExtra(
+                        SmartReminderScheduler.EXTRA_TEST_MODE,
+                        false
+                    )
 
-            SmartReminderScheduler.ACTION_SMART_REMINDER_TEST -> {
-                showTestNotification(context)
+                if (isTest) {
+
+                    showTestNotification(
+                        context
+                    )
+
+                } else {
+
+                    showOnThisDayNotification(
+                        context
+                    )
+
+                    SmartReminderScheduler.scheduleNext(
+                        context
+                    )
+                }
             }
 
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED -> {
+
                 SmartReminderScheduler.scheduleNext(
                     context
                 )
@@ -43,6 +60,7 @@ class SmartReminderReceiver : BroadcastReceiver() {
     private fun showOnThisDayNotification(
         context: Context
     ) {
+
         val userId =
             FirebaseAuth
                 .getInstance()
@@ -77,8 +95,11 @@ class SmartReminderReceiver : BroadcastReceiver() {
 
         val message =
             if (transactionCount == 1) {
+
                 firstReminder.message
+
             } else {
+
                 "আজকের দিনে আগের বছরগুলোতে " +
                         "$transactionCount টি " +
                         "লেনদেন করেছিলেন। " +
@@ -97,6 +118,7 @@ class SmartReminderReceiver : BroadcastReceiver() {
     private fun showTestNotification(
         context: Context
     ) {
+
         showNotification(
             context = context,
             title = "🔔 Amar Hisab Test Reminder",
@@ -113,6 +135,7 @@ class SmartReminderReceiver : BroadcastReceiver() {
         message: String,
         transactionId: Long
     ) {
+
         SmartReminderScheduler
             .createNotificationChannel(
                 context
@@ -123,6 +146,7 @@ class SmartReminderReceiver : BroadcastReceiver() {
                 context,
                 MainActivity::class.java
             ).apply {
+
                 flags =
                     Intent.FLAG_ACTIVITY_NEW_TASK or
                             Intent.FLAG_ACTIVITY_CLEAR_TOP or
@@ -146,9 +170,12 @@ class SmartReminderReceiver : BroadcastReceiver() {
                 Build.VERSION.SDK_INT >=
                 Build.VERSION_CODES.M
             ) {
+
                 PendingIntent.FLAG_UPDATE_CURRENT or
                         PendingIntent.FLAG_IMMUTABLE
+
             } else {
+
                 PendingIntent.FLAG_UPDATE_CURRENT
             }
 
@@ -178,7 +205,9 @@ class SmartReminderReceiver : BroadcastReceiver() {
                     NotificationCompat.PRIORITY_HIGH
                 )
                 .setAutoCancel(true)
-                .setContentIntent(pendingIntent)
+                .setContentIntent(
+                    pendingIntent
+                )
                 .build()
 
         val manager =
@@ -190,6 +219,7 @@ class SmartReminderReceiver : BroadcastReceiver() {
             Build.VERSION.SDK_INT >=
             Build.VERSION_CODES.TIRAMISU
         ) {
+
             if (
                 ContextCompat.checkSelfPermission(
                     context,
