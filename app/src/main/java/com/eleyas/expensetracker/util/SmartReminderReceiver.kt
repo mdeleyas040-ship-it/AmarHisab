@@ -14,118 +14,52 @@ import com.google.firebase.auth.FirebaseAuth
 
 class SmartReminderReceiver : BroadcastReceiver() {
 
-    override fun onReceive(
-        context: Context,
-        intent: Intent
-    ) {
-
+    override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
-
             SmartReminderScheduler.ACTION_SMART_REMINDER -> {
-
-                val isTest =
-                    intent.getBooleanExtra(
-                        SmartReminderScheduler.EXTRA_TEST_MODE,
-                        false
-                    )
+                val isTest = intent.getBooleanExtra(
+                    SmartReminderScheduler.EXTRA_TEST_MODE,
+                    false
+                )
 
                 if (isTest) {
-
-                    showTestNotification(
-                        context
-                    )
-
+                    // Settings-এর Test এখন বাস্তব On This Day data পরীক্ষা করবে।
+                    showOnThisDayNotification(context)
                 } else {
-
-                    showOnThisDayNotification(
-                        context
-                    )
-
-                    SmartReminderScheduler.scheduleNext(
-                        context
-                    )
+                    showOnThisDayNotification(context)
+                    SmartReminderScheduler.scheduleNext(context)
                 }
             }
 
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED -> {
-
-                SmartReminderScheduler.scheduleNext(
-                    context
-                )
+                SmartReminderScheduler.scheduleNext(context)
             }
         }
     }
 
-    private fun showOnThisDayNotification(
-        context: Context
-    ) {
+    private fun showOnThisDayNotification(context: Context) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "guest"
+        val prefs = AccountStorage.getPrefs(context, userId)
+        val transactions = loadTransactions(prefs)
 
-        val userId =
-            FirebaseAuth
-                .getInstance()
-                .currentUser
-                ?.uid
-                ?: "guest"
+        val reminders = SmartReminderManager.getTransactionReminders(transactions)
+        if (reminders.isEmpty()) return
 
-        val prefs =
-            AccountStorage.getPrefs(
-                context,
-                userId
-            )
+        val firstReminder = reminders.first()
+        val transactionCount = reminders.size
 
-        val transactions =
-            loadTransactions(prefs)
-
-        val reminders =
-            SmartReminderManager
-                .getTransactionReminders(
-                    transactions
-                )
-
-        if (reminders.isEmpty()) {
-            return
+        val message = if (transactionCount == 1) {
+            firstReminder.message
+        } else {
+            "আজকের দিনে আগের বছরগুলোতে $transactionCount টি লেনদেন করেছিলেন। বিস্তারিত দেখতে ট্যাপ করুন।"
         }
-
-        val firstReminder =
-            reminders.first()
-
-        val transactionCount =
-            reminders.size
-
-        val message =
-            if (transactionCount == 1) {
-
-                firstReminder.message
-
-            } else {
-
-                "আজকের দিনে আগের বছরগুলোতে " +
-                        "$transactionCount টি " +
-                        "লেনদেন করেছিলেন। " +
-                        "বিস্তারিত দেখতে ট্যাপ করুন।"
-            }
 
         showNotification(
             context = context,
             title = "📅 এই দিনে আপনার হিসাব",
             message = message,
-            transactionId =
-                firstReminder.transactionId
-        )
-    }
-
-    private fun showTestNotification(
-        context: Context
-    ) {
-
-        showNotification(
-            context = context,
-            title = "🔔 Amar Hisab Test Reminder",
-            message =
-                "Notification system ঠিকমতো কাজ করছে। " +
-                        "ট্যাপ করে “এই দিনে” হিসাবের screen দেখুন।",
-            transactionId = -1L
+            transactionId = firstReminder.transactionId
         )
     }
 
@@ -135,93 +69,53 @@ class SmartReminderReceiver : BroadcastReceiver() {
         message: String,
         transactionId: Long
     ) {
+        SmartReminderScheduler.createNotificationChannel(context)
 
-        SmartReminderScheduler
-            .createNotificationChannel(
-                context
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+
+            putExtra(
+                SmartReminderScheduler.EXTRA_TRANSACTION_ID,
+                transactionId
             )
-
-        val intent =
-            Intent(
-                context,
-                MainActivity::class.java
-            ).apply {
-
-                flags =
-                    Intent.FLAG_ACTIVITY_NEW_TASK or
-                            Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                            Intent.FLAG_ACTIVITY_SINGLE_TOP
-
-                putExtra(
-                    SmartReminderScheduler
-                        .EXTRA_TRANSACTION_ID,
-                    transactionId
-                )
-
-                putExtra(
-                    SmartReminderScheduler
-                        .EXTRA_TRANSACTION_TYPE,
-                    "on_this_day"
-                )
-            }
-
-        val pendingFlags =
-            if (
-                Build.VERSION.SDK_INT >=
-                Build.VERSION_CODES.M
-            ) {
-
-                PendingIntent.FLAG_UPDATE_CURRENT or
-                        PendingIntent.FLAG_IMMUTABLE
-
-            } else {
-
-                PendingIntent.FLAG_UPDATE_CURRENT
-            }
-
-        val pendingIntent =
-            PendingIntent.getActivity(
-                context,
-                9001,
-                intent,
-                pendingFlags
+            putExtra(
+                SmartReminderScheduler.EXTRA_TRANSACTION_TYPE,
+                "on_this_day"
             )
+        }
 
-        val notification =
-            NotificationCompat.Builder(
-                context,
-                SmartReminderScheduler.CHANNEL_ID
-            )
-                .setSmallIcon(
-                    android.R.drawable.ic_dialog_info
-                )
-                .setContentTitle(title)
-                .setContentText(message)
-                .setStyle(
-                    NotificationCompat.BigTextStyle()
-                        .bigText(message)
-                )
-                .setPriority(
-                    NotificationCompat.PRIORITY_HIGH
-                )
-                .setAutoCancel(true)
-                .setContentIntent(
-                    pendingIntent
-                )
-                .build()
+        val pendingFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
 
-        val manager =
-            context.getSystemService(
-                Context.NOTIFICATION_SERVICE
-            ) as NotificationManager
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            9001,
+            intent,
+            pendingFlags
+        )
 
-        if (
-            Build.VERSION.SDK_INT >=
-            Build.VERSION_CODES.TIRAMISU
-        ) {
+        val notification = NotificationCompat.Builder(
+            context,
+            SmartReminderScheduler.CHANNEL_ID
+        )
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
 
-            if (
-                ContextCompat.checkSelfPermission(
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
                     context,
                     android.Manifest.permission.POST_NOTIFICATIONS
                 ) != PackageManager.PERMISSION_GRANTED
@@ -230,9 +124,6 @@ class SmartReminderReceiver : BroadcastReceiver() {
             }
         }
 
-        manager.notify(
-            9001,
-            notification
-        )
+        manager.notify(9001, notification)
     }
 }
