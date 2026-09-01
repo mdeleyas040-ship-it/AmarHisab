@@ -117,7 +117,7 @@ class SmartReminderReceiver : BroadcastReceiver() {
                 NotificationCompat.BigTextStyle()
                     .bigText(message)
                     .setBigContentTitle("📅 এই দিনে আপনার হিসাব")
-                    .setSummaryText("Amar Hisab • পুরোনো হিসাবের স্মৃতি")
+                    .setSummaryText("পুরোনো হিসাবের স্মৃতি")
             )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
