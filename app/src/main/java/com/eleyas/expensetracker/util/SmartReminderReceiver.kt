@@ -10,6 +10,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.eleyas.expensetracker.MainActivity
+import com.eleyas.expensetracker.R
 import com.google.firebase.auth.FirebaseAuth
 
 class SmartReminderReceiver : BroadcastReceiver() {
@@ -22,11 +23,9 @@ class SmartReminderReceiver : BroadcastReceiver() {
                     false
                 )
 
-                if (isTest) {
-                    // Settings-এর Test এখন বাস্তব On This Day data পরীক্ষা করবে।
-                    showOnThisDayNotification(context)
-                } else {
-                    showOnThisDayNotification(context)
+                showOnThisDayNotification(context)
+
+                if (!isTest) {
                     SmartReminderScheduler.scheduleNext(context)
                 }
             }
@@ -42,8 +41,8 @@ class SmartReminderReceiver : BroadcastReceiver() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "guest"
         val prefs = AccountStorage.getPrefs(context, userId)
         val transactions = loadTransactions(prefs)
-
         val reminders = SmartReminderManager.getTransactionReminders(transactions)
+
         if (reminders.isEmpty()) return
 
         val firstReminder = reminders.first()
@@ -52,14 +51,14 @@ class SmartReminderReceiver : BroadcastReceiver() {
         val message = if (transactionCount == 1) {
             firstReminder.message
         } else {
-            val preview = reminders
-                .take(3)
-                .joinToString("\n") { "• ${it.message}" }
+            val preview = reminders.take(3).joinToString("\n") { reminder ->
+                "• ${reminder.message}"
+            }
 
             if (transactionCount > 3) {
-                "$preview\nআরও ${transactionCount - 3}টি লেনদেন আছে। বিস্তারিত দেখতে ট্যাপ করুন।"
+                "$preview\nআরও ${transactionCount - 3}টি লেনদেন আছে।\nবিস্তারিত দেখতে ট্যাপ করুন।"
             } else {
-                "$preview\n\nবিস্তারিত দেখতে ট্যাপ করুন।"
+                "$preview\nবিস্তারিত দেখতে ট্যাপ করুন।"
             }
         }
 
@@ -111,13 +110,14 @@ class SmartReminderReceiver : BroadcastReceiver() {
             context,
             SmartReminderScheduler.CHANNEL_ID
         )
-            .setSmallIcon(android.R.drawable.ic_menu_my_calendar)
+            .setSmallIcon(R.drawable.ic_notification_calendar)
             .setContentTitle(title)
             .setContentText(message.replace("\n", " "))
             .setStyle(
                 NotificationCompat.BigTextStyle()
                     .bigText(message)
                     .setBigContentTitle("📅 এই দিনে আপনার হিসাব")
+                    .setSummaryText("Amar Hisab • পুরোনো হিসাবের স্মৃতি")
             )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
