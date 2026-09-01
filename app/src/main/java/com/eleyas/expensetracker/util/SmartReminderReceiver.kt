@@ -52,7 +52,15 @@ class SmartReminderReceiver : BroadcastReceiver() {
         val message = if (transactionCount == 1) {
             firstReminder.message
         } else {
-            "আজকের দিনে আগের বছরগুলোতে $transactionCount টি লেনদেন করেছিলেন। বিস্তারিত দেখতে ট্যাপ করুন।"
+            val preview = reminders
+                .take(3)
+                .joinToString("\n") { "• ${it.message}" }
+
+            if (transactionCount > 3) {
+                "$preview\nআরও ${transactionCount - 3}টি লেনদেন আছে। বিস্তারিত দেখতে ট্যাপ করুন।"
+            } else {
+                "$preview\n\nবিস্তারিত দেখতে ট্যাপ করুন।"
+            }
         }
 
         showNotification(
@@ -103,12 +111,19 @@ class SmartReminderReceiver : BroadcastReceiver() {
             context,
             SmartReminderScheduler.CHANNEL_ID
         )
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(android.R.drawable.ic_menu_my_calendar)
             .setContentTitle(title)
-            .setContentText(message)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setContentText(message.replace("\n", " "))
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText(message)
+                    .setBigContentTitle("📅 এই দিনে আপনার হিসাব")
+            )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .setShowWhen(true)
             .setContentIntent(pendingIntent)
             .build()
 
