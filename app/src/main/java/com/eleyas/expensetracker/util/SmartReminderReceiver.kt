@@ -23,7 +23,8 @@ class SmartReminderReceiver : BroadcastReceiver() {
                 )
 
                 if (isTest) {
-                    showTestNotification(context)
+                    // Settings-এর Test এখন বাস্তব On This Day data পরীক্ষা করবে।
+                    showOnThisDayNotification(context)
                 } else {
                     showOnThisDayNotification(context)
                     SmartReminderScheduler.scheduleNext(context)
@@ -62,15 +63,6 @@ class SmartReminderReceiver : BroadcastReceiver() {
         )
     }
 
-    private fun showTestNotification(context: Context) {
-        showNotification(
-            context = context,
-            title = "🔔 Amar Hisab Test Reminder",
-            message = "Notification system ঠিকমতো কাজ করছে। ট্যাপ করে “এই দিনে” হিসাবের screen দেখুন।",
-            transactionId = -1L
-        )
-    }
-
     private fun showNotification(
         context: Context,
         title: String,
@@ -102,7 +94,7 @@ class SmartReminderReceiver : BroadcastReceiver() {
 
         val pendingIntent = PendingIntent.getActivity(
             context,
-            if (transactionId == -1L) 9002 else 9001,
+            9001,
             intent,
             pendingFlags
         )
@@ -132,9 +124,6 @@ class SmartReminderReceiver : BroadcastReceiver() {
             }
         }
 
-        manager.notify(
-            if (transactionId == -1L) 9002 else 9001,
-            notification
-        )
+        manager.notify(9001, notification)
     }
 }
