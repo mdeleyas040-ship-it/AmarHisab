@@ -5,7 +5,7 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,6 +35,7 @@ fun TransactionCard(
     val expenseRed = Color(0xFFD32F2F)
     val blue = Color(0xFF1976D2)
     val cardRadius = 18.dp
+    var showDeleteWarning by remember(transaction.id) { mutableStateOf(false) }
 
     val icon = when (transaction.type) {
         "income" -> Icons.Default.AddCircle
@@ -180,7 +181,7 @@ fun TransactionCard(
                     }
 
                     IconButton(
-                        onClick = { onDelete(transaction) },
+                        onClick = { showDeleteWarning = true },
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp), tint = expenseRed)
@@ -188,5 +189,21 @@ fun TransactionCard(
                 }
             }
         }
+    }
+
+    if (showDeleteWarning) {
+        WarningDialog(
+            title = "লেনদেন মুছে ফেলবেন?",
+            message = "${transaction.reason.ifBlank { transaction.category }} — ${transaction.currency} ${formatMoney(transaction.amount)}\n\nএই লেনদেনটি মুছে দিলে এটি হিসাব থেকে স্থায়ীভাবে চলে যাবে।",
+            confirmText = "মুছে ফেলুন",
+            dismissText = "বাতিল",
+            onConfirm = {
+                showDeleteWarning = false
+                onDelete(transaction)
+            },
+            onDismiss = {
+                showDeleteWarning = false
+            }
+        )
     }
 }
