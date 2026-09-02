@@ -98,7 +98,6 @@ fun HomeScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(SectionSpacing)
         ) {
-
             if (serverNotice != null) {
                 item {
                     Card(
@@ -469,7 +468,8 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.background
             ) {
                 HomeMoneyFlowScreen(
-                    entries = HomeMoneyFlow.entries(appViewModel)
+                    entries = HomeMoneyFlow.entries(appViewModel),
+                    onBack = { showHomeMoneyFlow = false }
                 )
             }
         }
