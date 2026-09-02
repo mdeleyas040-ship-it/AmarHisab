@@ -9,11 +9,12 @@ import kotlin.math.ceil
 
 object MyJourneyCalculator {
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    private const val DAY_MS = 24L * 60L * 60L * 1000L
 
     fun daysInMaldives(arrivalDate: String, today: Date = Date()): Long? {
         val arrival = parseDate(arrivalDate) ?: return null
         if (arrival.after(today)) return 0L
-        return ((today.time - arrival.time) / (24L * 60L * 60L * 1000L)).coerceAtLeast(0L)
+        return ((today.time - arrival.time) / DAY_MS).coerceAtLeast(0L)
     }
 
     fun journeyLabel(arrivalDate: String, today: Date = Date()): String {
@@ -43,19 +44,46 @@ object MyJourneyCalculator {
         return "${years.coerceAtLeast(0)} বছর ${months.coerceAtLeast(0)} মাস ${days.coerceAtLeast(0)} দিন"
     }
 
-    fun monthlyExpense(transactions: List<Transaction>, today: Date = Date()): Double {
-        val cal = Calendar.getInstance().apply { time = today }
-        val month = cal.get(Calendar.MONTH)
-        val year = cal.get(Calendar.YEAR)
+    /**
+     * Returns the average monthly expense for the last [months] calendar months.
+     * Only normal expense transactions are included. The current month is included
+     * as well, so the value updates automatically whenever a new expense is added.
+     */
+    fun averageMonthlyExpense(
+        transactions: List<Transaction>,
+        months: Int = 3,
+        today: Date = Date()
+    ): Double {
+        if (months <= 0) return 0.0
 
-        return transactions
-            .filter { it.type == "expense" }
-            .filter {
-                val date = parseDate(it.date) ?: return@filter false
-                val c = Calendar.getInstance().apply { time = date }
-                c.get(Calendar.MONTH) == month && c.get(Calendar.YEAR) == year
+        val current = Calendar.getInstance().apply {
+            time = today
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        val monthTotals = DoubleArray(months)
+
+        transactions
+            .asSequence()
+            .filter { it.type.equals("expense", ignoreCase = true) }
+            .forEach { transaction ->
+                val date = parseDate(transaction.date) ?: return@forEach
+                val transactionMonth = Calendar.getInstance().apply { time = date }
+                transactionMonth.set(Calendar.DAY_OF_MONTH, 1)
+
+                val monthDistance = ((current.get(Calendar.YEAR) - transactionMonth.get(Calendar.YEAR)) * 12) +
+                    (current.get(Calendar.MONTH) - transactionMonth.get(Calendar.MONTH))
+
+                if (monthDistance in 0 until months) {
+                    monthTotals[monthDistance] += transaction.amount.coerceAtLeast(0.0)
+                }
             }
-            .sumOf { it.amount }
+
+        return monthTotals.sum() / months
     }
 
     fun repaymentDays(debt: Double, salary: Double, monthlyExpense: Double): Long? {
