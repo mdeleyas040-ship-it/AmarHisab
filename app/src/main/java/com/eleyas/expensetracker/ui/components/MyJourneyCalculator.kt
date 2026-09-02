@@ -44,25 +44,26 @@ object MyJourneyCalculator {
         return "${years.coerceAtLeast(0)} বছর ${months.coerceAtLeast(0)} মাস ${days.coerceAtLeast(0)} দিন"
     }
 
-    /** Average monthly income from the last [months] calendar months. */
     fun averageMonthlyIncome(
         transactions: List<Transaction>,
         months: Int = 3,
-        today: Date = Date()
-    ): Double = averageMonthlyAmount(transactions, "income", months, today)
+        today: Date = Date(),
+        amountConverter: (Transaction) -> Double = { it.amount }
+    ): Double = averageMonthlyAmount(transactions, "income", months, today, amountConverter)
 
-    /** Average monthly expense from the last [months] calendar months. */
     fun averageMonthlyExpense(
         transactions: List<Transaction>,
         months: Int = 3,
-        today: Date = Date()
-    ): Double = averageMonthlyAmount(transactions, "expense", months, today)
+        today: Date = Date(),
+        amountConverter: (Transaction) -> Double = { it.amount }
+    ): Double = averageMonthlyAmount(transactions, "expense", months, today, amountConverter)
 
     private fun averageMonthlyAmount(
         transactions: List<Transaction>,
         type: String,
         months: Int,
-        today: Date
+        today: Date,
+        amountConverter: (Transaction) -> Double
     ): Double {
         if (months <= 0) return 0.0
 
@@ -91,7 +92,7 @@ object MyJourneyCalculator {
                         (current.get(Calendar.MONTH) - transactionMonth.get(Calendar.MONTH))
 
                 if (monthDistance in 0 until months) {
-                    monthTotals[monthDistance] += transaction.amount.coerceAtLeast(0.0)
+                    monthTotals[monthDistance] += amountConverter(transaction).coerceAtLeast(0.0)
                 }
             }
 
