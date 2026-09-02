@@ -18,7 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.util.Date
 
 @Composable
 fun MyJourneyCard(
@@ -30,10 +29,11 @@ fun MyJourneyCard(
     var showEditor by remember { mutableStateOf(false) }
 
     val journey = MyJourneyCalculator.journeyLabel(settings.arrivalDate)
+    val availableForDebt = (settings.monthlySalary - settings.monthlyExpense).coerceAtLeast(0.0)
     val repaymentDays = MyJourneyCalculator.repaymentDays(
         debt = totalDebt,
         salary = settings.monthlySalary,
-        monthlyExpense = 0.0
+        monthlyExpense = settings.monthlyExpense
     )
     val debtFreeDate = repaymentDays?.let { MyJourneyCalculator.debtFreeDate(it) }
 
@@ -120,6 +120,14 @@ fun MyJourneyCard(
                 )
             }
 
+            Spacer(Modifier.height(10.dp))
+
+            Text(
+                "মাসিক খরচ: ৳ ${formatMoney(settings.monthlyExpense)}  •  ঋণে যাবে: ৳ ${formatMoney(availableForDebt)}",
+                color = Color.White.copy(alpha = 0.58f),
+                fontSize = 11.sp
+            )
+
             Spacer(Modifier.height(14.dp))
 
             if (totalDebt <= 0.0) {
@@ -131,7 +139,7 @@ fun MyJourneyCard(
                 )
             } else if (repaymentDays == null) {
                 Text(
-                    "বেতন সেট করলে ঋণ পরিশোধের আনুমানিক সময় দেখা যাবে।",
+                    "বেতন ও মাসিক খরচ ঠিক করে দিলে ঋণ পরিশোধের সময় দেখা যাবে।",
                     color = Color.White.copy(alpha = 0.7f),
                     fontSize = 12.sp
                 )
@@ -152,7 +160,9 @@ fun MyJourneyCard(
                 Spacer(Modifier.height(10.dp))
                 LinearProgressIndicator(
                     progress = {
-                        val ratio = if (settings.monthlySalary > 0) 1.0 - (totalDebt / (totalDebt + settings.monthlySalary)).coerceIn(0.0, 1.0) else 0.0
+                        val ratio = if (availableForDebt > 0.0) {
+                            1.0 - (totalDebt / (totalDebt + availableForDebt)).coerceIn(0.0, 1.0)
+                        } else 0.0
                         ratio.toFloat()
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -204,13 +214,14 @@ private fun MyJourneyEditorDialog(
 ) {
     var arrivalDate by remember { mutableStateOf(initial.arrivalDate) }
     var salary by remember { mutableStateOf(if (initial.monthlySalary == 0.0) "" else initial.monthlySalary.toString()) }
+    var expense by remember { mutableStateOf(if (initial.monthlyExpense == 0.0) "" else initial.monthlyExpense.toString()) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("My Journey সেটআপ", fontWeight = FontWeight.ExtraBold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("তারিখের ফরম্যাট: দিন/মাস/বছর", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("আপনার নিয়মিত মাসিক খরচ আনুমানিক দিন।", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedTextField(
                     value = arrivalDate,
                     onValueChange = { arrivalDate = it },
@@ -226,12 +237,26 @@ private fun MyJourneyEditorDialog(
                     singleLine = true,
                     leadingIcon = { Icon(Icons.Default.Payments, null) }
                 )
+                OutlinedTextField(
+                    value = expense,
+                    onValueChange = { expense = it.filter { ch -> ch.isDigit() || ch == '.' } },
+                    label = { Text("মাসিক খরচ (BDT)") },
+                    singleLine = true,
+                    leadingIcon = { Icon(Icons.Default.Payments, null) }
+                )
             }
         },
         confirmButton = {
             TextButton(onClick = {
                 val salaryValue = salary.toDoubleOrNull() ?: 0.0
-                onSave(MyJourneySettings(arrivalDate.trim(), salaryValue.coerceAtLeast(0.0)))
+                val expenseValue = expense.toDoubleOrNull() ?: 0.0
+                onSave(
+                    MyJourneySettings(
+                        arrivalDate = arrivalDate.trim(),
+                        monthlySalary = salaryValue.coerceAtLeast(0.0),
+                        monthlyExpense = expenseValue.coerceAtLeast(0.0)
+                    )
+                )
             }) { Text("Save", fontWeight = FontWeight.Bold) }
         },
         dismissButton = {
