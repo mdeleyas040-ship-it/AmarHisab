@@ -58,6 +58,28 @@ object MyJourneyCalculator {
         amountConverter: (Transaction) -> Double = { it.amount }
     ): Double = averageMonthlyAmount(transactions, "expense", months, today, amountConverter)
 
+    fun totalIncomeSinceArrival(
+        transactions: List<Transaction>,
+        arrivalDate: String,
+        today: Date = Date(),
+        amountConverter: (Transaction) -> Double = { it.amount }
+    ): Double {
+        val arrival = parseDate(arrivalDate) ?: return 0.0
+        if (arrival.after(today)) return 0.0
+
+        return transactions.asSequence()
+            .filter { it.type.equals("income", ignoreCase = true) }
+            .mapNotNull { transaction ->
+                val transactionDate = parseDate(transaction.date) ?: return@mapNotNull null
+                if (!transactionDate.before(arrival) && !transactionDate.after(today)) {
+                    amountConverter(transaction).coerceAtLeast(0.0)
+                } else {
+                    null
+                }
+            }
+            .sum()
+    }
+
     private fun averageMonthlyAmount(
         transactions: List<Transaction>,
         type: String,
