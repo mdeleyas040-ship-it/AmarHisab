@@ -18,11 +18,14 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +54,7 @@ fun MyJourneyQuickSection(
     modifier: Modifier = Modifier
 ) {
     var showDetails by remember { mutableStateOf(false) }
+    var showEditor by remember { mutableStateOf(false) }
     val mainViewModel: MainViewModel = viewModel()
     val liveTransactions = mainViewModel.transactions
     val dataTransactions = if (liveTransactions.isNotEmpty()) liveTransactions else transactions
@@ -214,7 +218,7 @@ fun MyJourneyQuickSection(
                         Spacer(Modifier.width(4.dp))
                         Surface(shape = RoundedCornerShape(14.dp), color = Color(0xFF2E9E69)) {
                             TextButton(
-                                onClick = { showDetails = false; onEdit(settings) },
+                                onClick = { showEditor = true },
                                 colors = ButtonDefaults.textButtonColors(contentColor = Color.White)
                             ) {
                                 Text("তারিখ সম্পাদনা", fontWeight = FontWeight.ExtraBold)
@@ -225,6 +229,72 @@ fun MyJourneyQuickSection(
             }
         }
     }
+
+    if (showEditor) {
+        MyJourneyEditorDialog(
+            initial = settings,
+            onDismiss = { showEditor = false },
+            onSave = { updatedSettings ->
+                onEdit(updatedSettings)
+                showEditor = false
+                showDetails = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun MyJourneyEditorDialog(
+    initial: MyJourneySettings,
+    onDismiss: () -> Unit,
+    onSave: (MyJourneySettings) -> Unit
+) {
+    var arrivalDate by remember(initial.arrivalDate) { mutableStateOf(initial.arrivalDate) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("মালদ্বীপে আসার তারিখ", fontWeight = FontWeight.ExtraBold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    "আপনার মালদ্বীপে আসার সঠিক তারিখ দিন। এই তারিখ থেকেই যাত্রার সময় ও মোট আয় হিসাব হবে।",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                OutlinedTextField(
+                    value = arrivalDate,
+                    onValueChange = { arrivalDate = it },
+                    label = { Text("তারিখ (DD/MM/YYYY)") },
+                    placeholder = { Text("01/01/2026") },
+                    singleLine = true,
+                    leadingIcon = { Icon(Icons.Default.CalendarMonth, contentDescription = null) }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (arrivalDate.trim().isNotEmpty()) {
+                        onSave(
+                            MyJourneySettings(
+                                arrivalDate = arrivalDate.trim(),
+                                monthlySalary = 0.0,
+                                monthlyExpense = 0.0
+                            )
+                        )
+                    }
+                },
+                colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF2E9E69))
+            ) {
+                Text("তারিখ সংরক্ষণ", fontWeight = FontWeight.ExtraBold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("বাতিল", fontWeight = FontWeight.SemiBold)
+            }
+        }
+    )
 }
 
 @Composable
