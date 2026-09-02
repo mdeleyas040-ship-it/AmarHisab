@@ -103,6 +103,17 @@ fun LoansScreen(
                 loan.note.contains(searchQuery, ignoreCase = true)
     }
     var expandedLoanId by remember { mutableStateOf<Long?>(null) }
+
+    LaunchedEffect(LoanNavigationState.requestedLoanId, loans) {
+        val requestedId = LoanNavigationState.requestedLoanId
+        if (requestedId != null) {
+            if (loans.any { it.id == requestedId }) {
+                expandedLoanId = requestedId
+            }
+            LoanNavigationState.clear()
+        }
+    }
+
     val totalBorrowed = loans.sumOf { it.principal }
 
     val totalInterest = loans.sumOf { loan ->
@@ -231,11 +242,11 @@ fun LoansScreen(
                             if (loan.note.isNotBlank()) Text("নোট: ${loan.note}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Spacer(Modifier.height(8.dp))
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(onClick = { onEditLoan(loan) }, modifier = Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(12.dp)) { 
+                                OutlinedButton(onClick = { onEditLoan(loan) }, modifier = Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(12.dp)) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
                                         Spacer(Modifier.width(4.dp))
-                                        Text("Edit") 
+                                        Text("Edit")
                                     }
                                 }
                                 OutlinedButton(onClick = { if (remaining > 0.0) onAddLoanPayment(loan) else showPaymentHistoryLoan = loan }, modifier = Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(12.dp), colors = if (remaining > 0.0) ButtonDefaults.buttonColors(containerColor = Green, contentColor = Color.White) else ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)) {
