@@ -47,7 +47,7 @@ fun SearchOverlay(
     onEditTransaction: (Transaction) -> Unit,
     onDeleteTransaction: (Transaction) -> Unit,
     onShareResults: (String, Boolean) -> Unit,
-    onOpenLoan: (LoanAccount) -> Unit = {},
+    onOpenLoan: (LoanAccount) -> Unit = { LoanNavigationState.openLoan(it.id) },
     onClose: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -202,6 +202,7 @@ fun SearchOverlay(
                                     val loanToOpen = loan
                                     selectedLoan = null
                                     onOpenLoan(loanToOpen)
+                                    onClose()
                                 },
                                 modifier = Modifier.weight(1f).height(48.dp),
                                 shape = RoundedCornerShape(14.dp),
