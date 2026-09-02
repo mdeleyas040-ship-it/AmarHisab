@@ -19,30 +19,54 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eleyas.expensetracker.model.Transaction
 import com.eleyas.expensetracker.util.formatMoney
 import com.eleyas.expensetracker.viewmodel.MainViewModel
+import java.util.Locale
 
 @Composable
 fun MyJourneyCard(
     settings: MyJourneySettings,
     totalDebt: Double,
-    transactions: List<com.eleyas.expensetracker.model.Transaction> = emptyList(),
+    transactions: List<Transaction> = emptyList(),
     onSave: (MyJourneySettings) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showEditor by remember { mutableStateOf(false) }
-
-    // Use the same Activity-scoped MainViewModel as the rest of the app.
-    // This keeps income/expense fully automatic without changing HomeScreen.kt.
     val mainViewModel: MainViewModel = viewModel()
-    val liveTransactions = mainViewModel.transactions
-    val effectiveTransactions = if (liveTransactions.isNotEmpty()) liveTransactions else transactions
 
-    val averageIncome = remember(effectiveTransactions) {
-        MyJourneyCalculator.averageMonthlyIncome(effectiveTransactions, months = 3)
+    // Use the same Activity-scoped transaction data as the rest of the app.
+    val autoTransactions = mainViewModel.transactions
+    val dataTransactions = if (autoTransactions.isNotEmpty()) autoTransactions else transactions
+    val usdToBdt = mainViewModel.usdToBdt
+    val usdToMvr = mainViewModel.usdToMvr
+
+    val amountInBdt: (Transaction) -> Double = { transaction ->
+        when (transaction.currency.trim().uppercase(Locale.getDefault())) {
+            "BDT", "৳" -> transaction.amount
+            "USD", "$" -> if (usdToBdt > 0.0) transaction.amount * usdToBdt else transaction.amount
+            "MVR", "RF", "RUFIYAA" -> {
+                if (usdToBdt > 0.0 && usdToMvr > 0.0) {
+                    transaction.amount * (usdToBdt / usdToMvr)
+                } else transaction.amount
+            }
+            else -> transaction.amount
+        }.coerceAtLeast(0.0)
     }
-    val averageExpense = remember(effectiveTransactions) {
-        MyJourneyCalculator.averageMonthlyExpense(effectiveTransactions, months = 3)
+
+    val averageIncome = remember(dataTransactions, usdToBdt, usdToMvr) {
+        MyJourneyCalculator.averageMonthlyIncome(
+            dataTransactions,
+            months = 3,
+            amountConverter = amountInBdt
+        )
+    }
+    val averageExpense = remember(dataTransactions, usdToBdt, usdToMvr) {
+        MyJourneyCalculator.averageMonthlyExpense(
+            dataTransactions,
+            months = 3,
+            amountConverter = amountInBdt
+        )
     }
     val availableForDebt = (averageIncome - averageExpense).coerceAtLeast(0.0)
     val repaymentDays = MyJourneyCalculator.repaymentDays(
@@ -139,7 +163,7 @@ fun MyJourneyCard(
             Spacer(Modifier.height(10.dp))
 
             Text(
-                "অটো মাসিক খরচ (৩ মাসের গড়): ৳ ${formatMoney(averageExpense)}",
+                "গড় মাসিক খরচ (৩ মাস): ৳ ${formatMoney(averageExpense)}",
                 color = Color.White.copy(alpha = 0.68f),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium
@@ -161,7 +185,7 @@ fun MyJourneyCard(
                 )
             } else if (repaymentDays == null) {
                 Text(
-                    "বর্তমান আয়-খরচ অনুযায়ী ঋণ পরিশোধের জন্য অতিরিক্ত টাকা থাকছে না।",
+                    "বর্তমান গড় আয়-খরচ অনুযায়ী ঋণ পরিশোধের জন্য অতিরিক্ত টাকা থাকছে না।",
                     color = Color.White.copy(alpha = 0.7f),
                     fontSize = 12.sp
                 )
@@ -242,7 +266,7 @@ private fun MyJourneyEditorDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "শুধু মালদ্বীপে আসার তারিখ দিন। আয় ও খরচ আপনার এন্ট্রি থেকে অ্যাপ নিজে হিসাব করবে।",
+                    "শুধু মালদ্বীপে আসার তারিখ দিন। আয় ও খরচ আপনার transaction থেকে অটো হিসাব হবে।",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -259,7 +283,7 @@ private fun MyJourneyEditorDialog(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                 ) {
                     Text(
-                        "গড় আয় + গড় খরচ: গত ৩ মাসের transaction থেকে অটো হিসাব হবে।",
+                        "গড় আয় + গড় খরচ: গত ৩ মাসের transaction থেকে অটো হিসাব হবে",
                         modifier = Modifier.padding(12.dp),
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -272,7 +296,7 @@ private fun MyJourneyEditorDialog(
                 onSave(
                     MyJourneySettings(
                         arrivalDate = arrivalDate.trim(),
-                        // Legacy fields are kept only for backward compatibility.
+                        // Legacy fields are kept at zero; UI calculations no longer use them.
                         monthlySalary = 0.0,
                         monthlyExpense = 0.0
                     )
