@@ -1,7 +1,6 @@
 package com.eleyas.expensetracker.ui.components
 
 import com.eleyas.expensetracker.model.Transaction
-import com.eleyas.expensetracker.util.convertToBdt
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -45,14 +44,14 @@ object MyJourneyCalculator {
         return "${years.coerceAtLeast(0)} বছর ${months.coerceAtLeast(0)} মাস ${days.coerceAtLeast(0)} দিন"
     }
 
-    /** Average monthly income from the last [months] calendar months, converted to BDT. */
+    /** Average monthly income from the last [months] calendar months. */
     fun averageMonthlyIncome(
         transactions: List<Transaction>,
         months: Int = 3,
         today: Date = Date()
     ): Double = averageMonthlyAmount(transactions, "income", months, today)
 
-    /** Average monthly expense from the last [months] calendar months, converted to BDT. */
+    /** Average monthly expense from the last [months] calendar months. */
     fun averageMonthlyExpense(
         transactions: List<Transaction>,
         months: Int = 3,
@@ -92,12 +91,10 @@ object MyJourneyCalculator {
                         (current.get(Calendar.MONTH) - transactionMonth.get(Calendar.MONTH))
 
                 if (monthDistance in 0 until months) {
-                    monthTotals[monthDistance] += convertToBdt(transaction.amount, transaction.currency)
-                        .coerceAtLeast(0.0)
+                    monthTotals[monthDistance] += transaction.amount.coerceAtLeast(0.0)
                 }
             }
 
-        // Three calendar months are used consistently, including months with no entry.
         return monthTotals.sum() / months
     }
 
