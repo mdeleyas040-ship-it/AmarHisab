@@ -1,6 +1,7 @@
 package com.eleyas.expensetracker.ui.components
 
 import com.eleyas.expensetracker.model.Transaction
+import com.eleyas.expensetracker.util.convertToBdt
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -44,15 +45,25 @@ object MyJourneyCalculator {
         return "${years.coerceAtLeast(0)} বছর ${months.coerceAtLeast(0)} মাস ${days.coerceAtLeast(0)} দিন"
     }
 
-    /**
-     * Returns the average monthly expense for the last [months] calendar months.
-     * Only normal expense transactions are included. The current month is included
-     * as well, so the value updates automatically whenever a new expense is added.
-     */
+    /** Average monthly income from the last [months] calendar months, converted to BDT. */
+    fun averageMonthlyIncome(
+        transactions: List<Transaction>,
+        months: Int = 3,
+        today: Date = Date()
+    ): Double = averageMonthlyAmount(transactions, "income", months, today)
+
+    /** Average monthly expense from the last [months] calendar months, converted to BDT. */
     fun averageMonthlyExpense(
         transactions: List<Transaction>,
         months: Int = 3,
         today: Date = Date()
+    ): Double = averageMonthlyAmount(transactions, "expense", months, today)
+
+    private fun averageMonthlyAmount(
+        transactions: List<Transaction>,
+        type: String,
+        months: Int,
+        today: Date
     ): Double {
         if (months <= 0) return 0.0
 
@@ -67,22 +78,26 @@ object MyJourneyCalculator {
 
         val monthTotals = DoubleArray(months)
 
-        transactions
-            .asSequence()
-            .filter { it.type.equals("expense", ignoreCase = true) }
+        transactions.asSequence()
+            .filter { it.type.equals(type, ignoreCase = true) }
             .forEach { transaction ->
                 val date = parseDate(transaction.date) ?: return@forEach
-                val transactionMonth = Calendar.getInstance().apply { time = date }
-                transactionMonth.set(Calendar.DAY_OF_MONTH, 1)
+                val transactionMonth = Calendar.getInstance().apply {
+                    time = date
+                    set(Calendar.DAY_OF_MONTH, 1)
+                }
 
-                val monthDistance = ((current.get(Calendar.YEAR) - transactionMonth.get(Calendar.YEAR)) * 12) +
-                    (current.get(Calendar.MONTH) - transactionMonth.get(Calendar.MONTH))
+                val monthDistance =
+                    ((current.get(Calendar.YEAR) - transactionMonth.get(Calendar.YEAR)) * 12) +
+                        (current.get(Calendar.MONTH) - transactionMonth.get(Calendar.MONTH))
 
                 if (monthDistance in 0 until months) {
-                    monthTotals[monthDistance] += transaction.amount.coerceAtLeast(0.0)
+                    monthTotals[monthDistance] += convertToBdt(transaction.amount, transaction.currency)
+                        .coerceAtLeast(0.0)
                 }
             }
 
+        // Three calendar months are used consistently, including months with no entry.
         return monthTotals.sum() / months
     }
 
