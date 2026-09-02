@@ -420,14 +420,10 @@ fun AmarHisabApp(
                     transactions = transactions,
                     household = household,
                     onFamilyClick = { showFamilyDialog = true },
-                    onReminderClick = { reminder ->
-                        reminderTransactionId = reminder.transactionId
-                        showOnThisDayScreen = false
+                    onReminderClick = {
+                        reminderTransactionId = null
                         showNotificationScreen = false
-                        selectedTab = when {
-                            transactions.firstOrNull { it.id == reminder.transactionId }?.type == "income" -> 1
-                            else -> 2
-                        }
+                        showOnThisDayScreen = true
                     }
                 )
 
