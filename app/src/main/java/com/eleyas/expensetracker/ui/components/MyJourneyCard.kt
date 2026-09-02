@@ -18,29 +18,37 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.eleyas.expensetracker.model.Transaction
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eleyas.expensetracker.util.formatMoney
+import com.eleyas.expensetracker.viewmodel.MainViewModel
 
 @Composable
 fun MyJourneyCard(
     settings: MyJourneySettings,
     totalDebt: Double,
-    transactions: List<Transaction> = emptyList(),
+    transactions: List<com.eleyas.expensetracker.model.Transaction> = emptyList(),
     onSave: (MyJourneySettings) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showEditor by remember { mutableStateOf(false) }
 
-    // Expense is now calculated automatically from the last 3 calendar months.
-    // It updates whenever the transaction list changes.
-    val monthlyExpense = remember(transactions) {
-        MyJourneyCalculator.averageMonthlyExpense(transactions, months = 3)
+    // Use the same Activity-scoped MainViewModel as the rest of the app.
+    // This keeps income/expense fully automatic without changing HomeScreen.kt.
+    val mainViewModel: MainViewModel = viewModel()
+    val liveTransactions = mainViewModel.transactions
+    val effectiveTransactions = if (liveTransactions.isNotEmpty()) liveTransactions else transactions
+
+    val averageIncome = remember(effectiveTransactions) {
+        MyJourneyCalculator.averageMonthlyIncome(effectiveTransactions, months = 3)
     }
-    val availableForDebt = (settings.monthlySalary - monthlyExpense).coerceAtLeast(0.0)
+    val averageExpense = remember(effectiveTransactions) {
+        MyJourneyCalculator.averageMonthlyExpense(effectiveTransactions, months = 3)
+    }
+    val availableForDebt = (averageIncome - averageExpense).coerceAtLeast(0.0)
     val repaymentDays = MyJourneyCalculator.repaymentDays(
         debt = totalDebt,
-        salary = settings.monthlySalary,
-        monthlyExpense = monthlyExpense
+        salary = averageIncome,
+        monthlyExpense = averageExpense
     )
     val debtFreeDate = repaymentDays?.let { MyJourneyCalculator.debtFreeDate(it) }
     val journey = MyJourneyCalculator.journeyLabel(settings.arrivalDate)
@@ -117,8 +125,8 @@ fun MyJourneyCard(
                 JourneyStatBox(
                     modifier = Modifier.weight(1f),
                     icon = Icons.Default.Payments,
-                    title = "বেতন / মাস",
-                    value = "৳ ${formatMoney(settings.monthlySalary)}"
+                    title = "গড় আয় / মাস",
+                    value = "৳ ${formatMoney(averageIncome)}"
                 )
                 JourneyStatBox(
                     modifier = Modifier.weight(1f),
@@ -131,7 +139,7 @@ fun MyJourneyCard(
             Spacer(Modifier.height(10.dp))
 
             Text(
-                "অটো মাসিক খরচ (৩ মাসের গড়): ৳ ${formatMoney(monthlyExpense)}",
+                "অটো মাসিক খরচ (৩ মাসের গড়): ৳ ${formatMoney(averageExpense)}",
                 color = Color.White.copy(alpha = 0.68f),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium
@@ -153,7 +161,7 @@ fun MyJourneyCard(
                 )
             } else if (repaymentDays == null) {
                 Text(
-                    "বেতন থেকে মাসিক খরচ বাদ দেওয়ার পর ঋণ পরিশোধের জন্য টাকা থাকছে না।",
+                    "বর্তমান আয়-খরচ অনুযায়ী ঋণ পরিশোধের জন্য অতিরিক্ত টাকা থাকছে না।",
                     color = Color.White.copy(alpha = 0.7f),
                     fontSize = 12.sp
                 )
@@ -227,7 +235,6 @@ private fun MyJourneyEditorDialog(
     onSave: (MyJourneySettings) -> Unit
 ) {
     var arrivalDate by remember { mutableStateOf(initial.arrivalDate) }
-    var salary by remember { mutableStateOf(if (initial.monthlySalary == 0.0) "" else initial.monthlySalary.toString()) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -235,7 +242,7 @@ private fun MyJourneyEditorDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "শুধু মালদ্বীপে আসার তারিখ ও মাসিক বেতন দিন। মাসিক খরচ অ্যাপ নিজে হিসাব করবে।",
+                    "শুধু মালদ্বীপে আসার তারিখ দিন। আয় ও খরচ আপনার এন্ট্রি থেকে অ্যাপ নিজে হিসাব করবে।",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -247,19 +254,12 @@ private fun MyJourneyEditorDialog(
                     singleLine = true,
                     leadingIcon = { Icon(Icons.Default.CalendarMonth, null) }
                 )
-                OutlinedTextField(
-                    value = salary,
-                    onValueChange = { salary = it.filter { ch -> ch.isDigit() || ch == '.' } },
-                    label = { Text("মাসিক বেতন (BDT)") },
-                    singleLine = true,
-                    leadingIcon = { Icon(Icons.Default.Payments, null) }
-                )
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                 ) {
                     Text(
-                        "মাসিক খরচ: অটো • গত ৩ মাসের গড় expense থেকে হিসাব হবে",
+                        "গড় আয় + গড় খরচ: গত ৩ মাসের transaction থেকে অটো হিসাব হবে।",
                         modifier = Modifier.padding(12.dp),
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -269,13 +269,12 @@ private fun MyJourneyEditorDialog(
         },
         confirmButton = {
             TextButton(onClick = {
-                val salaryValue = salary.toDoubleOrNull() ?: 0.0
                 onSave(
                     MyJourneySettings(
                         arrivalDate = arrivalDate.trim(),
-                        monthlySalary = salaryValue.coerceAtLeast(0.0),
-                        // Kept for backward compatibility with older saved settings.
-                        monthlyExpense = initial.monthlyExpense
+                        // Legacy fields are kept only for backward compatibility.
+                        monthlySalary = 0.0,
+                        monthlyExpense = 0.0
                     )
                 )
             }) { Text("Save", fontWeight = FontWeight.Bold) }
