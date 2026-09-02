@@ -779,17 +779,20 @@ fun AmarHisabApp(
                 editingBorrowing = null
             }
         )
-        if (deletingBorrowing != null) AlertDialog(
-            onDismissRequest = { deletingBorrowing = null },
-            title = { Text("ঋণের entry মুছবেন?") },
-            text = { Text("৳${com.eleyas.expensetracker.util.formatMoney(deletingBorrowing!!.second.amount)} — ${displayLoanDate(deletingBorrowing!!.second.date)}") },
-            confirmButton = {
-                Button(onClick = {
-                    viewModel.deleteBorrowing(context, deletingBorrowing!!.first, deletingBorrowing!!.second)
-                    deletingBorrowing = null
-                }, colors = ButtonDefaults.buttonColors(containerColor = ExpenseRed)) { Text("মুছে ফেলুন") }
+        if (deletingBorrowing != null) WarningDialog(
+            title = "ঋণের entry মুছবেন?",
+            message = "৳${com.eleyas.expensetracker.util.formatMoney(deletingBorrowing!!.second.amount)} — ${displayLoanDate(deletingBorrowing!!.second.date)}\n\nএই ঋণের entry-টি স্থায়ীভাবে মুছে যাবে।",
+            confirmText = "মুছে ফেলুন",
+            dismissText = "বাতিল",
+            onConfirm = {
+                viewModel.deleteBorrowing(
+                    context,
+                    deletingBorrowing!!.first,
+                    deletingBorrowing!!.second
+                )
+                deletingBorrowing = null
             },
-            dismissButton = { TextButton(onClick = { deletingBorrowing = null }) { Text("বাতিল") } }
+            onDismiss = { deletingBorrowing = null }
         )
         if (showLoanDialog) PremiumLoanDialog(
             { showLoanDialog = false; editingLoan = null }, editingLoan, loans.map { it.name }.distinct(),
@@ -851,46 +854,22 @@ fun AmarHisabApp(
         if (deletingLending != null) {
             val targetLending = deletingLending!!
 
-            AlertDialog(
-                onDismissRequest = {
+            WarningDialog(
+                title = "ধারের তথ্য মুছে ফেলবেন?",
+                message = targetLending.person +
+                        "\n\nধার: ৳" +
+                        com.eleyas.expensetracker.util.formatMoney(targetLending.amount) +
+                        "\n\nএই ধারটির সঙ্গে যুক্ত ফেরত history-ও মুছে যাবে।",
+                confirmText = "মুছে ফেলুন",
+                dismissText = "বাতিল",
+                onConfirm = {
+                    viewModel.deleteLending(
+                        context,
+                        targetLending
+                    )
                     deletingLending = null
                 },
-                title = {
-                    Text("ধারের তথ্য মুছে ফেলবেন?")
-                },
-                text = {
-                    Text(
-                        targetLending.person +
-                                "\n\nধার: ৳" +
-                                com.eleyas.expensetracker.util.formatMoney(targetLending.amount) +
-                                "\n\nএই ধারটির সঙ্গে যুক্ত ফেরত history-ও মুছে যাবে।"
-                    )
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            viewModel.deleteLending(
-                                context,
-                                targetLending
-                            )
-                            deletingLending = null
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = ExpenseRed
-                        )
-                    ) {
-                        Text("মুছে ফেলুন")
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = {
-                            deletingLending = null
-                        }
-                    ) {
-                        Text("বাতিল")
-                    }
-                }
+                onDismiss = { deletingLending = null }
             )
         }
         if (showLendingReturnDialog && selectedLending != null) {
@@ -940,18 +919,20 @@ fun AmarHisabApp(
                 }
             )
         }
-        if (showDeleteDialog && deletingTransaction != null) AlertDialog(
-            onDismissRequest = { showDeleteDialog = false; deletingTransaction = null },
-            title = { Text("লেনদেন মুছে ফেলবেন?") },
-            text = { Text("${deletingTransaction!!.reason.ifBlank { deletingTransaction!!.category }} — ${deletingTransaction!!.currency} ${com.eleyas.expensetracker.util.formatMoney(deletingTransaction!!.amount)}") },
-            confirmButton = {
-                Button(onClick = {
-                    viewModel.deleteTransaction(context, deletingTransaction!!)
-                    showDeleteDialog = false
-                    deletingTransaction = null
-                }, colors = ButtonDefaults.buttonColors(containerColor = ExpenseRed)) { Text("মুছে ফেলুন") }
+        if (showDeleteDialog && deletingTransaction != null) WarningDialog(
+            title = "লেনদেন মুছে ফেলবেন?",
+            message = "${deletingTransaction!!.reason.ifBlank { deletingTransaction!!.category }} — ${deletingTransaction!!.currency} ${com.eleyas.expensetracker.util.formatMoney(deletingTransaction!!.amount)}\n\nএই লেনদেনটি স্থায়ীভাবে মুছে যাবে।",
+            confirmText = "মুছে ফেলুন",
+            dismissText = "বাতিল",
+            onConfirm = {
+                viewModel.deleteTransaction(context, deletingTransaction!!)
+                showDeleteDialog = false
+                deletingTransaction = null
             },
-            dismissButton = { TextButton(onClick = { showDeleteDialog = false; deletingTransaction = null }) { Text("বাতিল") } }
+            onDismiss = {
+                showDeleteDialog = false
+                deletingTransaction = null
+            }
         )
         if (showSplitBillDialog) SplitBillDialog(
             onDismiss = { showSplitBillDialog = false },
