@@ -31,9 +31,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eleyas.expensetracker.model.Transaction
 import com.eleyas.expensetracker.util.formatMoney
-import java.text.SimpleDateFormat
+import com.eleyas.expensetracker.viewmodel.MainViewModel
 import java.util.Locale
 
 @Composable
@@ -45,27 +46,39 @@ fun MyJourneyQuickSection(
     modifier: Modifier = Modifier
 ) {
     var showDetails by remember { mutableStateOf(false) }
+    val mainViewModel: MainViewModel = viewModel()
+    val liveTransactions = mainViewModel.transactions
+    val dataTransactions = if (liveTransactions.isNotEmpty()) liveTransactions else transactions
+    val usdToBdt = mainViewModel.usdToBdt
+    val usdToMvr = mainViewModel.usdToMvr
+
+    val amountInBdt: (Transaction) -> Double = { transaction ->
+        when (transaction.currency.trim().uppercase(Locale.getDefault())) {
+            "BDT", "৳" -> transaction.amount
+            "USD", "$" -> if (usdToBdt > 0.0) transaction.amount * usdToBdt else transaction.amount
+            "MVR", "RF", "RUFIYAA" -> if (usdToBdt > 0.0 && usdToMvr > 0.0) {
+                transaction.amount * (usdToBdt / usdToMvr)
+            } else transaction.amount
+            else -> transaction.amount
+        }.coerceAtLeast(0.0)
+    }
 
     val journey = MyJourneyCalculator.journeyLabel(settings.arrivalDate)
-    val averageIncome = MyJourneyCalculator.averageMonthlyIncome(transactions, months = 3)
-    val averageExpense = MyJourneyCalculator.averageMonthlyExpense(transactions, months = 3)
+    val averageIncome = MyJourneyCalculator.averageMonthlyIncome(dataTransactions, 3, amountConverter = amountInBdt)
+    val averageExpense = MyJourneyCalculator.averageMonthlyExpense(dataTransactions, 3, amountConverter = amountInBdt)
     val monthlyDebtCapacity = (averageIncome - averageExpense).coerceAtLeast(0.0)
     val repaymentDays = MyJourneyCalculator.repaymentDays(totalDebt, averageIncome, averageExpense)
     val debtFreeDate = repaymentDays?.let { MyJourneyCalculator.debtFreeDate(it) }
 
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { showDetails = true },
+        modifier = modifier.fillMaxWidth().clickable { showDetails = true },
         shape = RoundedCornerShape(18.dp),
         color = Color.Transparent
     ) {
         Row(
             modifier = Modifier
                 .background(
-                    Brush.horizontalGradient(
-                        listOf(Color(0xFF202631), Color(0xFF11151B))
-                    ),
+                    Brush.horizontalGradient(listOf(Color(0xFF202631), Color(0xFF11151B))),
                     RoundedCornerShape(18.dp)
                 )
                 .padding(horizontal = 16.dp, vertical = 14.dp),
@@ -77,42 +90,26 @@ fun MyJourneyQuickSection(
                 color = Color.White.copy(alpha = 0.08f)
             ) {
                 androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.Default.CalendarMonth,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(22.dp)
-                    )
+                    Icon(Icons.Default.CalendarMonth, null, tint = Color.White, modifier = Modifier.size(22.dp))
                 }
             }
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    "🇲🇻 মালদ্বীপ আমার যাত্রা",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
+                Text("🇲🇻 মালদ্বীপ আমার যাত্রা", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
                 Text(
                     if (settings.arrivalDate.isBlank()) "আসার তারিখ সেট করুন" else "মালদ্বীপে আছেন • $journey",
                     color = Color.White.copy(alpha = 0.62f),
                     fontSize = 11.sp
                 )
             }
-            Icon(
-                Icons.Default.ChevronRight,
-                contentDescription = "বিস্তারিত",
-                tint = Color.White.copy(alpha = 0.65f)
-            )
+            Icon(Icons.Default.ChevronRight, "বিস্তারিত", tint = Color.White.copy(alpha = 0.65f))
         }
     }
 
     if (showDetails) {
         AlertDialog(
             onDismissRequest = { showDetails = false },
-            title = {
-                Text("🇲🇻 মালদ্বীপ আমার যাত্রা", fontWeight = FontWeight.ExtraBold)
-            },
+            title = { Text("🇲🇻 মালদ্বীপ আমার যাত্রা", fontWeight = FontWeight.ExtraBold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     JourneyDetailRow("মালদ্বীপে আছেন", journey)
@@ -120,13 +117,8 @@ fun MyJourneyQuickSection(
                     JourneyDetailRow("গড় খরচ / মাস", "৳ ${formatMoney(averageExpense)}")
                     JourneyDetailRow("ঋণে যাবে / মাস", "৳ ${formatMoney(monthlyDebtCapacity)}")
                     JourneyDetailRow("মোট বাকি ঋণ", "৳ ${formatMoney(totalDebt)}")
-                    JourneyDetailRow(
-                        "ঋণ শেষ হতে",
-                        repaymentDays?.let { "$it দিন" } ?: "বর্তমান আয়-খরচে সম্ভব নয়"
-                    )
-                    debtFreeDate?.let {
-                        JourneyDetailRow("সম্ভাব্য ঋণমুক্তির তারিখ", MyJourneyCalculator.formatDate(it))
-                    }
+                    JourneyDetailRow("ঋণ শেষ হতে", repaymentDays?.let { "$it দিন" } ?: "বর্তমান আয়-খরচে সম্ভব নয়")
+                    debtFreeDate?.let { JourneyDetailRow("সম্ভাব্য ঋণমুক্তির তারিখ", MyJourneyCalculator.formatDate(it)) }
                     Text(
                         "আয় ও খরচ গত ৩ মাসের transaction থেকে অটো হিসাব করা হচ্ছে।",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -135,15 +127,12 @@ fun MyJourneyQuickSection(
                 }
             },
             confirmButton = {
-                androidx.compose.material3.TextButton(onClick = {
-                    showDetails = false
-                    onEdit(settings)
-                }) { Text("তারিখ Edit") }
+                androidx.compose.material3.TextButton(onClick = { showDetails = false; onEdit(settings) }) {
+                    Text("তারিখ Edit")
+                }
             },
             dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { showDetails = false }) {
-                    Text("বন্ধ")
-                }
+                androidx.compose.material3.TextButton(onClick = { showDetails = false }) { Text("বন্ধ") }
             }
         )
     }
