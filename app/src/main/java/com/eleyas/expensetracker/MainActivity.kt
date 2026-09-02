@@ -1,5 +1,3 @@
-
-
 package com.eleyas.expensetracker
 
 import android.content.Context
@@ -226,6 +224,8 @@ fun AmarHisabApp(
     var showLendingDialog by remember(currentUserId) { mutableStateOf(false) }
     var showLendingReturnDialog by remember(currentUserId) { mutableStateOf(false) }
     var selectedLending by remember(currentUserId) { mutableStateOf<LendingAccount?>(null) }
+    var editingLending by remember(currentUserId) { mutableStateOf<LendingAccount?>(null) }
+    var deletingLending by remember(currentUserId) { mutableStateOf<LendingAccount?>(null) }
     var sharingLoanPdf by remember { mutableStateOf<LoanAccount?>(null) }
     var sharingLendingPdf by remember { mutableStateOf<LendingAccount?>(null) }
     var showWalletDialog by remember(currentUserId) { mutableStateOf(false) }
@@ -472,8 +472,16 @@ fun AmarHisabApp(
                     { loan, borrowing -> deletingBorrowing = loan to borrowing },
                     { showLendingDialog = true },
                     { selectedLending = it; showLendingReturnDialog = true },
-                    loanInterestTerms,
-                    onShowCalculator = { showCalculatorScreen = true },
+                    loanInterestTerms = loanInterestTerms,
+                    onEditLending = { lending ->
+                        editingLending = lending
+                    },
+                    onDeleteLending = { lending ->
+                        deletingLending = lending
+                    },
+                    onShowCalculator = {
+                        showCalculatorScreen = true
+                    },
                     onShareLoan = { loan, isPdf ->
                         if (isPdf) {
                             sharingLoanPdf = loan
@@ -525,7 +533,7 @@ fun AmarHisabApp(
                     { pdfExportLauncher.launch("AmarHisab_Report_${SimpleDateFormat("MMM_yyyy", Locale.getDefault()).format(Date())}.pdf") },
                     { csvExportLauncher.launch("AmarHisab_Export_${SimpleDateFormat("dd_MM_yyyy", Locale.getDefault()).format(Date())}.csv") },
                     {
-                        val text = "আমার হিসাব\nআয়: ৳${formatMoney(viewModel.totalIncome)}\nখরচ: ৳${formatMoney(viewModel.totalExpense)}\nব্যালেন্স: ৳${formatMoney(viewModel.balance)}"
+                        val text = "আমার হিসাব\nআয়: ৳${com.eleyas.expensetracker.util.formatMoney(viewModel.totalIncome)}\nখরচ: ৳${com.eleyas.expensetracker.util.formatMoney(viewModel.totalExpense)}\nব্যালেন্স: ৳${com.eleyas.expensetracker.util.formatMoney(viewModel.balance)}"
                         (context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("আমার হিসাব", text))
                     },
                     { showBudgetDialog = true },
@@ -774,7 +782,7 @@ fun AmarHisabApp(
         if (deletingBorrowing != null) AlertDialog(
             onDismissRequest = { deletingBorrowing = null },
             title = { Text("ঋণের entry মুছবেন?") },
-            text = { Text("৳${formatMoney(deletingBorrowing!!.second.amount)} — ${displayLoanDate(deletingBorrowing!!.second.date)}") },
+            text = { Text("৳${com.eleyas.expensetracker.util.formatMoney(deletingBorrowing!!.second.amount)} — ${displayLoanDate(deletingBorrowing!!.second.date)}") },
             confirmButton = {
                 Button(onClick = {
                     viewModel.deleteBorrowing(context, deletingBorrowing!!.first, deletingBorrowing!!.second)
@@ -783,7 +791,7 @@ fun AmarHisabApp(
             },
             dismissButton = { TextButton(onClick = { deletingBorrowing = null }) { Text("বাতিল") } }
         )
-        if (showLoanDialog) LoanDialog(
+        if (showLoanDialog) PremiumLoanDialog(
             { showLoanDialog = false; editingLoan = null }, editingLoan, loans.map { it.name }.distinct(),
             { n, s, p, m, d, nt, dd ->
                 if (editingLoan != null) viewModel.updateLoan(context, editingLoan!!, n, s, p, m, d, nt, dd)
@@ -817,21 +825,125 @@ fun AmarHisabApp(
         }
         if (showLendingDialog) LendingDialog(
             { showLendingDialog = false },
-            { p, a, d, n, dd -> viewModel.addLending(context, p, a, d, n, dd); showLendingDialog = false }
-        )
-        if (showLendingReturnDialog && selectedLending != null) LendingReturnDialog(
-            selectedLending!!,
-            { selectedLending = null; showLendingReturnDialog = false },
-            { a, d, n ->
-                viewModel.addLendingReturn(context, selectedLending!!, a, d, n)
-                selectedLending = null
-                showLendingReturnDialog = false
+            { p, a, d, n, dd ->
+                viewModel.addLending(context, p, a, d, n, dd)
+                showLendingDialog = false
             }
         )
+
+        if (editingLending != null) LendingEditDialog(
+            lending = editingLending!!,
+            onDismiss = { editingLending = null },
+            onSave = { p, a, d, n, dd ->
+                viewModel.updateLending(
+                    context,
+                    editingLending!!,
+                    p,
+                    a,
+                    d,
+                    n,
+                    dd
+                )
+                editingLending = null
+            }
+        )
+
+        if (deletingLending != null) {
+            val targetLending = deletingLending!!
+
+            AlertDialog(
+                onDismissRequest = {
+                    deletingLending = null
+                },
+                title = {
+                    Text("ধারের তথ্য মুছে ফেলবেন?")
+                },
+                text = {
+                    Text(
+                        targetLending.person +
+                                "\n\nধার: ৳" +
+                                com.eleyas.expensetracker.util.formatMoney(targetLending.amount) +
+                                "\n\nএই ধারটির সঙ্গে যুক্ত ফেরত history-ও মুছে যাবে।"
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.deleteLending(
+                                context,
+                                targetLending
+                            )
+                            deletingLending = null
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ExpenseRed
+                        )
+                    ) {
+                        Text("মুছে ফেলুন")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            deletingLending = null
+                        }
+                    ) {
+                        Text("বাতিল")
+                    }
+                }
+            )
+        }
+        if (showLendingReturnDialog && selectedLending != null) {
+
+            val currentLending = selectedLending!!
+
+            val alreadyReturned = lendingReturns
+                .filter { it.lendingId == currentLending.id }
+                .sumOf { it.amount }
+
+            val remainingDue = (
+                    currentLending.amount - alreadyReturned
+                    ).coerceAtLeast(0.0)
+
+            LendingReturnDialog(
+                lending = currentLending,
+                remainingDue = remainingDue,
+
+                onDismiss = {
+                    selectedLending = null
+                    showLendingReturnDialog = false
+                },
+
+                onSave = { amount, date, note ->
+
+                    if (amount > remainingDue) {
+
+                        Toast.makeText(
+                            context,
+                            "সর্বোচ্চ ৳${com.eleyas.expensetracker.util.formatMoney(remainingDue)} ফেরত যোগ করা যাবে।",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                    } else {
+
+                        viewModel.addLendingReturn(
+                            context,
+                            currentLending,
+                            amount,
+                            date,
+                            note
+                        )
+
+                        selectedLending = null
+                        showLendingReturnDialog = false
+                    }
+                }
+            )
+        }
         if (showDeleteDialog && deletingTransaction != null) AlertDialog(
             onDismissRequest = { showDeleteDialog = false; deletingTransaction = null },
             title = { Text("লেনদেন মুছে ফেলবেন?") },
-            text = { Text("${deletingTransaction!!.reason.ifBlank { deletingTransaction!!.category }} — ${deletingTransaction!!.currency} ${formatMoney(deletingTransaction!!.amount)}") },
+            text = { Text("${deletingTransaction!!.reason.ifBlank { deletingTransaction!!.category }} — ${deletingTransaction!!.currency} ${com.eleyas.expensetracker.util.formatMoney(deletingTransaction!!.amount)}") },
             confirmButton = {
                 Button(onClick = {
                     viewModel.deleteTransaction(context, deletingTransaction!!)
@@ -863,17 +975,66 @@ fun AmarHisabApp(
         if (showFamilyDialog) FamilyDialog(
             household = household,
             busy = viewModel.householdBusy,
-            onDismiss = { showFamilyDialog = false },
-            onCreate = { name -> viewModel.createHousehold(context, name) },
-            onJoin = { code -> viewModel.joinHousehold(context, code) },
-            onLeave = { viewModel.leaveHousehold(context) }
+
+            onDismiss = {
+                showFamilyDialog = false
+            },
+
+            onCreate = { name ->
+                viewModel.createHousehold(
+                    context,
+                    name
+                ) { success, message ->
+                    Toast.makeText(
+                        context,
+                        message,
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                    if (success) {
+                        showFamilyDialog = false
+                    }
+                }
+            },
+
+            onJoin = { code ->
+                viewModel.joinHousehold(
+                    context,
+                    code
+                ) { success, message ->
+                    Toast.makeText(
+                        context,
+                        message,
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                    if (success) {
+                        showFamilyDialog = false
+                    }
+                }
+            },
+
+            onLeave = {
+                viewModel.leaveHousehold(
+                    context
+                ) { success, message ->
+                    Toast.makeText(
+                        context,
+                        message,
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                    if (success) {
+                        showFamilyDialog = false
+                    }
+                }
+            }
         )
         if (showDailyTipDialog) DailyTipDialog(onDismiss = { showDailyTipDialog = false })
         if (showTickerDetail) TickerDetailDialog(
             insight = tickerInsight,
             tip = tickerTip,
             onDismiss = { showTickerDetail = false },
-            onShowDailyTip = { showTickerDetail = false; showDailyTipDialog = true }
         )
         if (sharingLoanPdf != null) sharingLoanPdf = null
         if (sharingLendingPdf != null) sharingLendingPdf = null
