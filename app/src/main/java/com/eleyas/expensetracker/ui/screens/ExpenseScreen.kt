@@ -39,10 +39,16 @@ fun ExpenseScreen(
     splitBills: List<SplitBillGroup> = emptyList(),
     onAddSplitBill: () -> Unit = {},
     onSplitBillClick: (SplitBillGroup) -> Unit = {},
-            targetTransactionId: Long? = null
+    targetTransactionId: Long? = null
 ) {
-    val filteredTransactions = transactions.filter {
-        it.reason.contains(searchQuery, ignoreCase = true) || 
+    // “খরচ” Tab-এ শুধু প্রকৃত খরচগুলো থাকবে।
+    // ব্যক্তিগত খরচ + বাড়ির খরচ একই History-তে দেখানো হবে।
+    val expenseTransactions = remember(transactions) {
+        transactions.filter { it.type == "expense" || it.type == "home_expense" }
+    }
+
+    val filteredTransactions = expenseTransactions.filter {
+        it.reason.contains(searchQuery, ignoreCase = true) ||
         it.category.contains(searchQuery, ignoreCase = true)
     }
 
@@ -61,9 +67,7 @@ fun ExpenseScreen(
             for ((_, list) in groupedTransactions) {
                 index += 1
 
-                val targetIndex = list.indexOfFirst {
-                    it.id == targetTransactionId
-                }
+                val targetIndex = list.indexOfFirst { it.id == targetTransactionId }
 
                 if (targetIndex >= 0) {
                     listState.animateScrollToItem(index + targetIndex)
@@ -81,9 +85,14 @@ fun ExpenseScreen(
         "MVR" -> if (usdToMvr > 0) amount * (usdToBdt / usdToMvr) else 0.0
         else -> 0.0
     }
-    
-    val totalExpense = transactions.filter { it.type == "expense" }.sumOf { convertToBdt(it.amount, it.currency) }
-    val totalHome = transactions.filter { it.type == "home" }.sumOf { convertToBdt(it.amount, it.currency) }
+
+    val totalExpense = expenseTransactions.sumOf {
+        convertToBdt(it.amount, it.currency)
+    }
+
+    val totalHome = expenseTransactions
+        .filter { it.type == "home_expense" }
+        .sumOf { convertToBdt(it.amount, it.currency) }
 
     LazyColumn(
         state = listState,
@@ -93,27 +102,57 @@ fun ExpenseScreen(
     ) {
         item {
             Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(10.dp)) {
-                SmallSummaryCard(Modifier.weight(1f), "মোট খরচ", totalExpense, ExpenseRed, Icons.Default.Payments)
-                SmallSummaryCard(Modifier.weight(1f), "বাড়িতে", totalHome, Blue, Icons.Default.Home)
+                SmallSummaryCard(
+                    Modifier.weight(1f),
+                    "মোট খরচ",
+                    totalExpense,
+                    ExpenseRed,
+                    Icons.Default.Payments
+                )
+                SmallSummaryCard(
+                    Modifier.weight(1f),
+                    "বাড়ির খরচ",
+                    totalHome,
+                    Blue,
+                    Icons.Default.Home
+                )
             }
         }
+
         item {
             Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.dp)) {
-                Button(onAddExpense, Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = ExpenseRed)) {
+                Button(
+                    onClick = onAddExpense,
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = ExpenseRed)
+                ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(2.dp))
                         Text("খরচ", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
                 }
-                Button(onAddHome, Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Blue)) {
+
+                Button(
+                    onClick = onAddHome,
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Blue)
+                ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(2.dp))
                         Text("বাড়িতে", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
                 }
-                Button(onAddSplitBill, Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7))) {
+
+                Button(
+                    onClick = onAddSplitBill,
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7))
+                ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Group, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(2.dp))
@@ -125,10 +164,19 @@ fun ExpenseScreen(
 
         if (splitBills.isNotEmpty()) {
             item {
-                Text("স্প্লিট বিল / খরচ ভাগাভাগি", fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+                Text(
+                    "স্প্লিট বিল / খরচ ভাগাভাগি",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
             }
+
             items(splitBills, key = { it.id }) { split ->
-                val perPerson = if (split.members.isNotEmpty()) split.totalAmount / split.members.size else 0.0
+                val perPerson = if (split.members.isNotEmpty()) {
+                    split.totalAmount / split.members.size
+                } else 0.0
+
                 Card(
                     onClick = { onSplitBillClick(split) },
                     modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
@@ -143,11 +191,24 @@ fun ExpenseScreen(
                     ) {
                         Column(Modifier.weight(1f)) {
                             Text(split.title, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                            Text("সদস্য: ${split.members.joinToString(", ")}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                "সদস্য: ${split.members.joinToString(", ")}",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("৳${formatMoney(split.totalAmount)}", fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, color = Color(0xFF673AB7))
-                            Text("প্রতিজন: ৳${formatMoney(perPerson)}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                "৳${formatMoney(split.totalAmount)}",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 15.sp,
+                                color = Color(0xFF673AB7)
+                            )
+                            Text(
+                                "প্রতিজন: ৳${formatMoney(perPerson)}",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 }
@@ -169,9 +230,17 @@ fun ExpenseScreen(
                     )
                 }
             }
+
             items(list) { trans ->
                 val wallet = wallets.firstOrNull { it.id == trans.walletId }
-                TransactionCard(trans, usdToBdt, usdToMvr, walletName = wallet?.name ?: "", onEdit = onEdit, onDelete = onDelete)
+                TransactionCard(
+                    trans,
+                    usdToBdt,
+                    usdToMvr,
+                    walletName = wallet?.name ?: "",
+                    onEdit = onEdit,
+                    onDelete = onDelete
+                )
             }
         }
     }
