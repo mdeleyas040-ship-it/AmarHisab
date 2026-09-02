@@ -17,12 +17,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.EventAvailable
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Dialog
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,7 +36,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eleyas.expensetracker.model.Transaction
 import com.eleyas.expensetracker.util.formatMoney
@@ -77,6 +77,11 @@ fun MyJourneyQuickSection(
     val averageExpense = MyJourneyCalculator.averageMonthlyExpense(
         dataTransactions,
         3,
+        amountConverter = amountInBdt
+    )
+    val totalIncomeSinceArrival = MyJourneyCalculator.totalIncomeSinceArrival(
+        dataTransactions,
+        settings.arrivalDate,
         amountConverter = amountInBdt
     )
     val monthlyDebtCapacity = (averageIncome - averageExpense).coerceAtLeast(0.0)
@@ -230,6 +235,54 @@ fun MyJourneyQuickSection(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
+                        color = Color(0xFF10392B)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                modifier = Modifier.size(42.dp),
+                                shape = RoundedCornerShape(13.dp),
+                                color = Color(0xFF1A5B43)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        Icons.Default.TrendingUp,
+                                        contentDescription = null,
+                                        tint = Color(0xFF5DE49A),
+                                        modifier = Modifier.size(23.dp)
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "মালদ্বীপে এ পর্যন্ত মোট আয়",
+                                    color = Color.White.copy(alpha = 0.62f),
+                                    fontSize = 10.sp
+                                )
+                                Spacer(Modifier.height(3.dp))
+                                Text(
+                                    "৳${formatMoney(totalIncomeSinceArrival)}",
+                                    color = Color(0xFF5DE49A),
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                                Text(
+                                    "আসার তারিখ থেকে সব Income transaction",
+                                    color = Color.White.copy(alpha = 0.45f),
+                                    fontSize = 9.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(14.dp))
+
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
                         color = Color(0xFF1D2026)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -339,16 +392,22 @@ fun MyJourneyQuickSection(
                         ) {
                             Text("বন্ধ", fontWeight = FontWeight.SemiBold)
                         }
-                        TextButton(
-                            onClick = {
-                                showDetails = false
-                                onEdit(settings)
-                            },
-                            colors = ButtonDefaults.textButtonColors(
-                                contentColor = Color(0xFF9FC4FF)
-                            )
+                        Spacer(Modifier.width(4.dp))
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = Color(0xFF2E9E69)
                         ) {
-                            Text("তারিখ Edit", fontWeight = FontWeight.Bold)
+                            TextButton(
+                                onClick = {
+                                    showDetails = false
+                                    onEdit(settings)
+                                },
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Text("তারিখ সম্পাদনা", fontWeight = FontWeight.ExtraBold)
+                            }
                         }
                     }
                 }
