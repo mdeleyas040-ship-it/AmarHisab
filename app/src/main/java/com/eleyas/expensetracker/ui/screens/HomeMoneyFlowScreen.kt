@@ -48,7 +48,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eleyas.expensetracker.model.HomeLedgerDirection
 import com.eleyas.expensetracker.model.HomeLedgerEntry
+import com.eleyas.expensetracker.model.LendingAccount
 import com.eleyas.expensetracker.ui.components.HomeLendingDialog
+import com.eleyas.expensetracker.ui.components.HomeLendingReturnDialog
 import com.eleyas.expensetracker.util.HomeLedgerEngine
 import com.eleyas.expensetracker.util.HomeMoneyFlow
 import com.eleyas.expensetracker.util.formatMoney
@@ -64,7 +66,9 @@ fun HomeMoneyFlowScreen(
     val appViewModel: MainViewModel = viewModel()
     val ordered = entries.sortedByDescending { it.date }
     val summary = HomeLedgerEngine.summarize(entries)
+    val homeLendings = appViewModel.lendings.filter { it.note.contains("[HOME]") }
     var showHomeLendingDialog by remember { mutableStateOf(false) }
+    var selectedReturnLending by remember { mutableStateOf<LendingAccount?>(null) }
 
     Column(
         modifier = modifier
@@ -138,9 +142,41 @@ fun HomeMoneyFlowScreen(
                 Spacer(Modifier.size(11.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text("বাড়ির টাকা দিয়ে ধার দিন", fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
-                    Text("এই টাকা Home হিসাব থেকে বাদ হবে", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("এই টাকা বাড়ির হিসাব থেকে বাদ হবে", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Text("→", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            }
+        }
+
+        if (homeLendings.isNotEmpty()) {
+            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("বাড়ির ধার", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                Text("ফেরত নেওয়া যাবে", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            }
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().height(170.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                items(homeLendings, key = { it.id }) { lending ->
+                    val returned = appViewModel.lendingReturns.filter { it.lendingId == lending.id }.sumOf { it.amount }
+                    val remaining = (lending.amount - returned).coerceAtLeast(0.0)
+                    Card(
+                        onClick = { if (remaining > 0.0) selectedReturnLending = lending },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(15.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))
+                    ) {
+                        Row(Modifier.fillMaxWidth().padding(11.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Handshake, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                            Column(Modifier.weight(1f).padding(horizontal = 9.dp)) {
+                                Text(lending.person, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text("বাকি: ৳${formatMoney(remaining)}", fontSize = 11.sp, color = if (remaining > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+                            }
+                            Text(if (remaining > 0) "ফেরত নিন" else "সম্পূর্ণ ফেরত", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
             }
         }
 
@@ -179,6 +215,25 @@ fun HomeMoneyFlowScreen(
                     val homeNote = listOf("[HOME]", note).filter { it.isNotBlank() }.joinToString(" ")
                     appViewModel.addLending(context, person, amount, date, homeNote)
                     showHomeLendingDialog = false
+                }
+            }
+        )
+    }
+
+    selectedReturnLending?.let { lending ->
+        val alreadyReturned = appViewModel.lendingReturns.filter { it.lendingId == lending.id }.sumOf { it.amount }
+        HomeLendingReturnDialog(
+            lending = lending,
+            alreadyReturned = alreadyReturned,
+            onDismiss = { selectedReturnLending = null },
+            onSave = { amount, date, note ->
+                val remaining = (lending.amount - alreadyReturned).coerceAtLeast(0.0)
+                if (amount > remaining) {
+                    Toast.makeText(context, "বাকি পাওনার চেয়ে বেশি নেওয়া যাবে না। বাকি: ৳${formatMoney(remaining)}", Toast.LENGTH_LONG).show()
+                } else {
+                    val homeNote = listOf("[HOME_RETURN]", note).filter { it.isNotBlank() }.joinToString(" ")
+                    appViewModel.addLendingReturn(context, lending, amount, date, homeNote)
+                    selectedReturnLending = null
                 }
             }
         )
