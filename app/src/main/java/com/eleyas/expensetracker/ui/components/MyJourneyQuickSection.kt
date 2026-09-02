@@ -3,10 +3,12 @@ package com.eleyas.expensetracker.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -14,11 +16,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.EventAvailable
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Dialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,21 +69,33 @@ fun MyJourneyQuickSection(
     }
 
     val journey = MyJourneyCalculator.journeyLabel(settings.arrivalDate)
-    val averageIncome = MyJourneyCalculator.averageMonthlyIncome(dataTransactions, 3, amountConverter = amountInBdt)
-    val averageExpense = MyJourneyCalculator.averageMonthlyExpense(dataTransactions, 3, amountConverter = amountInBdt)
+    val averageIncome = MyJourneyCalculator.averageMonthlyIncome(
+        dataTransactions,
+        3,
+        amountConverter = amountInBdt
+    )
+    val averageExpense = MyJourneyCalculator.averageMonthlyExpense(
+        dataTransactions,
+        3,
+        amountConverter = amountInBdt
+    )
     val monthlyDebtCapacity = (averageIncome - averageExpense).coerceAtLeast(0.0)
     val repaymentDays = MyJourneyCalculator.repaymentDays(totalDebt, averageIncome, averageExpense)
     val debtFreeDate = repaymentDays?.let { MyJourneyCalculator.debtFreeDate(it) }
 
     Surface(
-        modifier = modifier.fillMaxWidth().clickable { showDetails = true },
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { showDetails = true },
         shape = RoundedCornerShape(18.dp),
         color = Color.Transparent
     ) {
         Row(
             modifier = Modifier
                 .background(
-                    Brush.horizontalGradient(listOf(Color(0xFF202631), Color(0xFF11151B))),
+                    Brush.horizontalGradient(
+                        listOf(Color(0xFF202631), Color(0xFF11151B))
+                    ),
                     RoundedCornerShape(18.dp)
                 )
                 .padding(horizontal = 16.dp, vertical = 14.dp),
@@ -89,63 +106,283 @@ fun MyJourneyQuickSection(
                 shape = RoundedCornerShape(13.dp),
                 color = Color.White.copy(alpha = 0.08f)
             ) {
-                androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.CalendarMonth, null, tint = Color.White, modifier = Modifier.size(22.dp))
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Default.CalendarMonth,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(22.dp)
+                    )
                 }
             }
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("🇲🇻 মালদ্বীপ আমার যাত্রা", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+                Text(
+                    "🇲🇻 মালদ্বীপ আমার যাত্রা",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
                 Text(
                     if (settings.arrivalDate.isBlank()) "আসার তারিখ সেট করুন" else "মালদ্বীপে আছেন • $journey",
                     color = Color.White.copy(alpha = 0.62f),
                     fontSize = 11.sp
                 )
             }
-            Icon(Icons.Default.ChevronRight, "বিস্তারিত", tint = Color.White.copy(alpha = 0.65f))
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = "বিস্তারিত",
+                tint = Color.White.copy(alpha = 0.65f)
+            )
         }
     }
 
     if (showDetails) {
-        AlertDialog(
-            onDismissRequest = { showDetails = false },
-            title = { Text("🇲🇻 মালদ্বীপ আমার যাত্রা", fontWeight = FontWeight.ExtraBold) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    JourneyDetailRow("মালদ্বীপে আছেন", journey)
-                    JourneyDetailRow("গড় আয় / মাস", "৳ ${formatMoney(averageIncome)}")
-                    JourneyDetailRow("গড় খরচ / মাস", "৳ ${formatMoney(averageExpense)}")
-                    JourneyDetailRow("ঋণে যাবে / মাস", "৳ ${formatMoney(monthlyDebtCapacity)}")
-                    JourneyDetailRow("মোট বাকি ঋণ", "৳ ${formatMoney(totalDebt)}")
-                    JourneyDetailRow("ঋণ শেষ হতে", repaymentDays?.let { "$it দিন" } ?: "বর্তমান আয়-খরচে সম্ভব নয়")
-                    debtFreeDate?.let { JourneyDetailRow("সম্ভাব্য ঋণমুক্তির তারিখ", MyJourneyCalculator.formatDate(it)) }
+        Dialog(onDismissRequest = { showDetails = false }) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                color = Color(0xFF24262D),
+                tonalElevation = 8.dp
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            modifier = Modifier.size(48.dp),
+                            shape = RoundedCornerShape(15.dp),
+                            color = Color(0xFF3A404B)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text("🇲🇻", fontSize = 23.sp)
+                            }
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "মালদ্বীপ আমার যাত্রা",
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                "আপনার প্রবাস জীবনের হিসাব",
+                                color = Color.White.copy(alpha = 0.58f),
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(18.dp))
+
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        color = Color(0xFF30343D)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                "মালদ্বীপে আছেন",
+                                color = Color.White.copy(alpha = 0.60f),
+                                fontSize = 11.sp
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                journey,
+                                color = Color.White,
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        JourneyMetricCard(
+                            modifier = Modifier.weight(1f),
+                            label = "গড় আয়",
+                            value = "৳${formatMoney(averageIncome)}"
+                        )
+                        JourneyMetricCard(
+                            modifier = Modifier.weight(1f),
+                            label = "গড় খরচ",
+                            value = "৳${formatMoney(averageExpense)}"
+                        )
+                        JourneyMetricCard(
+                            modifier = Modifier.weight(1f),
+                            label = "ঋণে যাবে",
+                            value = "৳${formatMoney(monthlyDebtCapacity)}",
+                            emphasized = true
+                        )
+                    }
+
+                    Spacer(Modifier.height(14.dp))
+
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        color = Color(0xFF1D2026)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                "মোট বাকি ঋণ",
+                                color = Color.White.copy(alpha = 0.60f),
+                                fontSize = 11.sp
+                            )
+                            Spacer(Modifier.height(3.dp))
+                            Text(
+                                "৳${formatMoney(totalDebt)}",
+                                color = Color(0xFFFF5B61),
+                                fontSize = 25.sp,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        "আনুমানিক সময়",
+                                        color = Color.White.copy(alpha = 0.55f),
+                                        fontSize = 10.sp
+                                    )
+                                    Text(
+                                        repaymentDays?.let { "$it দিন" } ?: "বর্তমান হিসাবে সম্ভব নয়",
+                                        color = Color.White,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        "প্রতি মাসে ঋণে",
+                                        color = Color.White.copy(alpha = 0.55f),
+                                        fontSize = 10.sp
+                                    )
+                                    Text(
+                                        "৳${formatMoney(monthlyDebtCapacity)}",
+                                        color = Color(0xFF45C77A),
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    debtFreeDate?.let {
+                        Spacer(Modifier.height(12.dp))
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            color = Color(0xFF193427)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.EventAvailable,
+                                    contentDescription = null,
+                                    tint = Color(0xFF58D98C),
+                                    modifier = Modifier.size(23.dp)
+                                )
+                                Spacer(Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        "সম্ভাব্য ঋণমুক্তির তারিখ",
+                                        color = Color.White.copy(alpha = 0.60f),
+                                        fontSize = 10.sp
+                                    )
+                                    Text(
+                                        MyJourneyCalculator.formatDate(it),
+                                        color = Color.White,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+
                     Text(
                         "আয় ও খরচ গত ৩ মাসের transaction থেকে অটো হিসাব করা হচ্ছে।",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.White.copy(alpha = 0.48f),
                         fontSize = 10.sp
                     )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(
+                            onClick = { showDetails = false },
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = Color.White.copy(alpha = 0.72f)
+                            )
+                        ) {
+                            Text("বন্ধ", fontWeight = FontWeight.SemiBold)
+                        }
+                        TextButton(
+                            onClick = {
+                                showDetails = false
+                                onEdit(settings)
+                            },
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = Color(0xFF9FC4FF)
+                            )
+                        ) {
+                            Text("তারিখ Edit", fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
-            },
-            confirmButton = {
-                androidx.compose.material3.TextButton(onClick = { showDetails = false; onEdit(settings) }) {
-                    Text("তারিখ Edit")
-                }
-            },
-            dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { showDetails = false }) { Text("বন্ধ") }
             }
-        )
+        }
     }
 }
 
 @Composable
-private fun JourneyDetailRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+private fun JourneyMetricCard(
+    modifier: Modifier = Modifier,
+    label: String,
+    value: String,
+    emphasized: Boolean = false
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = if (emphasized) Color(0xFF173A29) else Color(0xFF30343D)
     ) {
-        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
-        Text(value, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+        Column(modifier = Modifier.padding(horizontal = 9.dp, vertical = 11.dp)) {
+            Text(
+                label,
+                color = Color.White.copy(alpha = 0.58f),
+                fontSize = 9.sp
+            )
+            Spacer(Modifier.height(3.dp))
+            Text(
+                value,
+                color = if (emphasized) Color(0xFF55D58A) else Color.White,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 1
+            )
+        }
     }
 }
