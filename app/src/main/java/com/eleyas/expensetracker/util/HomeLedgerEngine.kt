@@ -11,13 +11,27 @@ import com.eleyas.expensetracker.model.LoanPayment
 import com.eleyas.expensetracker.model.Transaction
 
 /**
- * Builds a Home ledger from existing records.
+ * Builds a Home ledger without rewriting existing records.
  *
- * No existing record is copied or rewritten. This prevents migration from
- * creating duplicate money movements. Ambiguous historical loan/lending
- * records are deliberately excluded until they are explicitly linked to Home.
+ * Historical loan/lending records are only included when they carry an
+ * explicit Home marker. This prevents double counting and accidental
+ * migration of personal money into the shared Home fund.
  */
 object HomeLedgerEngine {
+
+    private fun isHomeLoanPayment(payment: LoanPayment): Boolean {
+        if (payment.fundSource.equals("home", ignoreCase = true)) return true
+        val note = payment.note.lowercase()
+        return note.contains("বাড়িতে পাঠানো") || note.contains("বাড়িতে পাঠানো")
+    }
+
+    private fun isHomeLending(lending: LendingAccount): Boolean =
+        lending.fundSource.equals("home", ignoreCase = true) ||
+            lending.note.contains("[HOME]", ignoreCase = true)
+
+    private fun isHomeReturn(ret: LendingReturn, lending: LendingAccount?): Boolean =
+        ret.fundSource.equals("home", ignoreCase = true) ||
+            (lending != null && isHomeLending(lending))
 
     fun build(
         transactions: List<Transaction>,
@@ -56,16 +70,52 @@ object HomeLedgerEngine {
             }
         }
 
-        // Existing loan/lending records are not guessed as Home transactions.
-        // They can be linked explicitly in the next integration step.
-        @Suppress("UNUSED_VARIABLE")
-        val existingLoans = loans
-        @Suppress("UNUSED_VARIABLE")
-        val existingLoanPayments = loanPayments
-        @Suppress("UNUSED_VARIABLE")
-        val existingLendings = lendings
-        @Suppress("UNUSED_VARIABLE")
-        val existingLendingReturns = lendingReturns
+        val loanNames = loans.associateBy { it.id }
+        loanPayments.filter(::isHomeLoanPayment).forEach { payment ->
+            val loan = loanNames[payment.loanId]
+            entries += HomeLedgerEntry(
+                id = "loan_payment_home_${payment.id}",
+                date = payment.date,
+                title = "ঋণ পরিশোধ${loan?.name?.let { " — $it" } ?: ""}",
+                category = "ঋণ পরিশোধ",
+                amount = payment.amount,
+                direction = HomeLedgerDirection.OUT,
+                sourceType = HomeLedgerSourceType.LOAN_REPAYMENT_RECEIVED,
+                sourceId = payment.id.toString(),
+                note = payment.note
+            )
+        }
+
+        val lendingById = lendings.associateBy { it.id }
+        lendings.filter(::isHomeLending).forEach { lending ->
+            entries += HomeLedgerEntry(
+                id = "lending_home_${lending.id}",
+                date = lending.date,
+                title = "ধার দেওয়া — ${lending.person}",
+                category = "ধার দেওয়া",
+                amount = lending.amount,
+                direction = HomeLedgerDirection.OUT,
+                sourceType = HomeLedgerSourceType.LENDING_GIVEN,
+                sourceId = lending.id.toString(),
+                note = lending.note
+            )
+        }
+
+        lendingReturns.forEach { ret ->
+            val lending = lendingById[ret.lendingId]
+            if (!isHomeReturn(ret, lending)) return@forEach
+            entries += HomeLedgerEntry(
+                id = "lending_return_home_${ret.id}",
+                date = ret.date,
+                title = "ধার ফেরত${lending?.person?.let { " — $it" } ?: ""}",
+                category = "ধার ফেরত",
+                amount = ret.amount,
+                direction = HomeLedgerDirection.IN,
+                sourceType = HomeLedgerSourceType.LENDING_RETURN_RECEIVED,
+                sourceId = ret.id.toString(),
+                note = ret.note
+            )
+        }
 
         return entries.sortedByDescending { it.date }
     }
