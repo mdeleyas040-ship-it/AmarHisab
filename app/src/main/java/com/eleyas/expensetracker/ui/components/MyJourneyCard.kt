@@ -18,24 +18,32 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.eleyas.expensetracker.model.Transaction
+import com.eleyas.expensetracker.util.formatMoney
 
 @Composable
 fun MyJourneyCard(
     settings: MyJourneySettings,
     totalDebt: Double,
+    transactions: List<Transaction> = emptyList(),
     onSave: (MyJourneySettings) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showEditor by remember { mutableStateOf(false) }
 
-    val journey = MyJourneyCalculator.journeyLabel(settings.arrivalDate)
-    val availableForDebt = (settings.monthlySalary - settings.monthlyExpense).coerceAtLeast(0.0)
+    // Expense is now calculated automatically from the last 3 calendar months.
+    // It updates whenever the transaction list changes.
+    val monthlyExpense = remember(transactions) {
+        MyJourneyCalculator.averageMonthlyExpense(transactions, months = 3)
+    }
+    val availableForDebt = (settings.monthlySalary - monthlyExpense).coerceAtLeast(0.0)
     val repaymentDays = MyJourneyCalculator.repaymentDays(
         debt = totalDebt,
         salary = settings.monthlySalary,
-        monthlyExpense = settings.monthlyExpense
+        monthlyExpense = monthlyExpense
     )
     val debtFreeDate = repaymentDays?.let { MyJourneyCalculator.debtFreeDate(it) }
+    val journey = MyJourneyCalculator.journeyLabel(settings.arrivalDate)
 
     Card(
         modifier = modifier
@@ -123,8 +131,14 @@ fun MyJourneyCard(
             Spacer(Modifier.height(10.dp))
 
             Text(
-                "মাসিক খরচ: ৳ ${formatMoney(settings.monthlyExpense)}  •  ঋণে যাবে: ৳ ${formatMoney(availableForDebt)}",
-                color = Color.White.copy(alpha = 0.58f),
+                "অটো মাসিক খরচ (৩ মাসের গড়): ৳ ${formatMoney(monthlyExpense)}",
+                color = Color.White.copy(alpha = 0.68f),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                "ঋণে যাবে: ৳ ${formatMoney(availableForDebt)} / মাস",
+                color = Color.White.copy(alpha = 0.55f),
                 fontSize = 11.sp
             )
 
@@ -139,7 +153,7 @@ fun MyJourneyCard(
                 )
             } else if (repaymentDays == null) {
                 Text(
-                    "বেতন ও মাসিক খরচ ঠিক করে দিলে ঋণ পরিশোধের সময় দেখা যাবে।",
+                    "বেতন থেকে মাসিক খরচ বাদ দেওয়ার পর ঋণ পরিশোধের জন্য টাকা থাকছে না।",
                     color = Color.White.copy(alpha = 0.7f),
                     fontSize = 12.sp
                 )
@@ -214,14 +228,17 @@ private fun MyJourneyEditorDialog(
 ) {
     var arrivalDate by remember { mutableStateOf(initial.arrivalDate) }
     var salary by remember { mutableStateOf(if (initial.monthlySalary == 0.0) "" else initial.monthlySalary.toString()) }
-    var expense by remember { mutableStateOf(if (initial.monthlyExpense == 0.0) "" else initial.monthlyExpense.toString()) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("My Journey সেটআপ", fontWeight = FontWeight.ExtraBold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("আপনার নিয়মিত মাসিক খরচ আনুমানিক দিন।", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    "শুধু মালদ্বীপে আসার তারিখ ও মাসিক বেতন দিন। মাসিক খরচ অ্যাপ নিজে হিসাব করবে।",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 OutlinedTextField(
                     value = arrivalDate,
                     onValueChange = { arrivalDate = it },
@@ -237,24 +254,28 @@ private fun MyJourneyEditorDialog(
                     singleLine = true,
                     leadingIcon = { Icon(Icons.Default.Payments, null) }
                 )
-                OutlinedTextField(
-                    value = expense,
-                    onValueChange = { expense = it.filter { ch -> ch.isDigit() || ch == '.' } },
-                    label = { Text("মাসিক খরচ (BDT)") },
-                    singleLine = true,
-                    leadingIcon = { Icon(Icons.Default.Payments, null) }
-                )
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                ) {
+                    Text(
+                        "মাসিক খরচ: অটো • গত ৩ মাসের গড় expense থেকে হিসাব হবে",
+                        modifier = Modifier.padding(12.dp),
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         },
         confirmButton = {
             TextButton(onClick = {
                 val salaryValue = salary.toDoubleOrNull() ?: 0.0
-                val expenseValue = expense.toDoubleOrNull() ?: 0.0
                 onSave(
                     MyJourneySettings(
                         arrivalDate = arrivalDate.trim(),
                         monthlySalary = salaryValue.coerceAtLeast(0.0),
-                        monthlyExpense = expenseValue.coerceAtLeast(0.0)
+                        // Kept for backward compatibility with older saved settings.
+                        monthlyExpense = initial.monthlyExpense
                     )
                 )
             }) { Text("Save", fontWeight = FontWeight.Bold) }
