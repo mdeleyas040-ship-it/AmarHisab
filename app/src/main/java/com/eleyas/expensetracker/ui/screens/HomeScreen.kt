@@ -22,6 +22,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.eleyas.expensetracker.ui.components.HomeSummaryRow
 import com.eleyas.expensetracker.ui.components.SmartReminderCard
 import com.eleyas.expensetracker.ui.components.StatMiniBox
+import com.eleyas.expensetracker.ui.components.MyJourneyCard
+import com.eleyas.expensetracker.ui.components.MyJourneySettings
+import com.eleyas.expensetracker.ui.components.MyJourneyStorage
 import com.eleyas.expensetracker.ui.theme.*
 import com.eleyas.expensetracker.util.*
 import com.google.firebase.firestore.FirebaseFirestore
@@ -63,6 +66,10 @@ fun HomeScreen(
 ) {
     val firestore = remember { FirebaseFirestore.getInstance() }
     var serverNotice by remember { mutableStateOf<String?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var journeySettings by remember(currentUserId) {
+        mutableStateOf(MyJourneyStorage.load(context, currentUserId))
+    }
 
     val smartReminders = remember(transactions) {
         SmartReminderManager.getTransactionReminders(transactions)
@@ -131,6 +138,18 @@ fun HomeScreen(
                     onReminderClick = onReminderClick
                 )
             }
+        }
+
+        // My Journey
+        item {
+            MyJourneyCard(
+                settings = journeySettings,
+                totalDebt = loanRemaining,
+                onSave = { newSettings ->
+                    journeySettings = newSettings
+                    MyJourneyStorage.save(context, currentUserId, newSettings)
+                }
+            )
         }
 
         // Balance Card
