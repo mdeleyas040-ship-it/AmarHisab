@@ -2,7 +2,6 @@ package com.eleyas.expensetracker.ui.components
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,10 +14,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,7 +35,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun SearchOverlay(
     active: Boolean,
-    searchScope: Int, // 0: Global, 1: Income, 2: Expense, 4: Loans
+    searchScope: Int,
     transactions: List<Transaction>,
     loans: List<LoanAccount>,
     lendings: List<LendingAccount>,
@@ -47,8 +46,8 @@ fun SearchOverlay(
     usdToMvr: Double,
     onEditTransaction: (Transaction) -> Unit,
     onDeleteTransaction: (Transaction) -> Unit,
-    onShareResults: (String, Boolean) -> Unit, // Query, isPdf
-    onOpenLoan: (LoanAccount) -> Unit,
+    onShareResults: (String, Boolean) -> Unit,
+    onOpenLoan: (LoanAccount) -> Unit = {},
     onClose: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -95,9 +94,7 @@ fun SearchOverlay(
 
         Dialog(onDismissRequest = { selectedLoan = null }) {
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
                 shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF15181E)),
                 elevation = CardDefaults.cardElevation(defaultElevation = 18.dp)
@@ -106,11 +103,7 @@ fun SearchOverlay(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(Color(0xFF26364A), Color(0xFF171B22))
-                                )
-                            )
+                            .background(Brush.verticalGradient(listOf(Color(0xFF26364A), Color(0xFF171B22))))
                             .padding(22.dp)
                     ) {
                         Column {
@@ -120,19 +113,9 @@ fun SearchOverlay(
                                 verticalAlignment = Alignment.Top
                             ) {
                                 Column(Modifier.weight(1f)) {
-                                    Text(
-                                        "ঋণের বিস্তারিত",
-                                        color = Color(0xFF8FB7FF),
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    Text("ঋণের বিস্তারিত", color = Color(0xFF8FB7FF), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                     Spacer(Modifier.height(5.dp))
-                                    Text(
-                                        loan.name.ifBlank { "ঋণ" },
-                                        color = Color.White,
-                                        fontSize = 24.sp,
-                                        fontWeight = FontWeight.ExtraBold
-                                    )
+                                    Text(loan.name.ifBlank { "ঋণ" }, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
                                     Spacer(Modifier.height(4.dp))
                                     Text(
                                         if (loan.sourceType == "bank") "🏦 ব্যাংক ঋণ" else "👤 ব্যক্তিগত ঋণ",
@@ -140,10 +123,7 @@ fun SearchOverlay(
                                         fontSize = 11.sp
                                     )
                                 }
-                                Surface(
-                                    shape = RoundedCornerShape(15.dp),
-                                    color = Color.White.copy(alpha = 0.08f)
-                                ) {
+                                Surface(shape = RoundedCornerShape(15.dp), color = Color.White.copy(alpha = 0.08f)) {
                                     Icon(
                                         if (loan.sourceType == "bank") Icons.Default.AccountBalance else Icons.Default.Person,
                                         contentDescription = null,
@@ -154,20 +134,9 @@ fun SearchOverlay(
                             }
 
                             Spacer(Modifier.height(20.dp))
-
-                            Text(
-                                "বাকি ঋণ",
-                                color = Color.White.copy(alpha = 0.6f),
-                                fontSize = 11.sp
-                            )
+                            Text("বাকি ঋণ", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
                             Spacer(Modifier.height(3.dp))
-                            Text(
-                                "৳${formatMoney(remaining)}",
-                                color = Color.White,
-                                fontSize = 30.sp,
-                                fontWeight = FontWeight.ExtraBold
-                            )
-
+                            Text("৳${formatMoney(remaining)}", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold)
                             Spacer(Modifier.height(12.dp))
                             LinearProgressIndicator(
                                 progress = { progress },
@@ -177,7 +146,7 @@ fun SearchOverlay(
                             )
                             Spacer(Modifier.height(6.dp))
                             Text(
-                                "${formatMoney(paid)} পরিশোধ হয়েছে • ${formatMoney((loan.principal - paid).coerceAtLeast(0.0))} বাকি",
+                                "৳${formatMoney(paid)} পরিশোধ হয়েছে • ৳${formatMoney(remaining)} বাকি",
                                 color = Color.White.copy(alpha = 0.55f),
                                 fontSize = 10.sp
                             )
@@ -192,7 +161,6 @@ fun SearchOverlay(
                         }
 
                         Spacer(Modifier.height(14.dp))
-
                         SearchLoanInfoRow("শুরু", displayLoanDate(loan.startDate), Icons.Default.CalendarMonth)
                         if (loan.dueDate != null) SearchLoanInfoRow("পরিশোধের তারিখ", displayLoanDate(loan.dueDate), Icons.Default.Event)
                         if (loan.monthlyInstallment > 0.0) SearchLoanInfoRow("মাসিক কিস্তি", "৳${formatMoney(loan.monthlyInstallment)}", Icons.Default.Payments)
@@ -256,9 +224,7 @@ fun SearchOverlay(
         exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Surface(
@@ -308,21 +274,19 @@ fun SearchOverlay(
                                 usdToBdt = usdToBdt,
                                 usdToMvr = usdToMvr,
                                 walletName = wallet?.name ?: "",
-                                onEdit = {
-                                    onEditTransaction(it)
-                                    onClose()
-                                },
-                                onDelete = {
-                                    onDeleteTransaction(it)
-                                    onClose()
-                                }
+                                onEdit = { onEditTransaction(it); onClose() },
+                                onDelete = { onDeleteTransaction(it); onClose() }
                             )
                         }
 
                         if (filteredWallets.isNotEmpty()) {
                             item { Text("ব্যাংক / অ্যাকাউন্ট", fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 16.dp)) }
                             items(filteredWallets) { wallet ->
-                                Card(Modifier.fillMaxWidth().padding(vertical = 4.dp), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color(wallet.color.toLong() and 0xFFFFFFFFL))) {
+                                Card(
+                                    Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color(wallet.color.toLong() and 0xFFFFFFFFL))
+                                ) {
                                     Row(Modifier.padding(12.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                         Column {
                                             Text(wallet.name, color = Color.White, fontWeight = FontWeight.Bold)
@@ -393,11 +357,7 @@ fun SearchOverlay(
 
 @Composable
 private fun SearchLoanMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
-        color = Color.White.copy(alpha = 0.055f)
-    ) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White.copy(alpha = 0.055f)) {
         Column(Modifier.padding(11.dp)) {
             Text(label, color = Color.White.copy(alpha = 0.52f), fontSize = 9.sp)
             Spacer(Modifier.height(3.dp))
@@ -408,10 +368,7 @@ private fun SearchLoanMetric(label: String, value: String, modifier: Modifier = 
 
 @Composable
 private fun SearchLoanInfoRow(label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Surface(shape = RoundedCornerShape(10.dp), color = Color.White.copy(alpha = 0.055f)) {
             Icon(icon, null, tint = Color(0xFF8FB7FF), modifier = Modifier.padding(7.dp).size(16.dp))
         }
