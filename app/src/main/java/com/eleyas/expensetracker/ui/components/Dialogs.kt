@@ -282,6 +282,7 @@ fun AddTransactionDialog(
     var amount by remember(existingTransaction?.id) { mutableStateOf(existingTransaction?.amount?.let(::formatMoney) ?: "") }
     var selectedLoanId by remember(existingTransaction?.id) { mutableStateOf<Long?>(null) }
     var loanExpanded by remember { mutableStateOf(false) }
+    var showPremiumLoanSelector by remember { mutableStateOf(false) }
     var currency by remember(existingTransaction?.id) { mutableStateOf(existingTransaction?.currency ?: "BDT") }
     var category by remember(existingTransaction?.id) { mutableStateOf(existingTransaction?.category ?: when (type) { "income" -> "Salary"; "expense" -> "Food"; else -> "Family" }) }
     var selectedWalletId by remember(existingTransaction?.id) { mutableStateOf(existingTransaction?.walletId ?: wallets.firstOrNull()?.id ?: "default_cash") }
@@ -373,8 +374,6 @@ val cameraImageUri = remember { mutableStateOf<Uri?>(null) }
                     Spacer(Modifier.height(20.dp))
                     OutlinedTextField(value = amount, onValueChange = { amount = it }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), label = { Text("Amount", color = scheme.onSurfaceVariant) }, placeholder = { Text("যেমন: 100", color = scheme.onSurfaceVariant) }, leadingIcon = { Text("৳", color = accent, fontSize = 20.sp, fontWeight = FontWeight.Bold) }, singleLine = true, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(17.dp))
                     Spacer(Modifier.height(11.dp))
-                    
-                    // Wallet Selector
                     Box(modifier = Modifier.fillMaxWidth()) {
                         OutlinedButton(onClick = { walletExpanded = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(17.dp)) {
                             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -389,7 +388,6 @@ val cameraImageUri = remember { mutableStateOf<Uri?>(null) }
                         }
                     }
                     Spacer(Modifier.height(11.dp))
-
                     Box(modifier = Modifier.fillMaxWidth()) {
                         OutlinedButton(onClick = { currencyMenu = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(17.dp)) {
                             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -429,7 +427,6 @@ val cameraImageUri = remember { mutableStateOf<Uri?>(null) }
                     Spacer(Modifier.height(11.dp))
                     OutlinedTextField(value = reason, onValueChange = {
                         reason = it
-                        // নোট থেকে ক্যাটাগরি auto-detect (ম্যানুয়ালি সিলেক্ট করলেও পরে টাইপ করলে আবার হবে)
                         CategoryDetector.detect(type, it)?.let { detected ->
                             if (detected in categories) category = detected
                         }
@@ -453,12 +450,33 @@ val cameraImageUri = remember { mutableStateOf<Uri?>(null) }
                     }
                     if (receiptImage != null) { TextButton(onClick = { receiptImage = null }, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text("Remove Receipt", color = ExpenseRed, fontSize = 11.sp) } }
                     if (type == "home" && loans.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(18.dp)); Text(text = "🏦 এই টাকার অংশ কি Loan payment?", fontWeight = FontWeight.Bold, fontSize = 14.sp); Spacer(modifier = Modifier.height(8.dp))
-                        Box {
-                            OutlinedButton(onClick = { loanExpanded = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(17.dp)) { Text(selectedLoanId?.let { id -> loans.firstOrNull { it.id == id }?.name ?: "Loan নির্বাচন করুন" } ?: "Loan নির্বাচন করুন") }
-                            DropdownMenu(expanded = loanExpanded, onDismissRequest = { loanExpanded = false }) { loans.forEach { loan -> DropdownMenuItem(text = { Text(loan.name) }, onClick = { selectedLoanId = loan.id; loanExpanded = false }) } }
+                        Spacer(modifier = Modifier.height(18.dp))
+                        Text(text = "🏦 এই টাকার অংশ কি Loan payment?", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = { showPremiumLoanSelector = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(17.dp)
+                        ) {
+                            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.AccountBalanceWallet, contentDescription = null, modifier = Modifier.size(19.dp), tint = accent)
+                                Spacer(Modifier.width(10.dp))
+                                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+                                    Text("Loan", color = scheme.onSurfaceVariant, fontSize = 11.sp)
+                                    Text(
+                                        selectedLoanId?.let { id -> loans.firstOrNull { it.id == id }?.name }
+                                            ?: "Loan নির্বাচন করুন",
+                                        color = scheme.onSurface,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Text("⌄", color = accent, fontSize = 20.sp)
+                            }
                         }
-                        if (selectedLoanId != null) { Spacer(Modifier.height(10.dp)); OutlinedTextField(value = loanPaymentAmount, onValueChange = { loanPaymentAmount = it }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(17.dp), label = { Text("এই Loan-এ কত টাকা দিলেন?") }, placeholder = { Text("যেমন 20000") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)) }
+                        if (selectedLoanId != null) {
+                            Spacer(Modifier.height(10.dp))
+                            OutlinedTextField(value = loanPaymentAmount, onValueChange = { loanPaymentAmount = it }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(17.dp), label = { Text("এই Loan-এ কত টাকা দিলেন?") }, placeholder = { Text("যেমন 20000") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                        }
                     }
                     Spacer(Modifier.height(20.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
@@ -476,6 +494,51 @@ val cameraImageUri = remember { mutableStateOf<Uri?>(null) }
                             Text(if (existingTransaction != null) "Update করুন" else "সংরক্ষণ করুন", fontWeight = FontWeight.Bold)
                         }
                     }
+                }
+            }
+        }
+    }
+
+    if (showPremiumLoanSelector) {
+        Dialog(onDismissRequest = { showPremiumLoanSelector = false }) {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(containerColor = scheme.surface),
+                elevation = CardDefaults.cardElevation(12.dp)
+            ) {
+                Column(Modifier.fillMaxWidth().padding(18.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            modifier = Modifier.size(46.dp),
+                            shape = CircleShape,
+                            color = accent.copy(alpha = 0.14f)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Person, contentDescription = null, tint = accent)
+                            }
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Loan নির্বাচন করুন", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+                            Text("নাম, পরিশোধিত ও বাকি টাকা দেখে নির্বাচন করুন", fontSize = 11.sp, color = scheme.onSurfaceVariant)
+                        }
+                    }
+                    Spacer(Modifier.height(14.dp))
+                    PremiumLoanSelector(
+                        loans = loans,
+                        loanPayments = loanPayments,
+                        selectedLoanId = selectedLoanId,
+                        onLoanSelected = { id ->
+                            selectedLoanId = id
+                            showPremiumLoanSelector = false
+                        }
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    TextButton(
+                        onClick = { showPremiumLoanSelector = false },
+                        modifier = Modifier.align(Alignment.End)
+                    ) { Text("বাতিল") }
                 }
             }
         }
@@ -583,7 +646,6 @@ fun LoanDialog(
                     Spacer(Modifier.height(10.dp))
                     OutlinedTextField(value = installment, onValueChange = { installment = it }, label = { Text("মাসিক কিস্তি (না থাকলে 0)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(10.dp))
-                    
                     Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = {
                             val calendar = Calendar.getInstance()
@@ -595,7 +657,6 @@ fun LoanDialog(
                                 Text(date, fontSize = 12.sp)
                             }
                         }
-                        
                         OutlinedButton(onClick = {
                             val calendar = Calendar.getInstance()
                             try { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(dueDate.ifBlank { date })?.let { calendar.time = it } } catch (_: Exception) {}
@@ -607,7 +668,6 @@ fun LoanDialog(
                             }
                         }
                     }
-                    
                     Spacer(Modifier.height(10.dp))
                     OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("নোট") }, maxLines = 3, modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(16.dp))
@@ -684,7 +744,6 @@ fun LendingDialog(onDismiss: () -> Unit, onSave: (String, Double, String, String
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(value = amount, onValueChange = { amount = it }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), label = { Text("ধারের টাকা") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(10.dp))
-                
                 Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = { val calendar = Calendar.getInstance(); DatePickerDialog(context, { _, year, month, day -> date = "%02d/%02d/%04d".format(day, month + 1, year) }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show() }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) { 
                         Column(horizontalAlignment = Alignment.Start) {
@@ -699,7 +758,6 @@ fun LendingDialog(onDismiss: () -> Unit, onSave: (String, Double, String, String
                         }
                     }
                 }
-                
                 Spacer(Modifier.height(10.dp)); OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("নোট") }, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(14.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -768,10 +826,8 @@ fun WalletDialog(
                     Text(if (existingWallet == null) "নতুন অ্যাকাউন্ট যোগ করুন" else "অ্যাকাউন্ট এডিট করুন", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
                 }
                 Spacer(Modifier.height(16.dp))
-                
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("অ্যাকাউন্টের নাম (যেমন: My Bank)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(10.dp))
-                
                 Box {
                     OutlinedButton(onClick = { typeExpanded = true }, modifier = Modifier.fillMaxWidth()) {
                         Text("ধরন: $type")
@@ -781,10 +837,8 @@ fun WalletDialog(
                     }
                 }
                 Spacer(Modifier.height(10.dp))
-                
                 OutlinedTextField(value = initialBalance, onValueChange = { initialBalance = it }, label = { Text("শুরুর ব্যালেন্স (ঐচ্ছিক)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(16.dp))
-                
                 Text("রঙ নির্বাচন করুন:", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -798,7 +852,6 @@ fun WalletDialog(
                         ) {}
                     }
                 }
-                
                 Spacer(Modifier.height(24.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     if (existingWallet != null) {
