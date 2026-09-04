@@ -67,6 +67,7 @@ fun HomeScreen(
     val context = LocalContext.current
     val firestore = remember { FirebaseFirestore.getInstance() }
     val vm: MainViewModel = viewModel()
+    val displayedBalance = vm.sourceAwareBalance
     var serverNotice by remember { mutableStateOf<String?>(null) }
     var showHomeMoneyFlow by remember { mutableStateOf(false) }
     var debtMode by rememberSaveable { mutableStateOf(0) }
@@ -115,7 +116,7 @@ fun HomeScreen(
                     Box(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color(0xFF1E222A), Color(0xFF12141A))))) {
                         Column(Modifier.fillMaxWidth().padding(CardPadding)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                                Column { Text("মোট ব্যালেন্স", color = AccentGreen.copy(alpha=.8f), fontSize = 12.sp, fontWeight = FontWeight.Medium); Spacer(Modifier.height(4.dp)); Text("৳ ${formatMoney(balance)}", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold); Text("বাংলাদেশি টাকা (BDT)", color = Color.White.copy(alpha=.45f), fontSize = 10.sp) }
+                                Column { Text("মোট ব্যালেন্স", color = AccentGreen.copy(alpha=.8f), fontSize = 12.sp, fontWeight = FontWeight.Medium); Spacer(Modifier.height(4.dp)); Text("৳ ${formatMoney(displayedBalance)}", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold); Text("বাংলাদেশি টাকা (BDT)", color = Color.White.copy(alpha=.45f), fontSize = 10.sp) }
                                 Surface(Modifier.size(50.dp), RoundedCornerShape(14.dp), color = AccentGreen.copy(alpha=.1f)) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.AccountBalanceWallet, null, tint = AccentGreen, modifier = Modifier.size(28.dp)) } }
                             }
                             Spacer(Modifier.height(24.dp))
