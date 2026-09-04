@@ -33,9 +33,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.eleyas.expensetracker.ui.screens.HelpScreen
 
 @Composable
@@ -52,20 +52,21 @@ fun AmarHisabTopMenu(
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismiss,
-        modifier = Modifier.width(285.dp),
-        shape = RoundedCornerShape(20.dp),
-        tonalElevation = 6.dp,
-        shadowElevation = 12.dp
+        modifier = Modifier.width(280.dp),
+        shape = RoundedCornerShape(18.dp),
+        tonalElevation = 5.dp,
+        shadowElevation = 10.dp
     ) {
+        // Compact Telegram-style header.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 14.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
                 modifier = Modifier
-                    .size(46.dp)
+                    .size(44.dp)
                     .clip(CircleShape),
                 color = MaterialTheme.colorScheme.primaryContainer,
                 shape = CircleShape
@@ -74,11 +75,11 @@ fun AmarHisabTopMenu(
                     Icons.Default.AccountBalanceWallet,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(11.dp)
+                    modifier = Modifier.padding(10.dp)
                 )
             }
 
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(11.dp))
 
             Column {
                 Text(
@@ -96,40 +97,28 @@ fun AmarHisabTopMenu(
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-        TopMenuItem(
-            icon = Icons.Default.Groups,
-            title = "পরিবার শেয়ার",
-            onClick = { onDismiss(); onFamilyShare() }
-        )
-        TopMenuItem(
-            icon = Icons.Default.CalendarMonth,
-            title = "ক্যালেন্ডার",
-            onClick = { onDismiss(); onCalendar() }
-        )
-        TopMenuItem(
-            icon = Icons.Default.ShoppingCart,
-            title = "বাজারের ফর্দ",
-            onClick = { onDismiss(); onShoppingList() }
-        )
+        TopMenuItem(Icons.Default.Groups, "পরিবার শেয়ার") {
+            onDismiss(); onFamilyShare()
+        }
+        TopMenuItem(Icons.Default.CalendarMonth, "ক্যালেন্ডার") {
+            onDismiss(); onCalendar()
+        }
+        TopMenuItem(Icons.Default.ShoppingCart, "বাজারের ফর্দ") {
+            onDismiss(); onShoppingList()
+        }
 
         HorizontalDivider(
-            modifier = Modifier.padding(vertical = 5.dp),
+            modifier = Modifier.padding(vertical = 3.dp),
             color = MaterialTheme.colorScheme.outlineVariant
         )
 
-        TopMenuItem(
-            icon = Icons.Default.HelpOutline,
-            title = "হেল্প ও গাইড",
-            onClick = {
-                onDismiss()
-                showHelp = true
-            }
-        )
-        TopMenuItem(
-            icon = Icons.Default.Settings,
-            title = "সেটিংস",
-            onClick = { onDismiss(); onSettings() }
-        )
+        TopMenuItem(Icons.Default.HelpOutline, "হেল্প ও গাইড") {
+            onDismiss()
+            showHelp = true
+        }
+        TopMenuItem(Icons.Default.Settings, "সেটিংস") {
+            onDismiss(); onSettings()
+        }
     }
 
     if (showHelp) {
@@ -163,7 +152,7 @@ private fun TopMenuItem(
                 icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(22.dp)
+                modifier = Modifier.size(21.dp)
             )
         },
         text = {
@@ -173,6 +162,6 @@ private fun TopMenuItem(
             )
         },
         onClick = onClick,
-        modifier = Modifier.padding(horizontal = 5.dp)
+        modifier = Modifier.padding(horizontal = 4.dp)
     )
 }

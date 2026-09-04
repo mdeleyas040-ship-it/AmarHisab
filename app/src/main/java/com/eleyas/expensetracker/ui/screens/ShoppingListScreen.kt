@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import com.eleyas.expensetracker.model.ShoppingItem
+import com.eleyas.expensetracker.ui.components.WarningDialog
 import com.eleyas.expensetracker.ui.theme.AccentGreen
 import com.eleyas.expensetracker.ui.theme.ExpenseRed
 import com.eleyas.expensetracker.util.formatMoney
@@ -43,6 +44,8 @@ fun ShoppingListScreen(
 ) {
     var showDialog by remember { mutableStateOf(false) }
     var editingItem by remember { mutableStateOf<ShoppingItem?>(null) }
+    var itemToRemove by remember { mutableStateOf<ShoppingItem?>(null) }
+    var showClearAddedWarning by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     val totalItems = items.size
@@ -148,7 +151,7 @@ fun ShoppingListScreen(
                     item = item,
                     onToggle = { onToggle(item.id) },
                     onEdit = { editingItem = item; showDialog = true },
-                    onRemove = { onRemove(item) }
+                    onRemove = { itemToRemove = item }
                 )
             }
 
@@ -158,7 +161,7 @@ fun ShoppingListScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        TextButton(onClick = onClearAdded) {
+                        TextButton(onClick = { showClearAddedWarning = true }) {
                             Icon(Icons.Default.DeleteSweep, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(6.dp))
                             Text("কেনা শেষ হওয়া $addedCount টি মুছুন")
@@ -182,6 +185,34 @@ fun ShoppingListScreen(
                 showDialog = false
                 editingItem = null
             }
+        )
+    }
+
+    itemToRemove?.let { item ->
+        WarningDialog(
+            title = "আইটেম মুছে ফেলবেন?",
+            message = "${item.name}\n${currencySymbol(item.currency)}${formatMoney(item.amount)}\n\nএই বাজারের আইটেমটি তালিকা থেকে স্থায়ীভাবে মুছে যাবে।",
+            confirmText = "মুছে ফেলুন",
+            dismissText = "বাতিল",
+            onConfirm = {
+                itemToRemove = null
+                onRemove(item)
+            },
+            onDismiss = { itemToRemove = null }
+        )
+    }
+
+    if (showClearAddedWarning) {
+        WarningDialog(
+            title = "কেনা শেষ হওয়া আইটেমগুলো মুছবেন?",
+            message = "$addedCount টি কেনা শেষ হওয়া আইটেম তালিকা থেকে স্থায়ীভাবে মুছে যাবে।\n\nএই কাজটি করার আগে নিশ্চিত হয়ে নিন।",
+            confirmText = "মুছে ফেলুন",
+            dismissText = "বাতিল",
+            onConfirm = {
+                showClearAddedWarning = false
+                onClearAdded()
+            },
+            onDismiss = { showClearAddedWarning = false }
         )
     }
 }

@@ -1,5 +1,6 @@
 package com.eleyas.expensetracker.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eleyas.expensetracker.ui.components.HomeSummaryRow
 import com.eleyas.expensetracker.ui.components.SmartReminderCard
 import com.eleyas.expensetracker.ui.components.StatMiniBox
@@ -27,6 +29,7 @@ import com.eleyas.expensetracker.ui.components.MyJourneySettings
 import com.eleyas.expensetracker.ui.components.MyJourneyStorage
 import com.eleyas.expensetracker.ui.theme.*
 import com.eleyas.expensetracker.util.*
+import com.eleyas.expensetracker.viewmodel.MainViewModel
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
@@ -65,6 +68,7 @@ fun HomeScreen(
     onReminderClick: (SmartReminder) -> Unit = {}
 ) {
     val firestore = remember { FirebaseFirestore.getInstance() }
+    val appViewModel: MainViewModel = viewModel()
     var serverNotice by remember { mutableStateOf<String?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
     var journeySettings by remember(currentUserId) {
@@ -85,30 +89,29 @@ fun HomeScreen(
             }
     }
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(
-            horizontal = ScreenHorizontalPadding,
-            vertical = 16.dp
-        ),
-        verticalArrangement = Arrangement.spacedBy(SectionSpacing)
-    ) {
+    BackHandler(enabled = showHomeMoneyFlow) {
+        showHomeMoneyFlow = false
+    }
 
-        // Server Notice
-        if (serverNotice != null) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Blue.copy(alpha = 0.1f)
-                    )
-                ) {
-                    Row(
-                        Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+    Box(modifier = modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            contentPadding = PaddingValues(
+                horizontal = ScreenHorizontalPadding,
+                vertical = 16.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(SectionSpacing)
+        ) {
+            if (serverNotice != null) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Blue.copy(alpha = 0.1f)
+                        )
                     ) {
                         Icon(
                             Icons.Default.Campaign,
@@ -126,53 +129,43 @@ fun HomeScreen(
                     }
                 }
             }
-        }
 
-        // Smart Reminder
-        if (smartReminders.isNotEmpty()) {
-            item {
-                SmartReminderCard(
-                    reminders = smartReminders,
-                    onReminderClick = onReminderClick
-                )
+            if (smartReminders.isNotEmpty()) {
+                item {
+                    SmartReminderCard(
+                        reminders = smartReminders,
+                        onReminderClick = onReminderClick
+                    )
+                }
             }
-        }
 
-        // Balance Card
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(
-                        10.dp,
-                        shape = RoundedCornerShape(CardRadius),
-                        ambientColor = Color.Black,
-                        spotColor = AccentGreen.copy(alpha = 0.4f)
-                    ),
-                shape = RoundedCornerShape(CardRadius),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF181B21)
-                ),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 0.dp
-                )
-            ) {
-                Box(
+            item {
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color(0xFF1E222A),
-                                    Color(0xFF12141A)
+                        .shadow(
+                            10.dp,
+                            shape = RoundedCornerShape(CardRadius),
+                            ambientColor = Color.Black,
+                            spotColor = AccentGreen.copy(alpha = 0.4f)
+                        ),
+                    shape = RoundedCornerShape(CardRadius),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF181B21)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color(0xFF1E222A),
+                                        Color(0xFF12141A)
+                                    )
                                 )
                             )
-                        )
-                ) {
-                    Column(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(CardPadding)
                     ) {
                         Row(
                             Modifier.fillMaxWidth(),
@@ -215,12 +208,22 @@ fun HomeScreen(
                                 }
                             }
                         }
+                    }
+                }
+            }
 
-                        Spacer(Modifier.height(24.dp))
+            item {
+                Text(
+                    "দ্রুত অ্যাকশন",
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             StatMiniBox(Modifier.weight(1f), "আয়", totalIncome, IncomeGreen)
                             StatMiniBox(Modifier.weight(1f), "খরচ", totalExpense, ExpenseRed)
@@ -294,12 +297,13 @@ fun HomeScreen(
                                     color = Color.White.copy(alpha = 0.7f),
                                     fontSize = 10.sp
                                 )
+                            } else {
+                                Spacer(Modifier.weight(1f))
                             }
                         }
                     }
                 }
             }
-        }
 
         // Quick Actions Title
         item {
@@ -347,13 +351,7 @@ fun HomeScreen(
                                 color = actions[i + 1].first.third,
                                 onClick = actions[i + 1].second
                             )
-                        } else {
-                            Spacer(Modifier.weight(1f))
                         }
-                    }
-                }
-            }
-        }
 
         // My Journey — directly below Quick Actions
         item {
@@ -386,10 +384,11 @@ fun HomeScreen(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            "বাড়ির হিসাব",
-                            fontSize = 17.sp,
+                            "বিস্তারিত দেখুন  →",
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.align(Alignment.End)
                         )
                     }
                     Spacer(Modifier.height(10.dp))
@@ -404,11 +403,10 @@ fun HomeScreen(
             }
         }
 
-        // Loan & Lending
-        item {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+        if (showHomeMoneyFlow) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
             ) {
                 Card(
                     modifier = Modifier.weight(1f),

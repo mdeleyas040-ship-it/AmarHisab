@@ -17,7 +17,7 @@ data class Transaction(
 data class Wallet(
     val id: String,
     val name: String,
-    val type: String, // "Cash", "Bank", "Bikash", "Nagad", "Card"
+    val type: String,
     val initialBalance: Double = 0.0,
     val currency: String = "BDT",
     val color: Int = 0xFF4CAF50.toInt()
@@ -43,7 +43,7 @@ data class LoanBorrowing(
 )
 
 data class CategoryBudget(
-    val month: String,       // MM/yyyy
+    val month: String,
     val category: String,
     val limit: Double
 )
@@ -67,7 +67,8 @@ data class LoanPayment(
     val loanId: Long,
     val amount: Double,
     val date: String,
-    val note: String
+    val note: String,
+    val fundSource: String = "personal"
 )
 
 data class LendingAccount(
@@ -76,7 +77,8 @@ data class LendingAccount(
     val amount: Double,
     val date: String,
     val note: String,
-    val dueDate: String? = null
+    val dueDate: String? = null,
+    val fundSource: String = "personal"
 )
 
 data class LendingReturn(
@@ -84,7 +86,8 @@ data class LendingReturn(
     val lendingId: Long,
     val amount: Double,
     val date: String,
-    val note: String
+    val note: String,
+    val fundSource: String = "personal"
 )
 
 data class LoanInterestTerms(
