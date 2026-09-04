@@ -103,10 +103,10 @@ fun PremiumLoanSelectorItem(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("পরিশোধিত ৳${formatMoney(paid)}", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
                 Text(
-                    if (remaining <= 0.0) "সম্পূর্ণ পরিশোধিত" else "বাকি ৳${formatMoney(remaining)}",
+                    "বাকি ৳${formatMoney(remaining)}",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (remaining <= 0.0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                    color = MaterialTheme.colorScheme.error
                 )
             }
             Spacer(Modifier.height(6.dp))
@@ -130,7 +130,18 @@ fun PremiumLoanSelector(
     onDismiss: () -> Unit = {}
 ) {
     var query by remember { mutableStateOf("") }
-    val filteredLoans = loans.filter { it.name.contains(query.trim(), ignoreCase = true) }
+
+    // Fully paid loans are intentionally excluded: they cannot receive
+    // another payment, so they should not appear in the Loan selector.
+    val activeLoans = loans.filter { loan ->
+        val paid = loanPayments.filter { it.loanId == loan.id }.sumOf { it.amount }
+        val remaining = (loan.principal - paid).coerceAtLeast(0.0)
+        remaining > 0.0
+    }
+
+    val filteredLoans = activeLoans.filter {
+        it.name.contains(query.trim(), ignoreCase = true)
+    }
 
     Column(Modifier.fillMaxWidth()) {
         OutlinedTextField(
