@@ -125,6 +125,16 @@ fun LoansScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
+            PremiumLoansDashboard(
+                totalBorrowed = totalBorrowed,
+                totalPaid = totalPaid,
+                totalRemaining = totalRemaining,
+                totalLent = totalLent,
+                totalReturned = totalReturned,
+                totalReceivable = totalReceivable
+            )
+        }
+        item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SmallSummaryCard(Modifier.weight(1f), "মোট নেওয়া", totalBorrowed, Blue, Icons.Default.CreditCard)
                 SmallSummaryCard(Modifier.weight(1f), "পরিশোধ", totalPaid, IncomeGreen, Icons.Default.CheckCircle)
