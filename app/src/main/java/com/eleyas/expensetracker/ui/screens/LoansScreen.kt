@@ -91,8 +91,16 @@ fun LoansScreen(
     val totalReceivable = (totalLent - totalReturned).coerceAtLeast(0.0)
 
     LazyColumn(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { SmallSummaryCard(Modifier.weight(1f), "মোট নেওয়া", totalBorrowed, Blue, Icons.Default.CreditCard); SmallSummaryCard(Modifier.weight(1f), "পরিশোধ", totalPaid, IncomeGreen, Icons.Default.CheckCircle); SmallSummaryCard(Modifier.weight(1f), "বাকি ঋণ", totalRemaining, ExpenseRed, Icons.Default.Error) } }
-        item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { SmallSummaryCard(Modifier.weight(1f), "কাউকে দেওয়া", totalLent, Blue, Icons.Default.Handshake); SmallSummaryCard(Modifier.weight(1f), "ফেরত পেলাম", totalReturned, IncomeGreen, Icons.Default.Paid); SmallSummaryCard(Modifier.weight(1f), "পাওনা আছে", totalReceivable, ExpenseRed, Icons.Default.Schedule) } }
+        item {
+            PremiumLoansDashboard(
+                totalBorrowed = totalBorrowed,
+                totalPaid = totalPaid,
+                totalRemaining = totalRemaining,
+                totalLent = totalLent,
+                totalReturned = totalReturned,
+                totalReceivable = totalReceivable
+            )
+        }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = onAddLoan, Modifier.weight(1f).height(50.dp), shape = RoundedCornerShape(14.dp), colors = ButtonDefaults.buttonColors(containerColor = Green)) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.Add, null, Modifier.size(18.dp)); Spacer(Modifier.width(4.dp)); Text("ঋণ যোগ করুন", fontWeight = FontWeight.Bold) } }
