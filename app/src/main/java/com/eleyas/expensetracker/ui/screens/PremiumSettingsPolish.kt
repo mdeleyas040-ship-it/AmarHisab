@@ -14,10 +14,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
@@ -189,25 +189,28 @@ fun PremiumSettingsPolish(
         }
 
         item { PolishSection("অ্যাকাউন্ট") }
-        item { PolishRow(Icons.Default.Person, "ব্যক্তিগত তথ্য", "নাম ও অ্যাকাউন্টের তথ্য দেখুন বা পরিবর্তন করুন") { onSubViewChange("personal") } }
+        item { PolishRow(Icons.Default.Person, "ব্যক্তিগত তথ্য", "নাম ও অ্যাকাউন্টের তথ্য দেখুন বা পরিবর্তন করুন", onClick = { onSubViewChange("personal") }) }
 
         item { PolishSection("হিসাব ও মুদ্রা") }
-        item { PolishRow(Icons.Default.CurrencyExchange, "মুদ্রা ও এক্সচেঞ্জ রেট", if (usdToBdt > 0) "১ USD = ৳${"%.2f".format(usdToBdt)}" else "এক্সচেঞ্জ রেট সেট করুন") { onSubViewChange("currency") } }
+        item { PolishRow(Icons.Default.CurrencyExchange, "মুদ্রা ও এক্সচেঞ্জ রেট", if (usdToBdt > 0) "১ USD = ৳${"%.2f".format(usdToBdt)}" else "এক্সচেঞ্জ রেট সেট করুন", onClick = { onSubViewChange("currency") }) }
         item { PolishRow(Icons.Default.Assessment, "মাসিক বাজেট", "ক্যাটাগরি অনুযায়ী খরচের সীমা নির্ধারণ করুন", onBudget) }
         item { PolishRow(Icons.Default.ContentCopy, "আর্থিক সারসংক্ষেপ কপি", "আপনার হিসাবের সারাংশ ক্লিপবোর্ডে কপি করুন", onCopy) }
 
         item { PolishSection("নোটিফিকেশন ও স্মার্ট ফিচার") }
         item { PolishSwitch(Icons.Default.Lightbulb, "দৈনিক ফিন্যান্সিয়াল টিপস", "প্রতিদিন নতুন আর্থিক টিপস দেখান", com.eleyas.expensetracker.util.DailyFinancialTips.isDailyTipEnabled(context)) { com.eleyas.expensetracker.util.DailyFinancialTips.setDailyTipEnabled(context, it) } }
         item { PolishRow(Icons.Default.FormatQuote, "আজকের টিপস দেখুন", "আজকের ফিন্যান্সিয়াল টিপস এখনই দেখুন", onDailyTipClick) }
-        item { PolishSwitch(Icons.Default.NotificationsActive, "দৈনিক খরচ রিমাইন্ডার", "প্রতিদিন রাত ৯টায় খরচের কথা মনে করিয়ে দিন", DailyReminderManager.isReminderEnabled(context)) { DailyReminderManager.setReminderEnabled(context, it); Toast.makeText(context, if (it) "রিমাইন্ডার চালু হয়েছে" else "রিমাইন্ডার বন্ধ হয়েছে", Toast.LENGTH_SHORT).show() } }
+        item { PolishSwitch(Icons.Default.NotificationsActive, "দৈনিক খরচ রিমাইন্ডার", "প্রতিদিন রাত ৯টায় খরচের কথা মনে করিয়ে দিন", DailyReminderManager.isReminderEnabled(context)) { enabled ->
+            DailyReminderManager.setReminderEnabled(context, enabled)
+            Toast.makeText(context, if (enabled) "রিমাইন্ডার চালু হয়েছে" else "রিমাইন্ডার বন্ধ হয়েছে", Toast.LENGTH_SHORT).show()
+        } }
         item { SmartReminderSettingsCard() }
-        item { PolishSwitch(Icons.Default.DateRange, "সাপ্তাহিক সারসংক্ষেপ", "সপ্তাহের শুরুতে খরচের সারাংশ দেখান", com.eleyas.expensetracker.util.RecapNotificationManager.isWeeklyRecapEnabled(context)) { com.eleyas.expensetracker.util.RecapNotificationManager.setWeeklyRecapEnabled(context, it) } }
-        item { PolishSwitch(Icons.Default.EventNote, "মাসিক সারসংক্ষেপ", "মাসের শুরুতে খরচের সারাংশ দেখান", com.eleyas.expensetracker.util.RecapNotificationManager.isMonthlyRecapEnabled(context)) { com.eleyas.expensetracker.util.RecapNotificationManager.setMonthlyRecapEnabled(context, it) } }
-        item { PolishSwitch(Icons.Default.VolumeUp, "সাউন্ড ও ভাইব্রেশন", "লেনদেনের সময় শব্দ ও ভাইব্রেশন চালু রাখুন", com.eleyas.expensetracker.util.SoundHapticHelper.isSoundHapticEnabled(context)) { com.eleyas.expensetracker.util.SoundHapticHelper.setSoundHapticEnabled(context, it) } }
+        item { PolishSwitch(Icons.Default.DateRange, "সাপ্তাহিক সারসংক্ষেপ", "সপ্তাহের শুরুতে খরচের সারাংশ দেখান", com.eleyas.expensetracker.util.RecapNotificationManager.isWeeklyRecapEnabled(context)) { enabled -> com.eleyas.expensetracker.util.RecapNotificationManager.setWeeklyRecapEnabled(context, enabled) } }
+        item { PolishSwitch(Icons.Default.EventNote, "মাসিক সারসংক্ষেপ", "মাসের শুরুতে খরচের সারাংশ দেখান", com.eleyas.expensetracker.util.RecapNotificationManager.isMonthlyRecapEnabled(context)) { enabled -> com.eleyas.expensetracker.util.RecapNotificationManager.setMonthlyRecapEnabled(context, enabled) } }
+        item { PolishSwitch(Icons.Default.VolumeUp, "সাউন্ড ও ভাইব্রেশন", "লেনদেনের সময় শব্দ ও ভাইব্রেশন চালু রাখুন", com.eleyas.expensetracker.util.SoundHapticHelper.isSoundHapticEnabled(context)) { enabled -> com.eleyas.expensetracker.util.SoundHapticHelper.setSoundHapticEnabled(context, enabled) } }
 
         item { PolishSection("ডেটা ও ব্যাকআপ") }
-        item { PolishRow(Icons.Default.CloudUpload, "ক্লাউড ব্যাকআপ ও রিস্টোর", "ডেটা নিরাপদে সংরক্ষণ ও প্রয়োজন হলে ফিরিয়ে আনুন") { onSubViewChange("backup") } }
-        item { PolishRow(Icons.Default.FolderZip, "JSON ব্যাকআপ", "ডেটা ফাইল এক্সপোর্ট বা ইমপোর্ট করুন") { onSubViewChange("json_backup") } }
+        item { PolishRow(Icons.Default.CloudUpload, "ক্লাউড ব্যাকআপ ও রিস্টোর", "ডেটা নিরাপদে সংরক্ষণ ও প্রয়োজন হলে ফিরিয়ে আনুন", onClick = { onSubViewChange("backup") }) }
+        item { PolishRow(Icons.Default.FolderZip, "JSON ব্যাকআপ", "ডেটা ফাইল এক্সপোর্ট বা ইমপোর্ট করুন", onClick = { onSubViewChange("json_backup") }) }
         item { PolishRow(Icons.Default.TableChart, "CSV রিপোর্ট", "Excel বা Sheets-এ ব্যবহার করার জন্য রিপোর্ট তৈরি করুন", onExportCsv) }
         item { PolishRow(Icons.Default.PictureAsPdf, "PDF রিপোর্ট", "প্রফেশনাল রিপোর্ট তৈরি করুন", onExportPdf) }
 
@@ -226,7 +229,7 @@ fun PremiumSettingsPolish(
             Text(
                 "Amar Hisab • v$versionName",
                 modifier = Modifier.fillMaxWidth().padding(top = 22.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                textAlign = TextAlign.Center,
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -239,8 +242,12 @@ fun PremiumSettingsPolish(
             icon = { Icon(Icons.Default.Logout, null) },
             title = { Text("লগআউট করবেন?") },
             text = { Text("আপনি কি এই অ্যাকাউন্ট থেকে লগআউট করতে চান?") },
-            confirmButton = { TextButton(onClick = { showLogoutConfirm = false; onLogout() }) { Text("লগআউট") } },
-            dismissButton = { TextButton(onClick = { showLogoutConfirm = false }) { Text("বাতিল") } }
+            confirmButton = {
+                TextButton(onClick = { showLogoutConfirm = false; onLogout() }) { Text("লগআউট") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutConfirm = false }) { Text("বাতিল") }
+            }
         )
     }
 
@@ -250,8 +257,12 @@ fun PremiumSettingsPolish(
             icon = { Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error) },
             title = { Text("ডেটা রিসেট করবেন?") },
             text = { Text("এই কাজ করলে আপনার সংরক্ষিত হিসাবের ডেটা মুছে যেতে পারে। নিশ্চিত না হলে বাতিল করুন।") },
-            confirmButton = { TextButton(onClick = { showResetConfirm = false; onReset() }) { Text("রিসেট করুন") } },
-            dismissButton = { TextButton(onClick = { showResetConfirm = false }) { Text("বাতিল") } }
+            confirmButton = {
+                TextButton(onClick = { showResetConfirm = false; onReset() }) { Text("রিসেট করুন") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetConfirm = false }) { Text("বাতিল") }
+            }
         )
     }
 }
@@ -304,7 +315,13 @@ private fun PolishRow(
 }
 
 @Composable
-private fun PolishSwitch(icon: ImageVector, title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+private fun PolishSwitch(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onChange: (Boolean) -> Unit
+) {
     Surface(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp),
         shape = RoundedCornerShape(16.dp),
@@ -313,7 +330,9 @@ private fun PolishSwitch(icon: ImageVector, title: String, subtitle: String, che
     ) {
         Row(Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Surface(Modifier.size(42.dp), shape = RoundedCornerShape(13.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = .10f)) {
-                Box(contentAlignment = Alignment.Center) { Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(21.dp)) }
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(21.dp))
+                }
             }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
