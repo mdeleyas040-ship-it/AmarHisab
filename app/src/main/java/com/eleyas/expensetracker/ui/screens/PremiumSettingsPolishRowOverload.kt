@@ -14,15 +14,15 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 
 /**
- * Overload for PremiumSettingsPolish calls that use named title/subtitle
- * arguments followed by a trailing click lambda.
+ * Compatibility overload for PremiumSettingsPolish calls that place the
+ * click lambda last as a trailing lambda after named title/subtitle values.
+ * Danger styling remains handled by the main PolishRow overload.
  */
 @Composable
 fun PolishRow(
     icon: ImageVector,
     title: String,
     subtitle: String,
-    danger: Boolean = false,
     onClick: () -> Unit
 ) {
     Surface(
@@ -39,15 +39,13 @@ fun PolishRow(
             Surface(
                 Modifier.size(42.dp),
                 shape = RoundedCornerShape(13.dp),
-                color = if (danger) MaterialTheme.colorScheme.error.copy(alpha = .10f)
-                else MaterialTheme.colorScheme.primary.copy(alpha = .10f)
+                color = MaterialTheme.colorScheme.primary.copy(alpha = .10f)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         icon,
                         null,
-                        tint = if (danger) MaterialTheme.colorScheme.error
-                        else MaterialTheme.colorScheme.primary,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(21.dp)
                     )
                 }
@@ -58,8 +56,7 @@ fun PolishRow(
                     title,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (danger) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     subtitle,
