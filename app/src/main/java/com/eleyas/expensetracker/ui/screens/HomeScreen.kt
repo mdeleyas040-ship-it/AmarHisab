@@ -24,9 +24,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eleyas.expensetracker.ui.components.HomeSummaryRow
 import com.eleyas.expensetracker.ui.components.SmartReminderCard
 import com.eleyas.expensetracker.ui.components.StatMiniBox
-import com.eleyas.expensetracker.ui.components.MyJourneyQuickSection
-import com.eleyas.expensetracker.ui.components.MyJourneySettings
-import com.eleyas.expensetracker.ui.components.MyJourneyStorage
 import com.eleyas.expensetracker.ui.theme.*
 import com.eleyas.expensetracker.util.*
 import com.eleyas.expensetracker.viewmodel.MainViewModel
@@ -70,10 +67,6 @@ fun HomeScreen(
     val firestore = remember { FirebaseFirestore.getInstance() }
     val appViewModel: MainViewModel = viewModel()
     var serverNotice by remember { mutableStateOf<String?>(null) }
-    val context = androidx.compose.ui.platform.LocalContext.current
-    var journeySettings by remember(currentUserId) {
-        mutableStateOf(MyJourneyStorage.load(context, currentUserId))
-    }
 
     val smartReminders = remember(transactions) {
         SmartReminderManager.getTransactionReminders(transactions)
@@ -119,7 +112,9 @@ fun HomeScreen(
                             tint = Blue,
                             modifier = Modifier.size(24.dp)
                         )
+
                         Spacer(Modifier.width(10.dp))
+
                         Text(
                             serverNotice!!,
                             fontSize = 12.sp,
@@ -167,6 +162,7 @@ fun HomeScreen(
                                 )
                             )
                     ) {
+
                         Row(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -180,25 +176,31 @@ fun HomeScreen(
                                     fontWeight = FontWeight.Medium,
                                     letterSpacing = 0.5.sp
                                 )
+
                                 Spacer(Modifier.height(4.dp))
+
                                 Text(
                                     "৳ ${formatMoney(balance)}",
                                     color = Color.White,
                                     fontSize = 32.sp,
                                     fontWeight = FontWeight.ExtraBold
                                 )
+
                                 Text(
                                     "বাংলাদেশি টাকা (BDT)",
                                     color = Color.White.copy(alpha = 0.4f),
                                     fontSize = 10.sp
                                 )
                             }
+
                             Surface(
                                 modifier = Modifier.size(50.dp),
                                 shape = RoundedCornerShape(14.dp),
                                 color = AccentGreen.copy(alpha = 0.1f)
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
+                                Box(
+                                    contentAlignment = Alignment.Center
+                                ) {
                                     Icon(
                                         Icons.Default.AccountBalanceWallet,
                                         contentDescription = null,
@@ -221,21 +223,42 @@ fun HomeScreen(
                 )
             }
 
+                        // Mini Stats Row
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            StatMiniBox(Modifier.weight(1f), "আয়", totalIncome, IncomeGreen)
-                            StatMiniBox(Modifier.weight(1f), "খরচ", totalExpense, ExpenseRed)
-                            StatMiniBox(Modifier.weight(1f), "বাড়িতে", totalHome, Blue)
+                            StatMiniBox(
+                                Modifier.weight(1f),
+                                "আয়",
+                                totalIncome,
+                                IncomeGreen
+                            )
+
+                            StatMiniBox(
+                                Modifier.weight(1f),
+                                "খরচ",
+                                totalExpense,
+                                ExpenseRed
+                            )
+
+                            StatMiniBox(
+                                Modifier.weight(1f),
+                                "বাড়িতে",
+                                totalHome,
+                                Blue
+                            )
                         }
 
                         Spacer(Modifier.height(16.dp))
 
+                        // Birthday Countdown
                         BirthdayCountdownCard(
                             userId = currentUserId,
                             currentBirthday = birthday,
-                            onBirthdaySet = { onBirthdayChange(it) },
+                            onBirthdaySet = {
+                                onBirthdayChange(it)
+                            },
                             isCompact = true
                         )
                     }
@@ -250,12 +273,28 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("আমার অ্যাকাউন্টসমূহ", fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    "আমার অ্যাকাউন্টসমূহ",
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
                 TextButton(onClick = onAddWallet) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+
                         Spacer(Modifier.width(4.dp))
-                        Text("নতুন", fontWeight = FontWeight.Bold)
+
+                        Text(
+                            "নতুন",
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
@@ -267,15 +306,23 @@ fun HomeScreen(
             ) {
                 items(wallets) { wallet ->
                     Card(
-                        onClick = { onWalletClick(wallet) },
-                        modifier = Modifier.width(150.dp).height(100.dp),
+                        onClick = {
+                            onWalletClick(wallet)
+                        },
+                        modifier = Modifier
+                            .width(150.dp)
+                            .height(100.dp),
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(wallet.color.toLong() and 0xFFFFFFFFL)
+                            containerColor = Color(
+                                wallet.color.toLong() and 0xFFFFFFFFL
+                            )
                         )
                     ) {
                         Column(
-                            Modifier.padding(14.dp).fillMaxSize(),
+                            Modifier
+                                .padding(14.dp)
+                                .fillMaxSize(),
                             verticalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
@@ -285,6 +332,7 @@ fun HomeScreen(
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1
                             )
+
                             Column {
                                 Text(
                                     "৳${formatMoney(getWalletBalance(wallet.id))}",
@@ -292,6 +340,7 @@ fun HomeScreen(
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.ExtraBold
                                 )
+
                                 Text(
                                     wallet.type,
                                     color = Color.White.copy(alpha = 0.7f),
@@ -321,16 +370,52 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+
                 val actions = listOf(
-                    Triple(Icons.Default.AddCircle, "আয় যোগ", IncomeGreen) to onAddIncome,
-                    Triple(Icons.Default.RemoveCircle, "খরচ যোগ", ExpenseRed) to onAddExpense,
-                    Triple(Icons.Default.Home, "বাড়িতে পাঠান", Blue) to onAddHome,
-                    Triple(Icons.Default.ReceiptLong, "বাড়ির খরচ", Color(0xFFF59E0B)) to onAddHomeExpense,
-                    Triple(Icons.Default.Mic, "ভয়েস এন্ট্রি", Color(0xFF9C27B0)) to onVoiceClick,
-                    Triple(Icons.Default.ShoppingCart, "বাজারের ফর্দ", AccentGreen) to onShoppingList,
-                    Triple(Icons.Default.DirectionsCar, "Vehicle & Maintenance", Color(0xFF1565C0)) to onVehicle
+                    Triple(
+                        Icons.Default.AddCircle,
+                        "আয় যোগ",
+                        IncomeGreen
+                    ) to onAddIncome,
+
+                    Triple(
+                        Icons.Default.RemoveCircle,
+                        "খরচ যোগ",
+                        ExpenseRed
+                    ) to onAddExpense,
+
+                    Triple(
+                        Icons.Default.Home,
+                        "বাড়িতে পাঠান",
+                        Blue
+                    ) to onAddHome,
+
+                    Triple(
+                        Icons.Default.ReceiptLong,
+                        "বাড়ির খরচ",
+                        Color(0xFFF59E0B)
+                    ) to onAddHomeExpense,
+
+                    Triple(
+                        Icons.Default.Mic,
+                        "ভয়েস এন্ট্রি",
+                        Color(0xFF9C27B0)
+                    ) to onVoiceClick,
+
+                    Triple(
+                        Icons.Default.ShoppingCart,
+                        "বাজারের ফর্দ",
+                        AccentGreen
+                    ) to onShoppingList,
+
+                    Triple(
+                        Icons.Default.DirectionsCar,
+                        "Vehicle & Maintenance",
+                        Color(0xFF1565C0)
+                    ) to onVehicle
                 )
 
+                // Render in 2 columns
                 for (i in actions.indices step 2) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -343,6 +428,7 @@ fun HomeScreen(
                             color = actions[i].first.third,
                             onClick = actions[i].second
                         )
+
                         if (i + 1 < actions.size) {
                             QuickActionCard(
                                 modifier = Modifier.weight(1f),
@@ -353,36 +439,32 @@ fun HomeScreen(
                             )
                         }
 
-        // My Journey — directly below Quick Actions
-        item {
-            MyJourneyQuickSection(
-                settings = journeySettings,
-                totalDebt = loanRemaining,
-                transactions = transactions,
-                onEdit = { newSettings ->
-                    journeySettings = newSettings
-                    MyJourneyStorage.save(context, currentUserId, newSettings)
-                }
-            )
-        }
-
         // Home Account
         item {
             Card(
                 Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 1.dp
+                )
             ) {
                 Column(Modifier.padding(18.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Icon(
                             Icons.Default.HomeWork,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
+
                         Spacer(Modifier.width(8.dp))
+
                         Text(
                             "বিস্তারিত দেখুন  →",
                             fontSize = 12.sp,
@@ -391,14 +473,31 @@ fun HomeScreen(
                             modifier = Modifier.align(Alignment.End)
                         )
                     }
+
                     Spacer(Modifier.height(10.dp))
-                    HomeSummaryRow("বাড়িতে পাঠানো", totalHome, Blue)
-                    HomeSummaryRow("বাড়ির খরচ", totalHomeExpense, Color(0xFFF59E0B))
+
+                    HomeSummaryRow(
+                        "বাড়িতে পাঠানো",
+                        totalHome,
+                        Blue
+                    )
+
+                    HomeSummaryRow(
+                        "বাড়ির খরচ",
+                        totalHomeExpense,
+                        Color(0xFFF59E0B)
+                    )
+
                     HorizontalDivider(
                         Modifier.padding(vertical = 7.dp),
                         color = MaterialTheme.colorScheme.outlineVariant
                     )
-                    HomeSummaryRow("বাড়িতে অবশিষ্ট", homeBalance, IncomeGreen)
+
+                    HomeSummaryRow(
+                        "বাড়িতে অবশিষ্ট",
+                        homeBalance,
+                        IncomeGreen
+                    )
                 }
             }
         }
@@ -408,29 +507,44 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
             ) {
+
                 Card(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
                 ) {
                     Column(Modifier.padding(15.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Icon(
                                 Icons.Default.CreditCard,
                                 contentDescription = null,
                                 tint = ExpenseRed,
                                 modifier = Modifier.size(16.dp)
                             )
+
                             Spacer(Modifier.width(6.dp))
-                            Text("আমার ঋণ", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+
+                            Text(
+                                "আমার ঋণ",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
+
                         Spacer(Modifier.height(8.dp))
+
                         Text(
                             "৳${formatMoney(loanRemaining)}",
                             color = ExpenseRed,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.ExtraBold
                         )
+
                         Text(
                             "বাকি আছে",
                             fontSize = 10.sp,
@@ -442,26 +556,40 @@ fun HomeScreen(
                 Card(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
                 ) {
                     Column(Modifier.padding(15.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Icon(
                                 Icons.Default.Handshake,
                                 contentDescription = null,
                                 tint = Blue,
                                 modifier = Modifier.size(16.dp)
                             )
+
                             Spacer(Modifier.width(6.dp))
-                            Text("আমার পাওনা", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+
+                            Text(
+                                "আমার পাওনা",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
+
                         Spacer(Modifier.height(8.dp))
+
                         Text(
                             "৳${formatMoney(moneyToReceive)}",
                             color = Blue,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.ExtraBold
                         )
+
                         Text(
                             "ফেরত পাবো",
                             fontSize = 10.sp,
@@ -486,11 +614,17 @@ fun QuickActionCard(
         onClick = onClick,
         modifier = modifier.height(65.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp
+        )
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
@@ -499,7 +633,9 @@ fun QuickActionCard(
                 shape = RoundedCornerShape(10.dp),
                 color = color.copy(alpha = 0.15f)
             ) {
-                Box(contentAlignment = Alignment.Center) {
+                Box(
+                    contentAlignment = Alignment.Center
+                ) {
                     Icon(
                         icon,
                         contentDescription = null,
@@ -508,7 +644,9 @@ fun QuickActionCard(
                     )
                 }
             }
+
             Spacer(Modifier.width(12.dp))
+
             Text(
                 text = title,
                 fontSize = 14.sp,
