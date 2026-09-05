@@ -50,12 +50,24 @@ object BalanceEngine {
         val moneyReturned = personalReturns.sumOf { it.amount }
 
         return wallets.sumOf { it.initialBalance } +
-            income +
-            loanReceived +
-            moneyReturned -
-            expense -
-            homeTransfer -
-            loanPaid -
-            moneyLent
+                income +
+                loanReceived +
+                moneyReturned -
+                expense -
+                homeTransfer -
+                loanPaid -
+                moneyLent
+    }
+
+    /**
+     * Converts a transaction amount to BDT without depending on MainViewModel.
+     * BDT is unchanged; unknown currencies are kept as-is so historical data
+     * is not silently changed.
+     */
+    private fun convertToBdt(amount: Double, currency: String): Double {
+        return when (currency.trim().uppercase()) {
+            "", "BDT", "৳", "TK", "TAKA" -> amount
+            else -> amount
+        }
     }
 }

@@ -51,16 +51,16 @@ fun SearchOverlay(
          wallets.firstOrNull { w -> w.id == it.walletId }?.name?.contains(searchQuery, ignoreCase = true) == true)
     }
 
-    val filteredWallets = if (query.isBlank()) emptyList() else wallets.filter {
-        it.name.contains(query, true) || it.type.contains(query, true)
+    val filteredWallets = if (searchQuery.isBlank()) emptyList() else wallets.filter {
+        it.name.contains(searchQuery, true) || it.type.contains(searchQuery, true)
     }
 
-    val filteredLoans = if (query.isBlank() || (searchScope != 0 && searchScope != 4)) emptyList() else loans.filter {
-        it.name.contains(query, true) || it.note.contains(query, true)
+    val filteredLoans = if (searchQuery.isBlank() || (searchScope != 0 && searchScope != 4)) emptyList() else loans.filter {
+        it.name.contains(searchQuery, true) || it.note.contains(searchQuery, true)
     }
 
-    val filteredLendings = if (query.isBlank() || (searchScope != 0 && searchScope != 4)) emptyList() else lendings.filter {
-        it.person.contains(query, true) || it.note.contains(query, true)
+    val filteredLendings = if (searchQuery.isBlank() || (searchScope != 0 && searchScope != 4)) emptyList() else lendings.filter {
+        it.person.contains(searchQuery, true) || it.note.contains(searchQuery, true)
     }
 
     val totalIncome = filteredTransactions.filter { it.type == "income" }.sumOf { it.amount }
@@ -127,14 +127,14 @@ fun SearchOverlay(
                                     Column(horizontalAlignment = Alignment.End) {
                                         Text("আয় ৳${formatMoney(totalIncome)}", color = Color(0xFF22C55E), fontSize = 11.sp)
                                         Text("খরচ ৳${formatMoney(totalExpense)}", color = Color(0xFFEF4444), fontSize = 11.sp)
-                                        Text("নেট ৳${formatMoney(net)}", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                        Text("নেট ৳${formatMoney(totalIncome - totalExpense)}", fontWeight = FontWeight.Bold, fontSize = 11.sp)
                                     }
                                 }
                             }
 
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                TextButton(onClick = { onShareResults(query, false) }) { Text("শেয়ার") }
-                                TextButton(onClick = { onShareResults(query, true) }) { Text("PDF") }
+                                TextButton(onClick = { onShareResults(searchQuery, false) }) { Text("শেয়ার") }
+                                TextButton(onClick = { onShareResults(searchQuery, true) }) { Text("PDF") }
                             }
                         }
                     }

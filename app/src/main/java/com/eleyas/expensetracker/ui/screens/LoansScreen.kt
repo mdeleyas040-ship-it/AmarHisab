@@ -20,7 +20,8 @@ import androidx.compose.ui.unit.sp
 import com.eleyas.expensetracker.model.*
 import com.eleyas.expensetracker.ui.components.*
 import com.eleyas.expensetracker.ui.theme.*
-import com.eleyas.expensetracker.util.*
+import com.eleyas.expensetracker.util.displayLoanDate
+import com.eleyas.expensetracker.util.formatMoney
 
 @Composable
 fun LoansScreen(
@@ -36,6 +37,8 @@ fun LoansScreen(
     onDeleteBorrowing: (LoanAccount, LoanBorrowing) -> Unit,
     onAddLending: () -> Unit,
     onAddLendingReturn: (LendingAccount) -> Unit,
+    onEditLending: (LendingAccount) -> Unit = {},
+    onDeleteLending: (LendingAccount) -> Unit = {},
     loanInterestTerms: List<LoanInterestTerms>,
     onShowCalculator: () -> Unit = {},
     onShareLoan: (LoanAccount, Boolean) -> Unit = { _, _ -> },
@@ -168,7 +171,7 @@ fun LoansScreen(
                 Card(
                     onClick = { expandedLoanId = if (expandedLoanId == loan.id) null else loan.id },
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    shape = RoundedCornerShape(CardRadius),
+                    shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
