@@ -3,10 +3,6 @@ package com.eleyas.expensetracker.ui.screens
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
-/**
- * Stable Settings entry point used by MainActivity.
- * The visual implementation is kept in a separate premium Bengali component.
- */
 @Composable
 fun SettingsScreen(
     modifier: Modifier,
