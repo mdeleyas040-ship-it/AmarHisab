@@ -4,15 +4,13 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import com.eleyas.expensetracker.model.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -21,9 +19,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eleyas.expensetracker.model.*
 import com.eleyas.expensetracker.ui.components.HomeSummaryRow
 import com.eleyas.expensetracker.ui.components.SmartReminderCard
-import com.eleyas.expensetracker.ui.components.StatMiniBox
 import com.eleyas.expensetracker.ui.theme.*
 import com.eleyas.expensetracker.util.*
 import com.eleyas.expensetracker.viewmodel.MainViewModel
@@ -98,6 +96,7 @@ fun HomeScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(SectionSpacing)
         ) {
+
             if (serverNotice != null) {
                 item {
                     Card(
@@ -107,21 +106,26 @@ fun HomeScreen(
                             containerColor = Blue.copy(alpha = 0.1f)
                         )
                     ) {
-                        Icon(
-                            Icons.Default.Campaign,
-                            contentDescription = null,
-                            tint = Blue,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Campaign,
+                                contentDescription = null,
+                                tint = Blue,
+                                modifier = Modifier.size(24.dp)
+                            )
 
-                        Spacer(Modifier.width(10.dp))
+                            Spacer(Modifier.width(10.dp))
 
-                        Text(
-                            serverNotice!!,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Blue
-                        )
+                            Text(
+                                serverNotice!!,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Blue
+                            )
+                        }
                     }
                 }
             }
@@ -136,136 +140,17 @@ fun HomeScreen(
             }
 
             item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(
-                            10.dp,
-                            shape = RoundedCornerShape(CardRadius),
-                            ambientColor = Color.Black,
-                            spotColor = AccentGreen.copy(alpha = 0.4f)
-                        ),
-                    shape = RoundedCornerShape(CardRadius),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF181B21)
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color(0xFF1E222A),
-                                        Color(0xFF12141A)
-                                    )
-                                )
-                            )
-                    ) {
-
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Top
-                        ) {
-                            Column {
-                                Text(
-                                    "মোট ব্যালেন্স",
-                                    color = AccentGreen.copy(alpha = 0.8f),
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    letterSpacing = 0.5.sp
-                                )
-
-                                Spacer(Modifier.height(4.dp))
-
-                                Text(
-                                    "৳ ${formatMoney(balance)}",
-                                    color = Color.White,
-                                    fontSize = 32.sp,
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-
-                                Text(
-                                    "বাংলাদেশি টাকা (BDT)",
-                                    color = Color.White.copy(alpha = 0.4f),
-                                    fontSize = 10.sp
-                                )
-                            }
-
-                            Surface(
-                                modifier = Modifier.size(50.dp),
-                                shape = RoundedCornerShape(14.dp),
-                                color = AccentGreen.copy(alpha = 0.1f)
-                            ) {
-                                Box(
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        Icons.Default.AccountBalanceWallet,
-                                        contentDescription = null,
-                                        tint = AccentGreen,
-                                        modifier = Modifier.size(28.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            item {
-                Text(
-                    "দ্রুত অ্যাকশন",
-                    fontSize = 19.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                PremiumHomeHeader(
+                    balance = balance,
+                    totalIncome = totalIncome,
+                    totalExpense = totalExpense,
+                    totalHome = totalHome,
+                    currentUserId = currentUserId,
+                    birthday = birthday,
+                    onBirthdayChange = onBirthdayChange
                 )
             }
 
-            // Mini Stats Row
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    StatMiniBox(
-                        Modifier.weight(1f),
-                        "আয়",
-                        totalIncome,
-                        IncomeGreen
-                    )
-
-                    StatMiniBox(
-                        Modifier.weight(1f),
-                        "খরচ",
-                        totalExpense,
-                        ExpenseRed
-                    )
-
-                    StatMiniBox(
-                        Modifier.weight(1f),
-                        "বাড়িতে",
-                        totalHome,
-                        Blue
-                    )
-                }
-            }
-
-            // Birthday Countdown
-            item {
-                BirthdayCountdownCard(
-                    userId = currentUserId,
-                    currentBirthday = birthday,
-                    onBirthdaySet = {
-                        onBirthdayChange(it)
-                    },
-                    isCompact = true
-                )
-            }
-
-            // Accounts
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -279,26 +164,35 @@ fun HomeScreen(
                     )
 
                     TextButton(onClick = onAddWallet) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Icon(
                                 Icons.Default.Add,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
+
                             Spacer(Modifier.width(4.dp))
-                            Text("নতুন", fontWeight = FontWeight.Bold)
+
+                            Text(
+                                "নতুন",
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
 
                 Spacer(Modifier.height(8.dp))
 
-                androidx.compose.foundation.lazy.LazyRow(
+                LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(wallets) { wallet ->
                         Card(
-                            onClick = { onWalletClick(wallet) },
+                            onClick = {
+                                onWalletClick(wallet)
+                            },
                             modifier = Modifier
                                 .width(150.dp)
                                 .height(100.dp),
@@ -310,7 +204,7 @@ fun HomeScreen(
                             )
                         ) {
                             Column(
-                                Modifier
+                                modifier = Modifier
                                     .padding(14.dp)
                                     .fillMaxSize(),
                                 verticalArrangement = Arrangement.SpaceBetween
@@ -343,7 +237,6 @@ fun HomeScreen(
                 }
             }
 
-            // Quick Actions Title
             item {
                 Text(
                     "দ্রুত অ্যাকশন",
@@ -353,20 +246,53 @@ fun HomeScreen(
                 )
             }
 
-            // Quick Actions
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     val actions = listOf(
-                        Triple(Icons.Default.AddCircle, "আয় যোগ", IncomeGreen) to onAddIncome,
-                        Triple(Icons.Default.RemoveCircle, "খরচ যোগ", ExpenseRed) to onAddExpense,
-                        Triple(Icons.Default.Home, "বাড়িতে পাঠান", Blue) to onAddHome,
-                        Triple(Icons.Default.ReceiptLong, "বাড়ির খরচ", Color(0xFFF59E0B)) to onAddHomeExpense,
-                        Triple(Icons.Default.Mic, "ভয়েস এন্ট্রি", Color(0xFF9C27B0)) to onVoiceClick,
-                        Triple(Icons.Default.ShoppingCart, "বাজারের ফর্দ", AccentGreen) to onShoppingList,
-                        Triple(Icons.Default.DirectionsCar, "Vehicle & Maintenance", Color(0xFF1565C0)) to onVehicle
+                        Triple(
+                            Icons.Default.AddCircle,
+                            "আয় যোগ",
+                            IncomeGreen
+                        ) to onAddIncome,
+
+                        Triple(
+                            Icons.Default.RemoveCircle,
+                            "খরচ যোগ",
+                            ExpenseRed
+                        ) to onAddExpense,
+
+                        Triple(
+                            Icons.Default.Home,
+                            "বাড়িতে পাঠান",
+                            Blue
+                        ) to onAddHome,
+
+                        Triple(
+                            Icons.Default.ReceiptLong,
+                            "বাড়ির খরচ",
+                            Color(0xFFF59E0B)
+                        ) to onAddHomeExpense,
+
+                        Triple(
+                            Icons.Default.Mic,
+                            "ভয়েস এন্ট্রি",
+                            Color(0xFF9C27B0)
+                        ) to onVoiceClick,
+
+                        Triple(
+                            Icons.Default.ShoppingCart,
+                            "বাজারের ফর্দ",
+                            AccentGreen
+                        ) to onShoppingList,
+
+                        Triple(
+                            Icons.Default.DirectionsCar,
+                            "গাড়ি ও রক্ষণাবেক্ষণ",
+                            Color(0xFF1565C0)
+                        ) to onVehicle
                     )
 
                     for (i in actions.indices step 2) {
@@ -391,17 +317,18 @@ fun HomeScreen(
                                     onClick = actions[i + 1].second
                                 )
                             } else {
-                                Spacer(Modifier.weight(1f))
+                                Spacer(
+                                    Modifier.weight(1f)
+                                )
                             }
                         }
                     }
                 }
             }
 
-            // Home Account
             item {
                 Card(
-                    Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface
@@ -410,8 +337,9 @@ fun HomeScreen(
                         defaultElevation = 1.dp
                     )
                 ) {
-                    Column(Modifier.padding(18.dp)) {
-
+                    Column(
+                        Modifier.padding(18.dp)
+                    ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -425,10 +353,9 @@ fun HomeScreen(
                             Spacer(Modifier.width(8.dp))
 
                             Text(
-                                "বিস্তারিত দেখুন  →",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                                "বাড়ির হিসাব",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold
                             )
                         }
 
@@ -460,6 +387,14 @@ fun HomeScreen(
                 }
             }
 
+            item {
+                HisaberSarangso(
+                    totalIncome = totalIncome,
+                    totalExpense = totalExpense,
+                    moneyToReceive = moneyToReceive,
+                    loanRemaining = loanRemaining
+                )
+            }
         }
 
         if (showHomeMoneyFlow) {
@@ -469,7 +404,9 @@ fun HomeScreen(
             ) {
                 HomeMoneyFlowScreen(
                     entries = HomeMoneyFlow.entries(appViewModel),
-                    onBack = { showHomeMoneyFlow = false }
+                    onBack = {
+                        showHomeMoneyFlow = false
+                    }
                 )
             }
         }
