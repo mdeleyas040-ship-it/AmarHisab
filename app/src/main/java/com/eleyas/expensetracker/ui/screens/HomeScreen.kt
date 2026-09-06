@@ -388,6 +388,13 @@ fun HomeScreen(
             }
 
             item {
+                PremiumDebtSummary(
+                    loanRemaining = loanRemaining,
+                    moneyToReceive = moneyToReceive
+                )
+            }
+
+            item {
                 HisaberSarangso(
                     totalIncome = totalIncome,
                     totalExpense = totalExpense,
