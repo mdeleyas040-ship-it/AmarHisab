@@ -327,6 +327,14 @@ fun HomeScreen(
             }
 
             item {
+                PremiumJourneyCard(
+                    currentUserId = currentUserId,
+                    transactions = transactions,
+                    loanRemaining = loanRemaining
+                )
+            }
+
+            item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
