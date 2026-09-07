@@ -68,6 +68,8 @@ import java.util.*
 import kotlin.random.Random
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Redeem
 
 fun saveCategoryBudgets(prefs: SharedPreferences, budgets: List<CategoryBudget>) {
     val array = JSONArray(); budgets.forEach { array.put(JSONObject().apply { put("month", it.month); put("category", it.category); put("limit", it.limit) }) }
@@ -755,33 +757,44 @@ fun BirthdayCountdownCard(
     isCompact: Boolean = false
 ) {
     val context = LocalContext.current
-    val prefs = remember(userId) { AccountStorage.getPrefs(context, userId) }
-    var showDatePicker by remember { mutableStateOf(false) }
 
-    if (showDatePicker) {
-        val today = Calendar.getInstance()
-        DatePickerDialog(
-            context,
-            { _, year, month, dayOfMonth ->
-                saveBirthday(prefs, month, dayOfMonth)
-                onBirthdaySet(Pair(month, dayOfMonth))
-                showDatePicker = false
-            },
-            today.get(Calendar.YEAR),
-            currentBirthday?.first ?: today.get(Calendar.MONTH),
-            currentBirthday?.second ?: today.get(Calendar.DAY_OF_MONTH)
-        ).apply {
-            setOnCancelListener { showDatePicker = false }
-            show()
-        }
+    val prefs = remember(userId) {
+        AccountStorage.getPrefs(context, userId)
     }
 
     if (currentBirthday == null) {
+
         BirthdaySetupCard(
             modifier = modifier,
-            onSetBirthday = { showDatePicker = true },
+            onSetBirthday = {
+
+                val today = Calendar.getInstance()
+
+                DatePickerDialog(
+                    context,
+                    { _, _, month, dayOfMonth ->
+
+                        saveBirthday(
+                            prefs,
+                            month,
+                            dayOfMonth
+                        )
+
+                        onBirthdaySet(
+                            Pair(
+                                month,
+                                dayOfMonth
+                            )
+                        )
+                    },
+                    today.get(Calendar.YEAR),
+                    today.get(Calendar.MONTH),
+                    today.get(Calendar.DAY_OF_MONTH)
+                ).show()
+            },
             isCompact = isCompact
         )
+
         return
     }
 
@@ -794,48 +807,107 @@ fun BirthdayCountdownCard(
                 color = Color.White.copy(alpha = 0.08f),
                 shape = RoundedCornerShape(16.dp)
             )
-            .padding(if (isCompact) 12.dp else 20.dp)
+            .padding(
+                if (isCompact) 12.dp else 20.dp
+            )
     ) {
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
                 Text(
                     text = "🎂 Birthday",
                     color = Color.White,
-                    fontSize = if (isCompact) 14.sp else 19.sp,
+                    fontSize =
+                        if (isCompact) 14.sp else 19.sp,
                     fontWeight = FontWeight.Bold
                 )
 
                 if (days == 0) {
+
                     Text(
                         text = "🎉 আজ তোমার জন্মদিন!",
                         color = Color(0xFF00E676),
-                        fontSize = if (isCompact) 13.sp else 17.sp,
+                        fontSize =
+                            if (isCompact) 13.sp else 17.sp,
                         fontWeight = FontWeight.Bold
                     )
+
                 } else {
-                    Row(verticalAlignment = Alignment.Bottom) {
+
+                    Row(
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+
                         Text(
                             text = "$days দিন ",
                             color = Color(0xFF00E676),
-                            fontSize = if (isCompact) 20.sp else 30.sp,
+                            fontSize =
+                                if (isCompact) 20.sp else 30.sp,
                             fontWeight = FontWeight.Bold
                         )
+
                         Text(
                             text = "বাকি",
                             color = Color.White.copy(alpha = 0.8f),
-                            fontSize = if (isCompact) 11.sp else 14.sp,
+                            fontSize =
+                                if (isCompact) 11.sp else 14.sp,
                             modifier = Modifier.padding(bottom = 3.dp)
                         )
                     }
                 }
             }
 
-            IconButton(onClick = { showDatePicker = true }, modifier = Modifier.size(28.dp)) {
-                Text(if (days == 0) "🎉" else "🎁", fontSize = if (isCompact) 24.sp else 40.sp)
+            // =========================
+            // BIRTHDAY CHANGE BUTTON
+            // =========================
+            IconButton(
+                onClick = {
+
+                    val today = Calendar.getInstance()
+
+                    DatePickerDialog(
+                        context,
+                        { _, _, month, dayOfMonth ->
+
+                            saveBirthday(
+                                prefs,
+                                month,
+                                dayOfMonth
+                            )
+
+                            onBirthdaySet(
+                                Pair(
+                                    month,
+                                    dayOfMonth
+                                )
+                            )
+                        },
+                        today.get(Calendar.YEAR),
+                        currentBirthday.first,
+                        currentBirthday.second
+                    ).show()
+                },
+                modifier = Modifier.size(
+                    if (isCompact) 42.dp else 52.dp
+                )
+            ) {
+
+                androidx.compose.material3.Icon(
+                    imageVector = Icons.Default.Redeem,
+                    contentDescription = "জন্মদিন পরিবর্তন করুন",
+                    tint = Color.White,
+                    modifier = Modifier.size(
+                        if (isCompact) 25.dp else 34.dp
+                    )
+                )
             }
         }
     }
@@ -843,7 +915,7 @@ fun BirthdayCountdownCard(
 
 @Composable
 private fun BirthdaySetupCard(
-    modifier: Modifier = Modifier.Companion,
+    modifier: Modifier = Modifier,
     onSetBirthday: () -> Unit,
     isCompact: Boolean = false
 ) {
@@ -920,7 +992,7 @@ fun BirthdayCelebrationCheck(
     userId: String,
     birthday: Pair<Int, Int>?,
     onBirthdaySet: (Pair<Int, Int>) -> Unit,
-    modifier: Modifier = Modifier.Companion
+    modifier: Modifier = Modifier
 ) {
     BirthdayCountdownCard(
         userId = userId,

@@ -1,22 +1,26 @@
 package com.eleyas.expensetracker.ui.screens
 
+import android.app.DatePickerDialog
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Redeem
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eleyas.expensetracker.util.formatMoney
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
+import java.util.Calendar
 
 @Composable
 fun PremiumHomeHeader(
@@ -29,7 +33,10 @@ fun PremiumHomeHeader(
     onBirthdayChange: (Pair<Int, Int>?) -> Unit,
     onSearchClick: () -> Unit = {}
 ) {
+
     val birthdayDays = rememberBirthdayDays(birthday)
+
+    val context = LocalContext.current
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -41,6 +48,7 @@ fun PremiumHomeHeader(
             defaultElevation = 12.dp
         )
     ) {
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -56,20 +64,25 @@ fun PremiumHomeHeader(
                 .padding(
                     start = 24.dp,
                     end = 24.dp,
-                    top = 24.dp,
-                    bottom = 24.dp
+                    top = 20.dp,
+                    bottom = 20.dp
                 )
         ) {
+
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
 
+                // =========================
                 // মোট ব্যালেন্স
+                // =========================
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Top
                 ) {
+
                     Column {
 
                         Text(
@@ -80,7 +93,7 @@ fun PremiumHomeHeader(
                         )
 
                         Spacer(
-                            modifier = Modifier.height(7.dp)
+                            modifier = Modifier.height(5.dp)
                         )
 
                         Text(
@@ -91,7 +104,7 @@ fun PremiumHomeHeader(
                         )
 
                         Spacer(
-                            modifier = Modifier.height(3.dp)
+                            modifier = Modifier.height(2.dp)
                         )
 
                         Text(
@@ -106,11 +119,14 @@ fun PremiumHomeHeader(
                         shape = RoundedCornerShape(17.dp),
                         color = Color(0xFF0E6F4C).copy(alpha = 0.42f)
                     ) {
+
                         Box(
                             contentAlignment = Alignment.Center
                         ) {
+
                             Icon(
-                                imageVector = Icons.Default.AccountBalanceWallet,
+                                imageVector =
+                                    Icons.Default.AccountBalanceWallet,
                                 contentDescription = "ব্যালেন্স",
                                 tint = Color(0xFF00E878),
                                 modifier = Modifier.size(29.dp)
@@ -120,13 +136,17 @@ fun PremiumHomeHeader(
                 }
 
                 Spacer(
-                    modifier = Modifier.height(24.dp)
+                    modifier = Modifier.height(18.dp)
                 )
 
+                // =========================
                 // আয় / খরচ / বাড়িতে
+                // =========================
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement =
+                        Arrangement.spacedBy(10.dp)
                 ) {
 
                     PremiumHeaderStat(
@@ -154,11 +174,14 @@ fun PremiumHomeHeader(
                     )
                 }
 
-                // Birthday — Balance Card-এর ভিতরে
+                // =========================
+                // Birthday
+                // =========================
+
                 if (birthday != null && birthdayDays != null) {
 
                     Spacer(
-                        modifier = Modifier.height(22.dp)
+                        modifier = Modifier.height(16.dp)
                     )
 
                     Surface(
@@ -166,15 +189,18 @@ fun PremiumHomeHeader(
                         shape = RoundedCornerShape(20.dp),
                         color = Color(0xFF292B30)
                     ) {
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(
                                     horizontal = 18.dp,
-                                    vertical = 15.dp
+                                    vertical = 12.dp
                                 ),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            verticalAlignment =
+                                Alignment.CenterVertically,
+                            horizontalArrangement =
+                                Arrangement.SpaceBetween
                         ) {
 
                             Column {
@@ -187,18 +213,21 @@ fun PremiumHomeHeader(
                                 )
 
                                 Spacer(
-                                    modifier = Modifier.height(2.dp)
+                                    modifier = Modifier.height(1.dp)
                                 )
 
                                 Row(
-                                    verticalAlignment = Alignment.Bottom
+                                    verticalAlignment =
+                                        Alignment.Bottom
                                 ) {
 
                                     Text(
                                         text = "$birthdayDays দিন",
-                                        color = Color(0xFF00E878),
+                                        color =
+                                            Color(0xFF00E878),
                                         fontSize = 25.sp,
-                                        fontWeight = FontWeight.ExtraBold
+                                        fontWeight =
+                                            FontWeight.ExtraBold
                                     )
 
                                     Spacer(
@@ -207,19 +236,70 @@ fun PremiumHomeHeader(
 
                                     Text(
                                         text = "বাকি",
-                                        color = Color.White.copy(alpha = 0.72f),
+                                        color =
+                                            Color.White.copy(
+                                                alpha = 0.72f
+                                            ),
                                         fontSize = 13.sp,
-                                        modifier = Modifier.padding(
-                                            bottom = 4.dp
-                                        )
+                                        modifier =
+                                            Modifier.padding(
+                                                bottom = 4.dp
+                                            )
                                     )
                                 }
                             }
 
-                            Text(
-                                text = "🎁",
-                                fontSize = 34.sp
-                            )
+                            // =========================
+                            // Gift Button
+                            // =========================
+
+                            IconButton(
+                                onClick = {
+
+                                    val today =
+                                        Calendar.getInstance()
+
+                                    DatePickerDialog(
+                                        context,
+
+                                        { _, _, month, dayOfMonth ->
+
+                                            onBirthdayChange(
+                                                Pair(
+                                                    month,
+                                                    dayOfMonth
+                                                )
+                                            )
+                                        },
+
+                                        today.get(
+                                            Calendar.YEAR
+                                        ),
+
+                                        birthday.first,
+
+                                        birthday.second
+
+                                    ).show()
+                                },
+
+                                modifier = Modifier.size(52.dp)
+                            ) {
+
+                                Icon(
+                                    imageVector =
+                                        Icons.Default.Redeem,
+
+                                    contentDescription =
+                                        "জন্মদিন পরিবর্তন করুন",
+
+                                    tint =
+                                        Color.White,
+
+                                    modifier =
+                                        Modifier.size(34.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -236,22 +316,26 @@ private fun PremiumHeaderStat(
     amountColor: Color,
     backgroundColor: Color
 ) {
+
     Surface(
-        modifier = modifier.height(78.dp),
+        modifier = modifier.height(70.dp),
         shape = RoundedCornerShape(18.dp),
         color = backgroundColor.copy(alpha = 0.78f)
     ) {
+
         Column(
             modifier = Modifier.padding(
                 horizontal = 13.dp,
-                vertical = 10.dp
+                vertical = 8.dp
             ),
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement =
+                Arrangement.SpaceBetween
         ) {
 
             Text(
                 text = title,
-                color = Color.White.copy(alpha = 0.68f),
+                color =
+                    Color.White.copy(alpha = 0.68f),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -273,38 +357,82 @@ private fun rememberBirthdayDays(
 
     if (birthday == null) return null
 
-    val today = LocalDate.now()
+    val today = Calendar.getInstance()
 
-    val month = birthday.first
-    val day = birthday.second
+    // আজকের সময় বাদ দিয়ে শুধু তারিখ রাখছি
+    today.set(
+        Calendar.HOUR_OF_DAY,
+        12
+    )
+    today.set(
+        Calendar.MINUTE,
+        0
+    )
+    today.set(
+        Calendar.SECOND,
+        0
+    )
+    today.set(
+        Calendar.MILLISECOND,
+        0
+    )
 
-    val currentYearBirthday = try {
-        LocalDate.of(
-            today.year,
-            month,
-            day
+    val birthdayMonth = birthday.first
+    val birthdayDay = birthday.second
+
+    // প্রথমে এই বছরের birthday
+    val nextBirthday = Calendar.getInstance()
+
+    nextBirthday.set(
+        Calendar.YEAR,
+        today.get(Calendar.YEAR)
+    )
+    nextBirthday.set(
+        Calendar.MONTH,
+        birthdayMonth
+    )
+    nextBirthday.set(
+        Calendar.DAY_OF_MONTH,
+        birthdayDay
+    )
+    nextBirthday.set(
+        Calendar.HOUR_OF_DAY,
+        12
+    )
+    nextBirthday.set(
+        Calendar.MINUTE,
+        0
+    )
+    nextBirthday.set(
+        Calendar.SECOND,
+        0
+    )
+    nextBirthday.set(
+        Calendar.MILLISECOND,
+        0
+    )
+
+    // যদি এ বছরের birthday চলে যায়,
+    // তাহলে পরের বছরের birthday
+    if (nextBirthday.before(today)) {
+        nextBirthday.add(
+            Calendar.YEAR,
+            1
         )
-    } catch (_: Exception) {
-        return null
     }
 
-    val nextBirthday =
-        if (!currentYearBirthday.isBefore(today)) {
-            currentYearBirthday
-        } else {
-            try {
-                LocalDate.of(
-                    today.year + 1,
-                    month,
-                    day
-                )
-            } catch (_: Exception) {
-                return null
-            }
-        }
+    // সঠিক day difference বের করা
+    var days = 0L
 
-    return ChronoUnit.DAYS.between(
-        today,
-        nextBirthday
-    )
+    val counter = today.clone() as Calendar
+
+    while (counter.before(nextBirthday)) {
+        counter.add(
+            Calendar.DAY_OF_MONTH,
+            1
+        )
+        days++
+    }
+
+    return days
 }
