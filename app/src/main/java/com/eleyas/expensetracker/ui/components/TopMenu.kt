@@ -1,3 +1,4 @@
+
 package com.eleyas.expensetracker.ui.components
 
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Settings
@@ -45,6 +47,7 @@ fun AmarHisabTopMenu(
     onFamilyShare: () -> Unit,
     onCalendar: () -> Unit,
     onShoppingList: () -> Unit,
+    onBirthday: () -> Unit,
     onSettings: () -> Unit
 ) {
     var showHelp by remember { mutableStateOf(false) }
@@ -98,13 +101,24 @@ fun AmarHisabTopMenu(
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
         TopMenuItem(Icons.Default.Groups, "পরিবার শেয়ার") {
-            onDismiss(); onFamilyShare()
+            onDismiss()
+            onFamilyShare()
         }
+
         TopMenuItem(Icons.Default.CalendarMonth, "ক্যালেন্ডার") {
-            onDismiss(); onCalendar()
+            onDismiss()
+            onCalendar()
         }
+
         TopMenuItem(Icons.Default.ShoppingCart, "বাজারের ফর্দ") {
-            onDismiss(); onShoppingList()
+            onDismiss()
+            onShoppingList()
+        }
+
+        // জন্মদিন
+        TopMenuItem(Icons.Default.Cake, "জন্মদিন") {
+            onDismiss()
+            onBirthday()
         }
 
         HorizontalDivider(
@@ -116,8 +130,10 @@ fun AmarHisabTopMenu(
             onDismiss()
             showHelp = true
         }
+
         TopMenuItem(Icons.Default.Settings, "সেটিংস") {
-            onDismiss(); onSettings()
+            onDismiss()
+            onSettings()
         }
     }
 
@@ -134,7 +150,11 @@ fun AmarHisabTopMenu(
                 shape = RoundedCornerShape(20.dp),
                 color = MaterialTheme.colorScheme.background
             ) {
-                HelpScreen(onBack = { showHelp = false })
+                HelpScreen(
+                    onBack = {
+                        showHelp = false
+                    }
+                )
             }
         }
     }
