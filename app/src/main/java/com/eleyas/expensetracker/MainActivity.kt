@@ -1,4 +1,5 @@
 
+
 package com.eleyas.expensetracker
 
 import android.content.Context
@@ -418,6 +419,10 @@ fun AmarHisabApp(
         mutableStateOf<LendingAccount?>(null)
     }
 
+    var deletingWallet by remember(currentUserId) {
+        mutableStateOf<Wallet?>(null)
+    }
+
     var sharingLoanPdf by remember {
         mutableStateOf<LoanAccount?>(null)
     }
@@ -471,6 +476,10 @@ fun AmarHisabApp(
     }
 
     var selectedSplitBill by remember(currentUserId) {
+        mutableStateOf<SplitBillGroup?>(null)
+    }
+
+    var deletingSplitBill by remember(currentUserId) {
         mutableStateOf<SplitBillGroup?>(null)
     }
 
@@ -1115,10 +1124,7 @@ fun AmarHisabApp(
                         showAddDialog = true
                     },
                     {
-                        viewModel.deleteTransaction(
-                            context,
-                            it
-                        )
+                        deletingTransaction = it
                     },
                     targetTransactionId =
                         reminderTransactionId
@@ -1149,10 +1155,7 @@ fun AmarHisabApp(
                         showAddDialog = true
                     },
                     {
-                        viewModel.deleteTransaction(
-                            context,
-                            it
-                        )
+                        deletingTransaction = it
                     },
                     splitBills = splitBills,
                     onAddSplitBill = {
@@ -1177,10 +1180,7 @@ fun AmarHisabApp(
                         showAddDialog = true
                     },
                     {
-                        viewModel.deleteTransaction(
-                            context,
-                            it
-                        )
+                        deletingTransaction = it
                     }
                 )
 
@@ -1765,10 +1765,7 @@ fun AmarHisabApp(
                     showAddDialog = true
                 },
                 onDeleteTransaction = {
-                    viewModel.deleteTransaction(
-                        context,
-                        it
-                    )
+                    deletingTransaction = it
                 },
                 onShareResults = {
                         query,
@@ -2125,18 +2122,45 @@ fun AmarHisabApp(
 
                 onDelete = {
 
-                    if (
-                        selectedWalletForEdit != null
-                    ) {
+                    if (selectedWalletForEdit != null) {
 
-                        viewModel.deleteWallet(
-                            context,
-                            selectedWalletForEdit!!.id
-                        )
+                        deletingWallet = selectedWalletForEdit
 
                         showWalletDialog = false
-                        selectedWalletForEdit = null
                     }
+                }
+            )
+        }
+
+        if (deletingWallet != null) {
+
+            val targetWallet = deletingWallet!!
+
+            PremiumDeleteDialog(
+                title = "Wallet মুছে ফেলবেন?",
+
+                message =
+                    "Wallet-এর নাম\n" +
+                            "${targetWallet.name}\n\n" +
+                            "এই Wallet-টি স্থায়ীভাবে মুছে যাবে।",
+
+                confirmText = "স্থায়ীভাবে মুছুন",
+
+                dismissText = "বাতিল",
+
+                onConfirm = {
+
+                    viewModel.deleteWallet(
+                        context,
+                        targetWallet.id
+                    )
+
+                    deletingWallet = null
+                    selectedWalletForEdit = null
+                },
+
+                onDismiss = {
+                    deletingWallet = null
                 }
             )
         }
@@ -2330,38 +2354,70 @@ fun AmarHisabApp(
                 }
             )
         }
+        if (deletingTransaction != null) {
+
+            val targetTransaction = deletingTransaction!!
+
+            PremiumDeleteDialog(
+                title = "হিসাব মুছে ফেলবেন?",
+
+                message =
+                    "এই হিসাবটি স্থায়ীভাবে মুছে যাবে।\n\n" +
+                            "পরিমাণ\n" +
+                            "৳${
+                                com.eleyas.expensetracker.util
+                                    .formatMoney(
+                                        targetTransaction.amount
+                                    )
+                            }\n\n" +
+                            "তারিখ\n" +
+                            targetTransaction.date,
+
+                confirmText = "স্থায়ীভাবে মুছুন",
+
+                dismissText = "বাতিল",
+
+                onConfirm = {
+
+                    viewModel.deleteTransaction(
+                        context,
+                        targetTransaction
+                    )
+
+                    deletingTransaction = null
+                },
+
+                onDismiss = {
+                    deletingTransaction = null
+                }
+            )
+        }
 
         if (deletingBorrowing != null) {
 
-            val targetBorrowing =
-                deletingBorrowing!!
+            val targetBorrowing = deletingBorrowing!!
 
-            WarningDialog(
-
-                title =
-                    "ঋণের entry মুছে ফেলবেন?",
+            PremiumDeleteDialog(
+                title = "ঋণের Entry মুছে ফেলবেন?",
 
                 message =
-                    "ঋণের পরিমাণ: ৳${
-                        com.eleyas.expensetracker.util
-                            .formatMoney(
-                                targetBorrowing
-                                    .second
-                                    .amount
-                            )
-                    }\nতারিখ: ${
-                        displayLoanDate(
-                            targetBorrowing
-                                .second
-                                .date
-                        )
-                    }\n\nএই entry-টি মুছে দিলে তা হিসাব থেকে স্থায়ীভাবে চলে যাবে।",
+                    "ঋণের পরিমাণ\n" +
+                            "৳${
+                                com.eleyas.expensetracker.util
+                                    .formatMoney(
+                                        targetBorrowing.second.amount
+                                    )
+                            }\n\n" +
+                            "তারিখ\n" +
+                            displayLoanDate(
+                                targetBorrowing.second.date
+                            ) +
+                            "\n\n" +
+                            "এই ঋণের Entry-টি স্থায়ীভাবে মুছে যাবে।",
 
-                confirmText =
-                    "মুছে ফেলুন",
+                confirmText = "স্থায়ীভাবে মুছুন",
 
-                dismissText =
-                    "বাতিল",
+                dismissText = "বাতিল",
 
                 onConfirm = {
 
@@ -2512,27 +2568,41 @@ fun AmarHisabApp(
             }
         }
 
-        if (showLendingDialog) {
+        if (deletingLending != null) {
 
-            LendingDialog(
+            val targetLending = deletingLending!!
 
-                {
-                    showLendingDialog = false
-                },
+            PremiumDeleteDialog(
+                title = "ধারের তথ্য মুছে ফেলবেন?",
 
-                {
-                        p, a, d, n, dd ->
+                message =
+                    "ব্যক্তির নাম\n" +
+                            "${targetLending.person}\n\n" +
+                            "ধারের পরিমাণ\n" +
+                            "৳${
+                                com.eleyas.expensetracker.util
+                                    .formatMoney(
+                                        targetLending.amount
+                                    )
+                            }\n\n" +
+                            "এই ধারটির সঙ্গে যুক্ত সব ফেরত history-ও মুছে যাবে।",
 
-                    viewModel.addLending(
+                confirmText = "স্থায়ীভাবে মুছুন",
+
+                dismissText = "বাতিল",
+
+                onConfirm = {
+
+                    viewModel.deleteLending(
                         context,
-                        p,
-                        a,
-                        d,
-                        n,
-                        dd
+                        targetLending
                     )
 
-                    showLendingDialog = false
+                    deletingLending = null
+                },
+
+                onDismiss = {
+                    deletingLending = null
                 }
             )
         }
@@ -2562,52 +2632,6 @@ fun AmarHisabApp(
                     )
 
                     editingLending = null
-                }
-            )
-        }
-
-        if (deletingLending != null) {
-
-            val targetLending =
-                deletingLending!!
-
-            WarningDialog(
-
-                title =
-                    "ধারের তথ্য মুছে ফেলবেন?",
-
-                message =
-                    "ব্যক্তির নাম\n" +
-                            "${targetLending.person}\n\n" +
-                            "ধারের পরিমাণ\n" +
-                            "৳${
-                                com.eleyas.expensetracker.util
-                                    .formatMoney(
-                                        targetLending.amount
-                                    )
-                            }\n\n" +
-                            "ফেরত দেওয়া হিসাব\n" +
-                            "এই ধারটির সঙ্গে যুক্ত সব ফেরত history-ও মুছে যাবে।\n\n" +
-                            "আপনি কি এই ধারটি স্থায়ীভাবে মুছে ফেলতে চান?",
-
-                confirmText =
-                    "মুছে ফেলুন",
-
-                dismissText =
-                    "বাতিল",
-
-                onConfirm = {
-
-                    viewModel.deleteLending(
-                        context,
-                        targetLending
-                    )
-
-                    deletingLending = null
-                },
-
-                onDismiss = {
-                    deletingLending = null
                 }
             )
         }
@@ -2727,10 +2751,32 @@ fun AmarHisabApp(
                 onDelete = {
                         splitToDelete ->
 
+                    deletingSplitBill = splitToDelete
+                    selectedSplitBill = null
+                }
+            )
+        }
+
+        if (deletingSplitBill != null) {
+
+            val targetSplitBill = deletingSplitBill!!
+
+            PremiumDeleteDialog(
+                title = "Split Bill মুছে ফেলবেন?",
+
+                message =
+                    "এই Split Bill-টি স্থায়ীভাবে মুছে যাবে।\n\n" +
+                            "এর সঙ্গে থাকা Split Bill-এর হিসাবও আর পাওয়া যাবে না।",
+
+                confirmText = "স্থায়ীভাবে মুছুন",
+
+                dismissText = "বাতিল",
+
+                onConfirm = {
+
                     splitBills =
                         splitBills.filter {
-                            it.id !=
-                                    splitToDelete.id
+                            it.id != targetSplitBill.id
                         }
 
                     SplitBillStorage.saveSplits(
@@ -2739,13 +2785,17 @@ fun AmarHisabApp(
                         splitBills
                     )
 
-                    selectedSplitBill = null
+                    deletingSplitBill = null
 
                     Toast.makeText(
                         context,
                         "🗑️ স্প্লিট বিল মুছে ফেলা হয়েছে",
                         Toast.LENGTH_SHORT
                     ).show()
+                },
+
+                onDismiss = {
+                    deletingSplitBill = null
                 }
             )
         }
