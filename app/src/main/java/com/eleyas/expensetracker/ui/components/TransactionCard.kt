@@ -1,7 +1,7 @@
+
 package com.eleyas.expensetracker.ui.components
 
 import android.net.Uri
-import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -55,7 +55,9 @@ fun TransactionCard(
         "MVR" ->
             if (usdToMvr > 0) {
                 transaction.amount * (usdToBdt / usdToMvr)
-            } else 0.0
+            } else {
+                0.0
+            }
         else -> 0.0
     }
 
@@ -77,6 +79,7 @@ fun TransactionCard(
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+
             Surface(
                 shape = RoundedCornerShape(14.dp),
                 color = color.copy(alpha = 0.10f)
@@ -85,7 +88,9 @@ fun TransactionCard(
                     icon,
                     contentDescription = null,
                     tint = color,
-                    modifier = Modifier.padding(10.dp).size(22.dp)
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .size(22.dp)
                 )
             }
 
@@ -113,7 +118,9 @@ fun TransactionCard(
 
                 Spacer(Modifier.height(4.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Surface(
                         shape = RoundedCornerShape(8.dp),
                         color = MaterialTheme.colorScheme.surfaceVariant
@@ -128,8 +135,10 @@ fun TransactionCard(
                             )
                         )
                     }
+
                     if (walletName.isNotEmpty()) {
                         Spacer(Modifier.width(8.dp))
+
                         Text(
                             text = walletName,
                             fontSize = 10.sp,
@@ -145,6 +154,7 @@ fun TransactionCard(
             Column(
                 horizontalAlignment = Alignment.End
             ) {
+
                 Text(
                     "৳${formatMoney(bdt)}",
                     color = color,
@@ -153,37 +163,72 @@ fun TransactionCard(
                 )
 
                 Row {
+
                     if (transaction.receiptImage != null) {
                         IconButton(
                             onClick = {
                                 try {
-                                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
-                                        data = Uri.parse(transaction.receiptImage)
-                                        addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    val intent = android.content.Intent(
+                                        android.content.Intent.ACTION_VIEW
+                                    ).apply {
+                                        data = Uri.parse(
+                                            transaction.receiptImage
+                                        )
+
+                                        addFlags(
+                                            android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                        )
                                     }
+
                                     context.startActivity(intent)
+
                                 } catch (e: Exception) {
-                                    Toast.makeText(context, "Cannot open receipt: ${e.message}", Toast.LENGTH_SHORT).show()
+
+                                    WarningPopupManager.show(
+                                        title = "রসিদ খোলা যাচ্ছে না",
+                                        message = "রসিদটি খোলা সম্ভব হয়নি.\n\nকারণ: ${
+                                            e.message ?: "অজানা সমস্যা"
+                                        }"
+                                    )
                                 }
                             },
                             modifier = Modifier.size(32.dp)
                         ) {
-                            Icon(Icons.Default.Image, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                            Icon(
+                                Icons.Default.Image,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
                         }
                     }
 
                     IconButton(
-                        onClick = { onEdit(transaction) },
+                        onClick = {
+                            onEdit(transaction)
+                        },
                         modifier = Modifier.size(32.dp)
                     ) {
-                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
 
                     IconButton(
-                        onClick = { onDelete(transaction) },
+                        onClick = {
+                            onDelete(transaction)
+                        },
                         modifier = Modifier.size(32.dp)
                     ) {
-                        Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp), tint = expenseRed)
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = expenseRed
+                        )
                     }
                 }
             }

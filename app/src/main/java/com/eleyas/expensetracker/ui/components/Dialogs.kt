@@ -130,7 +130,10 @@ fun CategoryBudgetDialog(
                 if (amount != null && amount > 0) {
                     onSave(CategoryBudget(month = currentMonth, category = category, limit = amount))
                 } else {
-                    Toast.makeText(context, "সঠিক Budget Limit দিন।", Toast.LENGTH_SHORT).show()
+                    WarningPopupManager.show(
+                        title = "Budget Limit",
+                        message = "দয়া করে সঠিক Budget Limit দিন।"
+                    )
                 }
             }) { Text("Save Budget") }
         },
@@ -154,7 +157,10 @@ fun CategoryBudgetDialog(
                 Button(onClick = {
                     val candidate = normalizeCategoryName(customCategoryName)
                     if (candidate.isBlank()) {
-                        Toast.makeText(context, "ক্যাটাগরির নাম লিখুন।", Toast.LENGTH_SHORT).show()
+                        WarningPopupManager.show(
+                            title = "ক্যাটাগরির নাম প্রয়োজন",
+                            message = "দয়া করে একটি ক্যাটাগরির নাম লিখুন।"
+                        )
                         return@Button
                     }
                     if (candidate in categories) {
@@ -210,7 +216,7 @@ fun BorrowingDialog(
                 Spacer(Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text("বাতিল") }
-                    Button(onClick = { val parsedAmount = amount.replace(",", "").trim().toDoubleOrNull(); if (parsedAmount == null || parsedAmount <= 0.0) Toast.makeText(context, "সঠিক টাকার পরিমাণ দিন।", Toast.LENGTH_SHORT).show() else onSave(parsedAmount, date, note) }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text("Save") }
+                    Button(onClick = { val parsedAmount = amount.replace(",", "").trim().toDoubleOrNull(); if (parsedAmount == null || parsedAmount <= 0.0) WarningPopupManager.show(title = "সঠিক টাকার পরিমাণ দিন", message = "দয়া করে সঠিক টাকার পরিমাণ দিন।") else onSave(parsedAmount, date, note) }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text("Save") }
                 }
             }
         }
@@ -305,7 +311,10 @@ fun AddTransactionDialog(
                         if (reason.isBlank()) reason = "Receipt scan"
                         Toast.makeText(context, "✅ বিল স্ক্যান করা হয়েছে: ৳${formatMoney(result.amount)}", Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(context, "বিল থেকে টাকার পরিমাণ বের করা যায়নি।", Toast.LENGTH_LONG).show()
+                        WarningPopupManager.show(
+                            title = "বিল স্ক্যান করা যায়নি",
+                            message = "বিল থেকে টাকার পরিমাণ বের করা যায়নি।"
+                        )
                     }
                 }
             }
@@ -324,7 +333,10 @@ val cameraImageUri = remember { mutableStateOf<Uri?>(null) }
                     if (reason.isBlank()) reason = "Receipt scan"
                     Toast.makeText(context, "✅ ক্যামেরা থেকে বিল স্ক্যান করা হয়েছে: ৳${formatMoney(result.amount)}", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(context, "বিলের তথ্য পড়া যায়নি — আলো ভালো করে ছবি তুলুন।", Toast.LENGTH_LONG).show()
+                    WarningPopupManager.show(
+                        title = "বিলের তথ্য পাওয়া যায়নি",
+                        message = "বিলের তথ্য পড়া যায়নি — আলো ভালো করে ছবি তুলুন।"
+                    )
                 }
             }
         }
@@ -335,7 +347,10 @@ val cameraImageUri = remember { mutableStateOf<Uri?>(null) }
             cameraImageUri.value = uri
             cameraLauncher.launch(uri)
         } else {
-            Toast.makeText(context, "Scan করতে Camera permission দরকার।", Toast.LENGTH_SHORT).show()
+            WarningPopupManager.show(
+                title = "Camera Permission প্রয়োজন",
+                message = "বিল স্ক্যান করতে Camera permission অনুমতি দিতে হবে।"
+            )
         }
     }
     fun launchCameraScan() {
@@ -489,7 +504,12 @@ val cameraImageUri = remember { mutableStateOf<Uri?>(null) }
                                     val loanAmount = loanPaymentAmount.replace(",", "").trim().toDoubleOrNull()
                                     if (loanAmount != null && loanAmount > 0) onLoanPayment(selectedLoanId!!, loanAmount, date)
                                 }
-                            } else Toast.makeText(context, "সঠিক টাকার পরিমাণ দিন", Toast.LENGTH_SHORT).show()
+                            } else {
+                                WarningPopupManager.show(
+                                    title = "সঠিক টাকার পরিমাণ দিন",
+                                    message = "দয়া করে সঠিক টাকার পরিমাণ লিখুন।"
+                                )
+                            }
                         }, shape = RoundedCornerShape(17.dp), colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.White), elevation = ButtonDefaults.buttonElevation(defaultElevation = 5.dp)) {
                             Text(if (existingTransaction != null) "Update করুন" else "সংরক্ষণ করুন", fontWeight = FontWeight.Bold)
                         }
@@ -561,7 +581,10 @@ val cameraImageUri = remember { mutableStateOf<Uri?>(null) }
                 Button(onClick = {
                     val candidate = normalizeCategoryName(customCategoryName)
                     if (candidate.isBlank()) {
-                        Toast.makeText(context, "ক্যাটাগরির নাম লিখুন।", Toast.LENGTH_SHORT).show()
+                        WarningPopupManager.show(
+                            title = "ক্যাটাগরির নাম প্রয়োজন",
+                            message = "দয়া করে একটি ক্যাটাগরির নাম লিখুন।"
+                        )
                         return@Button
                     }
                     if (candidate in categories) {
@@ -677,7 +700,12 @@ fun LoanDialog(
                             val amount = principal.replace(",", "").trim().toDoubleOrNull()
                             val monthly = installment.replace(",", "").trim().toDoubleOrNull() ?: 0.0
                             if (name.isNotBlank() && amount != null && amount > 0.0 && monthly >= 0.0) onSave(name.trim(), sourceType, amount, monthly, date, note.trim(), dueDate.takeIf { it.isNotBlank() })
-                            else Toast.makeText(context, "নাম ও সঠিক ঋণের টাকা দিন।", Toast.LENGTH_SHORT).show()
+                            else {
+                                WarningPopupManager.show(
+                                    title = "ঋণের তথ্য সঠিক নয়",
+                                    message = "নাম ও সঠিক ঋণের টাকা দিন।"
+                                )
+                            }
                         }, colors = ButtonDefaults.buttonColors(containerColor = Green), shape = RoundedCornerShape(14.dp)) { Text("সংরক্ষণ করুন") }
                     }
                 }
@@ -715,7 +743,12 @@ fun LoanPaymentDialog(loan: LoanAccount, onDismiss: () -> Unit, onSave: (Double,
                 Spacer(Modifier.height(14.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) { Text("বাতিল") }; Spacer(Modifier.width(8.dp))
-                    Button(onClick = { val value = amount.replace(",", "").trim().toDoubleOrNull(); if (value != null && value > 0.0) onSave(value, date, note.trim()) else Toast.makeText(context, "সঠিক পরিশোধের টাকা দিন。", Toast.LENGTH_SHORT).show() }, colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text("পরিশোধ সংরক্ষণ") }
+                    Button(onClick = { val value = amount.replace(",", "").trim().toDoubleOrNull(); if (value != null && value > 0.0) onSave(value, date, note.trim()) else {
+                        WarningPopupManager.show(
+                            title = "পরিশোধের টাকা সঠিক নয়",
+                            message = "দয়া করে সঠিক পরিশোধের টাকা দিন।"
+                        )
+                    } }, colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text("পরিশোধ সংরক্ষণ") }
                 }
             }
         }
@@ -762,7 +795,12 @@ fun LendingDialog(onDismiss: () -> Unit, onSave: (String, Double, String, String
                 Spacer(Modifier.height(14.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) { Text("বাতিল") }; Spacer(Modifier.width(8.dp))
-                    Button(onClick = { val value = amount.replace(",", "").trim().toDoubleOrNull(); if (person.isNotBlank() && value != null && value > 0.0) onSave(person.trim(), value, date, note.trim(), dueDate.takeIf { it.isNotBlank() }) else Toast.makeText(context, "নাম ও সঠিক টাকার পরিমাণ দিন。", Toast.LENGTH_SHORT).show() }, colors = ButtonDefaults.buttonColors(containerColor = Blue)) { Text("ধার সংরক্ষণ") }
+                    Button(onClick = { val value = amount.replace(",", "").trim().toDoubleOrNull(); if (person.isNotBlank() && value != null && value > 0.0) onSave(person.trim(), value, date, note.trim(), dueDate.takeIf { it.isNotBlank() }) else {
+                        WarningPopupManager.show(
+                            title = "ধারের তথ্য সঠিক নয়",
+                            message = "নাম ও সঠিক টাকার পরিমাণ দিন।"
+                        )
+                    } }, colors = ButtonDefaults.buttonColors(containerColor = Blue)) { Text("ধার সংরক্ষণ") }
                 }
             }
         }
@@ -792,7 +830,12 @@ fun LendingReturnDialog(lending: LendingAccount, onDismiss: () -> Unit, onSave: 
                 Spacer(Modifier.height(14.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) { Text("বাতিল") }; Spacer(Modifier.width(8.dp))
-                    Button(onClick = { val value = amount.replace(",", "").trim().toDoubleOrNull(); if (value != null && value > 0.0) onSave(value, date, note.trim()) else Toast.makeText(context, "সঠিক ফেরতের টাকা দিন。", Toast.LENGTH_SHORT).show() }, colors = ButtonDefaults.buttonColors(containerColor = IncomeGreen)) { Text("ফেরত সংরক্ষণ") }
+                    Button(onClick = { val value = amount.replace(",", "").trim().toDoubleOrNull(); if (value != null && value > 0.0) onSave(value, date, note.trim())else {
+                        WarningPopupManager.show(
+                            title = "ফেরতের টাকা সঠিক নয়",
+                            message = "দয়া করে সঠিক ফেরতের টাকা দিন।"
+                        )
+                    } }, colors = ButtonDefaults.buttonColors(containerColor = IncomeGreen)) { Text("ফেরত সংরক্ষণ") }
                 }
             }
         }
@@ -874,9 +917,22 @@ fun WalletDialog(
                     Spacer(Modifier.width(8.dp))
                     Button(onClick = {
                         if (name.isNotBlank()) {
-                            onSave(name, type, initialBalance.toDoubleOrNull() ?: 0.0, currency, selectedColor)
+                            onSave(
+                                name,
+                                type,
+                                initialBalance.toDoubleOrNull() ?: 0.0,
+                                currency,
+                                selectedColor
+                            )
+                        } else {
+                            WarningPopupManager.show(
+                                title = "অ্যাকাউন্টের নাম প্রয়োজন",
+                                message = "দয়া করে অ্যাকাউন্টের একটি নাম দিন।"
+                            )
                         }
-                    }, shape = RoundedCornerShape(12.dp)) { Text("সংরক্ষণ করুন") }
+                    }, shape = RoundedCornerShape(12.dp)) {
+                        Text("সংরক্ষণ করুন")
+                    }
                 }
             }
         }

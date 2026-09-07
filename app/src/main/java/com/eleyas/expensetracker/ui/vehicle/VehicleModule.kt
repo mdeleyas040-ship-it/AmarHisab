@@ -1,3 +1,4 @@
+
 package com.eleyas.expensetracker.ui.vehicle
 
 import android.widget.Toast
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.platform.LocalContext
 import com.eleyas.expensetracker.model.Vehicle
 import com.eleyas.expensetracker.repository.VehicleRepository
+import com.eleyas.expensetracker.ui.components.WarningPopupManager
 import com.eleyas.expensetracker.ui.screens.AddVehicleScreen
 
 @Composable
@@ -66,15 +68,16 @@ fun VehicleModule(
         } else {
             val listener = repository.observeVehicles(
                 userId = userId,
+
                 onData = {
                     vehicles = it
                 },
+
                 onError = {
-                    Toast.makeText(
-                        context,
-                        "গাড়ির তথ্য লোড করা যায়নি",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    WarningPopupManager.show(
+                        title = "গাড়ির তথ্য লোড করা যায়নি",
+                        message = "গাড়ির তথ্য লোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।"
+                    )
                 }
             )
 
@@ -112,11 +115,10 @@ fun VehicleModule(
                     },
 
                     onError = {
-                        Toast.makeText(
-                            context,
-                            "গাড়ির তথ্য পরিবর্তন করা যায়নি",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        WarningPopupManager.show(
+                            title = "গাড়ির তথ্য পরিবর্তন করা যায়নি",
+                            message = "গাড়ির তথ্য আপডেট করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।"
+                        )
                     }
                 )
             }
@@ -162,11 +164,10 @@ fun VehicleModule(
                             },
 
                             onError = {
-                                Toast.makeText(
-                                    context,
-                                    "গাড়ি ডিলিট করা যায়নি",
-                                    Toast.LENGTH_LONG
-                                ).show()
+                                WarningPopupManager.show(
+                                    title = "গাড়ি ডিলিট করা যায়নি",
+                                    message = "গাড়ির তথ্য ডিলিট করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।"
+                                )
                             }
                         )
                     }
@@ -277,11 +278,10 @@ fun VehicleModule(
                     },
 
                     onError = {
-                        Toast.makeText(
-                            context,
-                            "গাড়ি যোগ করা যায়নি",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        WarningPopupManager.show(
+                            title = "গাড়ি যোগ করা যায়নি",
+                            message = "গাড়ির তথ্য সংরক্ষণ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।"
+                        )
                     }
                 )
             }

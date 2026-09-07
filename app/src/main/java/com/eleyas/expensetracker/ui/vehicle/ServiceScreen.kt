@@ -21,6 +21,7 @@ import com.eleyas.expensetracker.model.ServiceEntry
 import com.eleyas.expensetracker.model.Vehicle
 import com.eleyas.expensetracker.repository.ServiceRepository
 import com.eleyas.expensetracker.ui.screens.AddServiceScreen
+import com.eleyas.expensetracker.ui.components.WarningPopupManager
 import androidx.compose.ui.platform.LocalContext
 
 @Composable
@@ -64,11 +65,10 @@ fun ServiceScreen(
                 },
 
                 onError = { error ->
-                    Toast.makeText(
-                        context,
-                        "সার্ভিসের তথ্য লোড করা যায়নি",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    WarningPopupManager.show(
+                        title = "সার্ভিসের তথ্য লোড করা যায়নি",
+                        message = "সার্ভিসের তথ্য লোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।"
+                    )
                 }
             )
 
@@ -105,11 +105,10 @@ fun ServiceScreen(
                     },
 
                     onError = {
-                        Toast.makeText(
-                            context,
-                            "সার্ভিসের তথ্য যোগ করা যায়নি",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        WarningPopupManager.show(
+                            title = "সার্ভিসের তথ্য যোগ করা যায়নি",
+                            message = "সার্ভিসের তথ্য সংরক্ষণ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।"
+                        )
                     }
                 )
             }

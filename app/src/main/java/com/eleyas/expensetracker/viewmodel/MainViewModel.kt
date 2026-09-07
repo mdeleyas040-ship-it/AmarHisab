@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.net.Uri
 import android.widget.Toast
+import android.widget.Toast.makeText
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
@@ -17,6 +18,7 @@ import com.eleyas.expensetracker.*
 import com.eleyas.expensetracker.model.*
 import com.eleyas.expensetracker.repository.HouseholdRepository
 import com.eleyas.expensetracker.repository.syncAllLoanAndLendingData
+import com.eleyas.expensetracker.ui.components.WarningPopupManager
 import com.eleyas.expensetracker.util.*
 import com.eleyas.expensetracker.util.HouseholdStorage
 import com.google.firebase.auth.FirebaseAuth
@@ -537,9 +539,12 @@ class MainViewModel : ViewModel() {
 
         if (currentUserId != "guest") {
             saveTransactionToFirestore(firestore, currentUserId, marked, {
-                Toast.makeText(context, "☁️ Cloud-এ save হয়েছে", Toast.LENGTH_SHORT).show()
-            }, { message ->
-                Toast.makeText(context, "⚠️ Cloud save হয়নি: $message", Toast.LENGTH_LONG).show()
+                makeText(context, "☁️ Cloud-এ save হয়েছে", Toast.LENGTH_SHORT).show()
+            }, onError = { message ->
+                WarningPopupManager.show(
+                    title = "Cloud Save Failed",
+                    message = "Cloud-এ হিসাবটি save করা যায়নি।\n\n$message"
+                )
             })
         }
 
@@ -563,7 +568,12 @@ class MainViewModel : ViewModel() {
                     .sumOf { convertToBdt(it.amount, it.currency) }
                 val percentage = spent / budget.limit
                 if (spent >= budget.limit) {
-                    Toast.makeText(context, "⚠️ $category Budget Limit Cross হয়েছে!", Toast.LENGTH_LONG).show()
+                    WarningPopupManager.show(
+                        title = "$category Budget Limit Crossed",
+                        message = "আপনার $category Budget Limit অতিক্রম করেছে।\n\n" +
+                                "খরচ: ৳${formatMoney(spent)}\n" +
+                                "Limit: ৳${formatMoney(budget.limit)}"
+                    )
                     val newNotification = NotificationItem(
                         title = "🚨 $category Budget Limit Crossed",
                         message = "Budget limit cross হয়েছে।\nখরচ: ৳${formatMoney(spent)} / Limit: ৳${formatMoney(budget.limit)}"
@@ -571,11 +581,19 @@ class MainViewModel : ViewModel() {
                     notifications = notifications + newNotification
                     NotificationStorage.save(context, notifications, currentUserId)
                 } else if (percentage >= 0.80) {
-                    Toast.makeText(context, "⚠️ $category Budget-এর 80% ব্যবহার হয়েছে。", Toast.LENGTH_LONG).show()
+                    WarningPopupManager.show(
+                        title = "⚠️ $category Budget Warning",
+                        message = "Budget-এর 80% ব্যবহার হয়েছে।\n\n" +
+                                "খরচ: ৳${formatMoney(spent)}\n" +
+                                "Limit: ৳${formatMoney(budget.limit)}"
+                    )
+
                     val newNotification = NotificationItem(
                         title = "⚠️ $category Budget Warning",
-                        message = "Budget-এর 80% ব্যবহার হয়েছে।\nখরচ: ৳${formatMoney(spent)} / Limit: ৳${formatMoney(budget.limit)}"
+                        message = "Budget-এর 80% ব্যবহার হয়েছে।\n" +
+                                "খরচ: ৳${formatMoney(spent)} / Limit: ৳${formatMoney(budget.limit)}"
                     )
+
                     notifications = notifications + newNotification
                     NotificationStorage.save(context, notifications, currentUserId)
                 }
@@ -604,9 +622,12 @@ class MainViewModel : ViewModel() {
 
         if (currentUserId != "guest") {
             saveTransactionToFirestore(firestore, currentUserId, updatedTransaction, {
-                Toast.makeText(context, "✏️ Cloud data update হয়েছে", Toast.LENGTH_SHORT).show()
+                makeText(context, "✏️ Cloud data update হয়েছে", Toast.LENGTH_SHORT).show()
             }, { message ->
-                Toast.makeText(context, "⚠️ Cloud update হয়নি: $message", Toast.LENGTH_LONG).show()
+                WarningPopupManager.show(
+                    title = "Cloud Update Failed",
+                    message = "Cloud data update করা যায়নি।\n\n$message"
+                )
             })
         }
     }
@@ -631,9 +652,12 @@ class MainViewModel : ViewModel() {
 
         if (currentUserId != "guest") {
             deleteTransactionFromFirestore(firestore, currentUserId, transaction.id, {
-                Toast.makeText(context, "🗑️ Cloud data delete হয়েছে", Toast.LENGTH_SHORT).show()
+                makeText(context, "🗑️ Cloud data delete হয়েছে", Toast.LENGTH_SHORT).show()
             }, { message ->
-                Toast.makeText(context, "⚠️ Cloud delete হয়নি: $message", Toast.LENGTH_LONG).show()
+                WarningPopupManager.show(
+                    title = "Cloud Delete Failed",
+                    message = "Cloud data delete করা যায়নি।\n\n$message"
+                )
             })
         }
     }
@@ -641,42 +665,42 @@ class MainViewModel : ViewModel() {
     fun saveCategoryBudgetAction(context: Context, budget: CategoryBudget) {
         categoryBudgets = categoryBudgets.filterNot { it.month == budget.month && it.category == budget.category } + budget
         saveCategoryBudgets(prefs, categoryBudgets)
-        Toast.makeText(context, "✅ ${budget.category} Budget Save হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "✅ ${budget.category} Budget Save হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     fun addLoan(context: Context, name: String, type: String, amount: Double, monthly: Double, date: String, note: String, dueDate: String? = null) {
         val newLoan = LoanAccount(System.currentTimeMillis(), name, type, amount, monthly, date, note, dueDate = dueDate)
         loans = loans + newLoan
         persistLoanData(context)
-        Toast.makeText(context, "✅ নতুন ঋণ যোগ করা হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "✅ নতুন ঋণ যোগ করা হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     fun updateLoan(context: Context, loan: LoanAccount, name: String, type: String, amount: Double, monthly: Double, date: String, note: String, dueDate: String? = null) {
         val updated = loan.copy(name = name, sourceType = type, principal = amount, monthlyInstallment = monthly, startDate = date, note = note, lastEditedDate = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date()), editHistory = loan.editHistory + SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date()), dueDate = dueDate)
         loans = loans.map { if (it.id == loan.id) updated else it }
         persistLoanData(context)
-        Toast.makeText(context, "✅ ঋণের তথ্য আপডেট হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "✅ ঋণের তথ্য আপডেট হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     fun addLoanPayment(context: Context, loan: LoanAccount, amount: Double, date: String, note: String, isHome: Boolean) {
         val payment = LoanPayment(System.currentTimeMillis(), loan.id, amount, date, note)
         loanPayments = loanPayments + payment
         persistLoanData(context)
-        if (!isHome) Toast.makeText(context, "✅ পরিশোধের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
+        if (!isHome) makeText(context, "✅ পরিশোধের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     fun addLending(context: Context, person: String, amount: Double, date: String, note: String, dueDate: String? = null) {
         val lending = LendingAccount(System.currentTimeMillis(), person, amount, date, note, dueDate = dueDate)
         lendings = lendings + lending
         persistLoanData(context)
-        Toast.makeText(context, "✅ ধারের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "✅ ধারের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     fun addLendingReturn(context: Context, lending: LendingAccount, amount: Double, date: String, note: String) {
         val ret = LendingReturn(System.currentTimeMillis(), lending.id, amount, date, note)
         lendingReturns = lendingReturns + ret
         persistLoanData(context)
-        Toast.makeText(context, "✅ ধার ফেরতের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "✅ ধার ফেরতের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     fun updateBorrowing(context: Context, loan: LoanAccount, borrowing: LoanBorrowing, amount: Double, date: String, note: String) {
@@ -684,14 +708,14 @@ class MainViewModel : ViewModel() {
         val updatedLoan = loan.copy(borrowings = loan.borrowings.map { if (it.id == borrowing.id) updatedBorrowing else it })
         loans = loans.map { if (it.id == loan.id) updatedLoan else it }
         persistLoanData(context)
-        Toast.makeText(context, "✅ ঋণের এন্ট্রি আপডেট হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "✅ ঋণের এন্ট্রি আপডেট হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     fun deleteBorrowing(context: Context, loan: LoanAccount, borrowing: LoanBorrowing) {
         val updatedLoan = loan.copy(borrowings = loan.borrowings.filter { it.id != borrowing.id })
         loans = loans.map { if (it.id == loan.id) updatedLoan else it }
         persistLoanData(context)
-        Toast.makeText(context, "🗑️ এন্ট্রিটি মুছে ফেলা হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "🗑️ এন্ট্রিটি মুছে ফেলা হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     private fun persistLoanData(context: Context) {
@@ -713,7 +737,7 @@ class MainViewModel : ViewModel() {
         wallets = wallets + newWallet
         saveWallets(prefs, wallets)
         saveAutoBackup(context)
-        Toast.makeText(context, "✅ নতুন অ্যাকাউন্ট যোগ হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "✅ নতুন অ্যাকাউন্ট যোগ হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     fun updateWallet(context: Context, wallet: Wallet) {
@@ -724,13 +748,16 @@ class MainViewModel : ViewModel() {
 
     fun deleteWallet(context: Context, walletId: String) {
         if (walletId == "default_cash") {
-            Toast.makeText(context, "ডিফল্ট অ্যাকাউন্ট মোছা সম্ভব নয়", Toast.LENGTH_SHORT).show()
+            WarningPopupManager.show(
+                title = "অ্যাকাউন্ট মুছে ফেলা যাবে না",
+                message = "ডিফল্ট অ্যাকাউন্টটি মুছে ফেলা সম্ভব নয়।"
+            )
             return
         }
         wallets = wallets.filter { it.id != walletId }
         saveWallets(prefs, wallets)
         saveAutoBackup(context)
-        Toast.makeText(context, "🗑️ অ্যাকাউন্ট মুছে ফেলা হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "🗑️ অ্যাকাউন্ট মুছে ফেলা হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     fun getWalletBalance(walletId: String): Double {

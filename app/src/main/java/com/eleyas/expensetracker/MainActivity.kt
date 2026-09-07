@@ -2657,21 +2657,11 @@ fun AmarHisabApp(
                         date,
                         note ->
 
-                    if (
-                        amount > remainingDue
-                    ) {
-
-                        Toast.makeText(
-                            context,
-                            "সর্বোচ্চ ৳${
-                                com.eleyas.expensetracker.util
-                                    .formatMoney(
-                                        remainingDue
-                                    )
-                            } ফেরত যোগ করা যাবে।",
-                            Toast.LENGTH_LONG
-                        ).show()
-
+                    if (amount > remainingDue) {
+                        WarningPopupManager.show(
+                            title = "সর্বোচ্চ সীমা অতিক্রম",
+                            message = "সর্বোচ্চ ৳${formatMoney(remainingDue)} ফেরত যোগ করা যাবে।"
+                        )
                     } else {
 
                         viewModel.addLendingReturn(
@@ -2875,4 +2865,6 @@ fun AmarHisabApp(
             sharingLendingPdf = null
         }
     }
+
+    WarningPopupHost()
 }

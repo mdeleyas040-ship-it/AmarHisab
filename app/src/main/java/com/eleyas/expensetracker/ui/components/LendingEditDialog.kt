@@ -23,7 +23,6 @@ import androidx.compose.ui.window.DialogProperties
 import com.eleyas.expensetracker.model.LendingAccount
 import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 
 @Composable
@@ -42,95 +41,254 @@ fun LendingEditDialog(
 
     fun pickDate(initial: String, onSelected: (String) -> Unit) {
         val calendar = Calendar.getInstance()
-        try { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(initial)?.let { calendar.time = it } } catch (_: Exception) {}
+
+        try {
+            SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                .parse(initial)
+                ?.let { calendar.time = it }
+        } catch (_: Exception) {
+        }
+
         DatePickerDialog(
             context,
-            { _, year, month, day -> onSelected("%02d/%02d/%04d".format(day, month + 1, year)) },
-            calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)
+            { _, year, month, day ->
+                onSelected(
+                    "%02d/%02d/%04d".format(
+                        day,
+                        month + 1,
+                        year
+                    )
+                )
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
         ).show()
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
         Card(
-            Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp),
             shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(containerColor = scheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+            colors = CardDefaults.cardColors(
+                containerColor = scheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 12.dp
+            )
         ) {
-            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Person, null, tint = scheme.primary, modifier = Modifier.size(28.dp))
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Person,
+                        null,
+                        tint = scheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+
                     Spacer(Modifier.width(10.dp))
+
                     Column(Modifier.weight(1f)) {
-                        Text("ধার দেওয়া এডিট", fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
-                        Text("ধারের তথ্য পরিবর্তন করুন", fontSize = 11.sp, color = scheme.onSurfaceVariant)
+                        Text(
+                            "ধার দেওয়া এডিট",
+                            fontSize = 21.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+
+                        Text(
+                            "ধারের তথ্য পরিবর্তন করুন",
+                            fontSize = 11.sp,
+                            color = scheme.onSurfaceVariant
+                        )
                     }
-                    IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = "বন্ধ") }
+
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "বন্ধ"
+                        )
+                    }
                 }
 
                 OutlinedTextField(
-                    value = person, onValueChange = { person = it },
-                    modifier = Modifier.fillMaxWidth(), singleLine = true,
+                    value = person,
+                    onValueChange = { person = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
                     label = { Text("ব্যক্তির নাম") },
-                    leadingIcon = { Icon(Icons.Default.Person, null) },
+                    leadingIcon = {
+                        Icon(Icons.Default.Person, null)
+                    },
                     shape = RoundedCornerShape(15.dp)
                 )
 
                 OutlinedTextField(
-                    value = amount, onValueChange = { amount = it },
-                    modifier = Modifier.fillMaxWidth(), singleLine = true,
+                    value = amount,
+                    onValueChange = { amount = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
                     label = { Text("ধারের টাকা") },
-                    leadingIcon = { Icon(Icons.Default.Payments, null) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    leadingIcon = {
+                        Icon(Icons.Default.Payments, null)
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    ),
                     shape = RoundedCornerShape(15.dp)
                 )
 
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(9.dp)
+                ) {
                     OutlinedButton(
-                        onClick = { pickDate(date) { date = it } },
-                        modifier = Modifier.weight(1f).height(62.dp),
-                        shape = RoundedCornerShape(15.dp)
-                    ) {
-                        Icon(Icons.Default.CalendarMonth, null)
-                        Spacer(Modifier.width(6.dp))
-                        Column(horizontalAlignment = Alignment.Start) {
-                            Text("তারিখ", fontSize = 9.sp, color = scheme.onSurfaceVariant)
-                            Text(date, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                    OutlinedButton(
-                        onClick = { pickDate(dueDate.ifBlank { date }) { dueDate = it } },
-                        modifier = Modifier.weight(1f).height(62.dp),
-                        shape = RoundedCornerShape(15.dp)
-                    ) {
-                        Icon(Icons.Default.CalendarMonth, null)
-                        Spacer(Modifier.width(6.dp))
-                        Column(horizontalAlignment = Alignment.Start) {
-                            Text("ফেরতের তারিখ", fontSize = 9.sp, color = scheme.onSurfaceVariant)
-                            Text(dueDate.ifBlank { "নির্ধারিত নয়" }, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-
-                OutlinedTextField(
-                    value = note, onValueChange = { note = it },
-                    modifier = Modifier.fillMaxWidth(), label = { Text("নোট") }, maxLines = 3,
-                    shape = RoundedCornerShape(15.dp)
-                )
-
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    OutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f).height(50.dp), shape = RoundedCornerShape(15.dp)) { Text("বাতিল") }
-                    Button(
                         onClick = {
-                            val value = amount.replace(",", "").trim().toDoubleOrNull()
-                            if (person.isBlank() || value == null || value <= 0.0) {
-                                android.widget.Toast.makeText(context, "নাম ও সঠিক টাকার পরিমাণ দিন।", android.widget.Toast.LENGTH_SHORT).show()
-                            } else {
-                                onSave(person.trim(), value, date, note.trim(), dueDate.takeIf { it.isNotBlank() })
+                            pickDate(date) {
+                                date = it
                             }
                         },
-                        modifier = Modifier.weight(1f).height(50.dp), shape = RoundedCornerShape(15.dp)
-                    ) { Text("আপডেট করুন", fontWeight = FontWeight.Bold) }
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(62.dp),
+                        shape = RoundedCornerShape(15.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.CalendarMonth,
+                            null
+                        )
+
+                        Spacer(Modifier.width(6.dp))
+
+                        Column(
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            Text(
+                                "তারিখ",
+                                fontSize = 9.sp,
+                                color = scheme.onSurfaceVariant
+                            )
+
+                            Text(
+                                date,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            pickDate(
+                                dueDate.ifBlank { date }
+                            ) {
+                                dueDate = it
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(62.dp),
+                        shape = RoundedCornerShape(15.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.CalendarMonth,
+                            null
+                        )
+
+                        Spacer(Modifier.width(6.dp))
+
+                        Column(
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            Text(
+                                "ফেরতের তারিখ",
+                                fontSize = 9.sp,
+                                color = scheme.onSurfaceVariant
+                            )
+
+                            Text(
+                                dueDate.ifBlank { "নির্ধারিত নয়" },
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("নোট") },
+                    maxLines = 3,
+                    shape = RoundedCornerShape(15.dp)
+                )
+
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(9.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(15.dp)
+                    ) {
+                        Text("বাতিল")
+                    }
+
+                    Button(
+                        onClick = {
+                            val value = amount
+                                .replace(",", "")
+                                .trim()
+                                .toDoubleOrNull()
+
+                            if (
+                                person.isBlank() ||
+                                value == null ||
+                                value <= 0.0
+                            ) {
+                                WarningPopupManager.show(
+                                    title = "তথ্য সঠিক নয়",
+                                    message = "নাম ও সঠিক টাকার পরিমাণ দিন।"
+                                )
+                            } else {
+                                onSave(
+                                    person.trim(),
+                                    value,
+                                    date,
+                                    note.trim(),
+                                    dueDate.takeIf {
+                                        it.isNotBlank()
+                                    }
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(15.dp)
+                    ) {
+                        Text(
+                            "আপডেট করুন",
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

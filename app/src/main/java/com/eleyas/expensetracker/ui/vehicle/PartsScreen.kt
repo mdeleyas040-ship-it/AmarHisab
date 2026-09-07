@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.eleyas.expensetracker.model.PartEntry
 import com.eleyas.expensetracker.model.Vehicle
 import com.eleyas.expensetracker.repository.PartRepository
+import com.eleyas.expensetracker.ui.components.WarningPopupManager
 import com.eleyas.expensetracker.ui.screens.AddPartScreen
 
 @Composable
@@ -59,11 +60,10 @@ fun PartsScreen(
                 },
 
                 onError = {
-                    Toast.makeText(
-                        context,
-                        "যন্ত্রাংশের তথ্য লোড করা যায়নি",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    WarningPopupManager.show(
+                        title = "যন্ত্রাংশের তথ্য লোড করা যায়নি",
+                        message = "যন্ত্রাংশের তথ্য লোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।"
+                    )
                 }
             )
 
@@ -100,11 +100,10 @@ fun PartsScreen(
                     },
 
                     onError = {
-                        Toast.makeText(
-                            context,
-                            "যন্ত্রাংশ যোগ করা যায়নি",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        WarningPopupManager.show(
+                            title = "যন্ত্রাংশ যোগ করা যায়নি",
+                            message = "যন্ত্রাংশের তথ্য সংরক্ষণ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।"
+                        )
                     }
                 )
             }
