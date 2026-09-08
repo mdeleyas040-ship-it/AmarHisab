@@ -1816,6 +1816,25 @@ fun AmarHisabApp(
             )
         }
 
+        if (showLendingDialog) {
+            LendingDialog(
+                onDismiss = {
+                    showLendingDialog = false
+                },
+                onSave = { person, amount, date, note, dueDate ->
+                    viewModel.addLending(
+                        context,
+                        person,
+                        amount,
+                        date,
+                        note,
+                        dueDate
+                    )
+                    showLendingDialog = false
+                }
+            )
+        }
+
         if (showVoiceDialog) {
 
             VoiceInputDialog(
