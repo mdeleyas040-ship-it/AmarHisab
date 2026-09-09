@@ -21,7 +21,6 @@ import com.eleyas.expensetracker.ui.components.*
 import com.eleyas.expensetracker.ui.theme.*
 import com.eleyas.expensetracker.util.displayLoanDate
 import com.eleyas.expensetracker.util.formatMoney
-
 private val TealGreen = Color(0xFF16A085)
 
 @Composable
@@ -57,6 +56,10 @@ fun LoansScreen(
 
     var shareOptionsLoan by remember {
         mutableStateOf<LoanAccount?>(null)
+    }
+
+    var shareOptionsLending by remember {
+        mutableStateOf<LendingAccount?>(null)
     }
 
     var showPaymentHistoryLoan by remember {
@@ -120,13 +123,17 @@ fun LoansScreen(
     }
 
     // =========================================================
+    // LENDING SHARE DIALOG
+    // =========================================================
+
+
+    // =========================================================
     // LOAN PAYMENT HISTORY
     // =========================================================
 
     if (showPaymentHistoryLoan != null) {
 
-        val historyLoan =
-            showPaymentHistoryLoan!!
+        val historyLoan = showPaymentHistoryLoan!!
 
         val paymentHistory =
             loanPayments.filter {
@@ -159,7 +166,11 @@ fun LoansScreen(
                                     displayLoanDate(
                                         payment.date
                                     )
-                                } তারিখে পরিশোধ করা হয়েছে"
+                                } — ৳${
+                                    formatMoney(
+                                        payment.amount
+                                    )
+                                } পরিশোধ করা হয়েছে"
                             )
 
                             Spacer(
@@ -257,21 +268,17 @@ fun LoansScreen(
     // =========================================================
 
     LazyColumn(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .background(
-                    MaterialTheme
-                        .colorScheme
-                        .background
-                ),
-        contentPadding =
-            PaddingValues(
-                start = 24.dp,
-                end = 24.dp,
-                top = 14.dp,
-                bottom = 100.dp
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                MaterialTheme.colorScheme.background
             ),
+        contentPadding = PaddingValues(
+            start = 24.dp,
+            end = 24.dp,
+            top = 14.dp,
+            bottom = 100.dp
+        ),
         verticalArrangement =
             Arrangement.spacedBy(14.dp)
     ) {
@@ -386,8 +393,7 @@ fun LoansScreen(
                         RoundedCornerShape(17.dp),
                     colors =
                         ButtonDefaults.buttonColors(
-                            containerColor =
-                                Green
+                            containerColor = Green
                         )
                 ) {
 
@@ -454,8 +460,7 @@ fun LoansScreen(
 
                     LoanPremiumCard(
                         loan = loan,
-                        loanPayments =
-                            loanPayments,
+                        loanPayments = loanPayments,
                         loanInterestTerms =
                             loanInterestTerms,
                         expanded =
@@ -474,12 +479,10 @@ fun LoansScreen(
                                 }
                         },
                         onShare = {
-
                             shareOptionsLoan =
                                 loan
                         },
                         onEdit = {
-
                             onEditLoan(
                                 loan
                             )
@@ -519,13 +522,10 @@ fun LoansScreen(
                                 remaining >
                                 0.0
                             ) {
-
                                 onAddLoanPayment(
                                     loan
                                 )
-
                             } else {
-
                                 showPaymentHistoryLoan =
                                     loan
                             }
@@ -551,32 +551,20 @@ fun LoansScreen(
             item {
 
                 PremiumThreeSummary(
-                    firstTitle =
-                        "মোট ধার",
-                    firstAmount =
-                        totalLent,
-                    firstIcon =
-                        Icons.Default.Handshake,
-                    firstColor =
-                        Blue,
+                    firstTitle = "মোট ধার",
+                    firstAmount = totalLent,
+                    firstIcon = Icons.Default.Handshake,
+                    firstColor = Blue,
 
-                    secondTitle =
-                        "ফেরত পেলাম",
-                    secondAmount =
-                        totalReturned,
-                    secondIcon =
-                        Icons.Default.Paid,
-                    secondColor =
-                        IncomeGreen,
+                    secondTitle = "ফেরত পেলাম",
+                    secondAmount = totalReturned,
+                    secondIcon = Icons.Default.Paid,
+                    secondColor = IncomeGreen,
 
-                    thirdTitle =
-                        "পাওনা আছে",
-                    thirdAmount =
-                        totalReceivable,
-                    thirdIcon =
-                        Icons.Default.Schedule,
-                    thirdColor =
-                        ExpenseRed
+                    thirdTitle = "পাওনা আছে",
+                    thirdAmount = totalReceivable,
+                    thirdIcon = Icons.Default.Schedule,
+                    thirdColor = ExpenseRed
                 )
             }
 
@@ -709,8 +697,7 @@ fun LoansScreen(
                 ) { lending ->
 
                     LendingPremiumCard(
-                        lending =
-                            lending,
+                        lending = lending,
                         lendingReturns =
                             lendingReturns,
                         expanded =
@@ -728,41 +715,21 @@ fun LoansScreen(
                                     lending.id
                                 }
                         },
-
-                        // DIRECT TEXT SHARE
-                        onShareText = {
-
-                            onShareLending(
-                                lending,
-                                false
-                            )
+                        onShare = {
+                            shareOptionsLending =
+                                lending
                         },
-
-                        // DIRECT PDF SHARE
-                        onSharePdf = {
-
-                            onShareLending(
-                                lending,
-                                true
-                            )
-                        },
-
                         onEdit = {
-
                             onEditLending(
                                 lending
                             )
                         },
-
                         onDelete = {
-
                             onDeleteLending(
                                 lending
                             )
                         },
-
                         onAddReturn = {
-
                             onAddLendingReturn(
                                 lending
                             )
@@ -825,8 +792,7 @@ private fun PremiumBalanceCard(
             RoundedCornerShape(28.dp),
         color =
             primaryColor,
-        shadowElevation =
-            7.dp
+        shadowElevation = 7.dp
     ) {
 
         Column(
@@ -872,8 +838,7 @@ private fun PremiumBalanceCard(
                                 } else {
                                     Icons.Default.CreditCard
                                 },
-                                contentDescription =
-                                    null,
+                                contentDescription = null,
                                 tint =
                                     Color.White,
                                 modifier =
@@ -979,7 +944,11 @@ private fun PremiumBalanceCard(
                     modifier =
                         Modifier.weight(1f),
                     icon =
-                        Icons.Default.AccountBalance,
+                        if (isLending) {
+                            Icons.Default.AccountBalance
+                        } else {
+                            Icons.Default.AccountBalance
+                        },
                     title =
                         if (isLending) {
                             "মোট ধার"
@@ -1128,8 +1097,7 @@ private fun PremiumTabButton(
                 RoundedCornerShape(17.dp),
             colors =
                 ButtonDefaults.buttonColors(
-                    containerColor =
-                        color
+                    containerColor = color
                 ),
             contentPadding =
                 PaddingValues(
@@ -1171,9 +1139,7 @@ private fun PremiumTabButton(
                         MaterialTheme
                             .colorScheme
                             .surfaceVariant
-                            .copy(
-                                alpha = 0.55f
-                            ),
+                            .copy(alpha = 0.55f),
                     contentColor =
                         MaterialTheme
                             .colorScheme
@@ -1217,20 +1183,15 @@ private fun PremiumTabButton(
 private fun PremiumThreeSummary(
     firstTitle: String,
     firstAmount: Double,
-    firstIcon:
-    androidx.compose.ui.graphics.vector.ImageVector,
+    firstIcon: androidx.compose.ui.graphics.vector.ImageVector,
     firstColor: Color,
-
     secondTitle: String,
     secondAmount: Double,
-    secondIcon:
-    androidx.compose.ui.graphics.vector.ImageVector,
+    secondIcon: androidx.compose.ui.graphics.vector.ImageVector,
     secondColor: Color,
-
     thirdTitle: String,
     thirdAmount: Double,
-    thirdIcon:
-    androidx.compose.ui.graphics.vector.ImageVector,
+    thirdIcon: androidx.compose.ui.graphics.vector.ImageVector,
     thirdColor: Color
 ) {
 
@@ -1292,16 +1253,16 @@ private fun PremiumSummaryItem(
     modifier: Modifier,
     title: String,
     amount: Double,
-    icon:
-    androidx.compose.ui.graphics.vector.ImageVector,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     color: Color
 ) {
 
     Column(
         modifier =
-            modifier.padding(
-                vertical = 3.dp
-            )
+            modifier
+                .padding(
+                    vertical = 3.dp
+                )
     ) {
 
         Row(
@@ -1312,8 +1273,7 @@ private fun PremiumSummaryItem(
             Icon(
                 icon,
                 contentDescription = null,
-                tint =
-                    color,
+                tint = color,
                 modifier =
                     Modifier.size(21.dp)
             )
@@ -1324,8 +1284,7 @@ private fun PremiumSummaryItem(
 
             Text(
                 title,
-                color =
-                    color,
+                color = color,
                 fontSize = 12.sp,
                 maxLines = 1
             )
@@ -1337,8 +1296,7 @@ private fun PremiumSummaryItem(
 
         Text(
             "৳${formatMoney(amount)}",
-            color =
-                color,
+            color = color,
             fontSize = 18.sp,
             fontWeight =
                 FontWeight.ExtraBold,
@@ -1367,8 +1325,7 @@ private fun PremiumSummaryItem(
 
 @Composable
 private fun EmptyFinanceCard(
-    icon:
-    androidx.compose.ui.graphics.vector.ImageVector,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
     subtitle: String
 ) {
@@ -1566,16 +1523,14 @@ private fun LoanPremiumCard(
                     ) {
 
                         IconButton(
-                            onClick =
-                                onShare,
+                            onClick = onShare,
                             modifier =
                                 Modifier.size(32.dp)
                         ) {
 
                             Icon(
                                 Icons.Default.Share,
-                                contentDescription =
-                                    null,
+                                contentDescription = null,
                                 tint =
                                     MaterialTheme
                                         .colorScheme
@@ -1588,37 +1543,51 @@ private fun LoanPremiumCard(
                         Text(
                             "৳${
                                 formatMoney(
-                                    remaining
+                                    if (remaining <= 0.0) {
+                                        paid
+                                    } else {
+                                        remaining
+                                    }
                                 )
                             }",
                             fontSize = 17.sp,
                             fontWeight =
                                 FontWeight.ExtraBold,
                             color =
-                                if (
-                                    remaining > 0.0
-                                ) {
-                                    ExpenseRed
-                                } else {
+                                if (remaining <= 0.0) {
                                     IncomeGreen
+                                } else {
+                                    ExpenseRed
                                 }
                         )
                     }
 
-                    Text(
-                        if (
-                            remaining > 0.0
-                        ) {
-                            "বাকি আছে"
-                        } else {
-                            "পরিশোধিত"
-                        },
-                        fontSize = 11.sp,
-                        color =
-                            MaterialTheme
-                                .colorScheme
-                                .onSurfaceVariant
-                    )
+                    if (remaining <= 0.0) {
+
+                        // Fully paid: show only the paid status.
+                        Text(
+                            "পরিশোধিত",
+                            fontSize = 12.sp,
+                            fontWeight =
+                                FontWeight.Bold,
+                            color =
+                                IncomeGreen
+                        )
+
+                    } else {
+
+                        // Outstanding: show only the remaining status.
+                        // The paid amount remains available in the expanded
+                        // payment details / payment history.
+                        Text(
+                            "বাকি আছে",
+                            fontSize = 12.sp,
+                            fontWeight =
+                                FontWeight.Bold,
+                            color =
+                                ExpenseRed
+                        )
+                    }
                 }
             }
 
@@ -1650,7 +1619,7 @@ private fun LoanPremiumCard(
                 )
 
                 LoanInfoRow(
-                    "পরিশোধ",
+                    "পরিশোধিত",
                     paid
                 )
 
@@ -1775,8 +1744,7 @@ private fun LoanPremiumCard(
 
                                         Icon(
                                             Icons.Default.Edit,
-                                            contentDescription =
-                                                null,
+                                            contentDescription = null,
                                             modifier =
                                                 Modifier.size(
                                                     16.dp
@@ -1799,8 +1767,7 @@ private fun LoanPremiumCard(
 
                                         Icon(
                                             Icons.Default.Delete,
-                                            contentDescription =
-                                                null,
+                                            contentDescription = null,
                                             tint =
                                                 ExpenseRed,
                                             modifier =
@@ -1826,8 +1793,7 @@ private fun LoanPremiumCard(
                 ) {
 
                     OutlinedButton(
-                        onClick =
-                            onEdit,
+                        onClick = onEdit,
                         modifier =
                             Modifier
                                 .weight(1f)
@@ -1838,8 +1804,7 @@ private fun LoanPremiumCard(
 
                         Icon(
                             Icons.Default.Edit,
-                            contentDescription =
-                                null,
+                            contentDescription = null,
                             modifier =
                                 Modifier.size(18.dp)
                         )
@@ -1852,8 +1817,7 @@ private fun LoanPremiumCard(
                     }
 
                     Button(
-                        onClick =
-                            onPayment,
+                        onClick = onPayment,
                         modifier =
                             Modifier
                                 .weight(1f)
@@ -1875,8 +1839,7 @@ private fun LoanPremiumCard(
                             } else {
                                 Icons.Default.CheckCircle
                             },
-                            contentDescription =
-                                null,
+                            contentDescription = null,
                             modifier =
                                 Modifier.size(18.dp)
                         )
@@ -1912,8 +1875,7 @@ private fun LendingPremiumCard(
     lendingReturns: List<LendingReturn>,
     expanded: Boolean,
     onExpand: () -> Unit,
-    onShareText: () -> Unit,
-    onSharePdf: () -> Unit,
+    onShare: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onAddReturn: () -> Unit
@@ -2034,8 +1996,7 @@ private fun LendingPremiumCard(
 
                         Icon(
                             Icons.Default.Person,
-                            contentDescription =
-                                null,
+                            contentDescription = null,
                             tint =
                                 TealGreen,
                             modifier =
@@ -2151,8 +2112,7 @@ private fun LendingPremiumCard(
 
                         Icon(
                             statusIcon,
-                            contentDescription =
-                                null,
+                            contentDescription = null,
                             tint =
                                 TealGreen,
                             modifier =
@@ -2180,8 +2140,7 @@ private fun LendingPremiumCard(
                     } else {
                         Icons.Default.KeyboardArrowDown
                     },
-                    contentDescription =
-                        null,
+                    contentDescription = null,
                     modifier =
                         Modifier.size(28.dp),
                     tint =
@@ -2340,8 +2299,7 @@ private fun LendingPremiumCard(
 
                             Icon(
                                 Icons.Default.Description,
-                                contentDescription =
-                                    null,
+                                contentDescription = null,
                                 tint =
                                     TealGreen,
                                 modifier =
@@ -2413,8 +2371,7 @@ private fun LendingPremiumCard(
 
                             Icon(
                                 Icons.Default.Event,
-                                contentDescription =
-                                    null,
+                                contentDescription = null,
                                 tint =
                                     ExpenseRed,
                                 modifier =
@@ -2621,10 +2578,8 @@ private fun LendingPremiumCard(
                         Arrangement.spacedBy(8.dp)
                 ) {
 
-                    // TEXT SHARE
                     OutlinedButton(
-                        onClick =
-                            onShareText,
+                        onClick = onShare,
                         modifier =
                             Modifier
                                 .weight(1f)
@@ -2640,8 +2595,7 @@ private fun LendingPremiumCard(
 
                         Icon(
                             Icons.Default.Share,
-                            contentDescription =
-                                null,
+                            contentDescription = null,
                             modifier =
                                 Modifier.size(19.dp)
                         )
@@ -2660,10 +2614,8 @@ private fun LendingPremiumCard(
                         )
                     }
 
-                    // DIRECT PDF
                     OutlinedButton(
-                        onClick =
-                            onSharePdf,
+                        onClick = onShare,
                         modifier =
                             Modifier
                                 .weight(1f)
@@ -2679,8 +2631,7 @@ private fun LendingPremiumCard(
 
                         Icon(
                             Icons.Default.PictureAsPdf,
-                            contentDescription =
-                                null,
+                            contentDescription = null,
                             modifier =
                                 Modifier.size(19.dp)
                         )
@@ -2699,10 +2650,8 @@ private fun LendingPremiumCard(
                         )
                     }
 
-                    // ADD RETURN
                     Button(
-                        onClick =
-                            onAddReturn,
+                        onClick = onAddReturn,
                         enabled =
                             remaining > 0.0,
                         modifier =
@@ -2731,8 +2680,7 @@ private fun LendingPremiumCard(
                             } else {
                                 Icons.Default.CheckCircle
                             },
-                            contentDescription =
-                                null,
+                            contentDescription = null,
                             modifier =
                                 Modifier.size(19.dp)
                         )
