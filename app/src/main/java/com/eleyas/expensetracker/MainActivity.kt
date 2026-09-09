@@ -706,14 +706,91 @@ fun AmarHisabApp(
                                 it.date to it.amount
                             }
 
-                    viewModel.exportPersonStatementPdf(
+                    ReportExporter.exportPersonStatement(
                         context,
                         it,
                         loan.name,
                         loan.principal,
                         history,
-                        false
+                        false,
+                        loan.startDate
                     )
+
+                    // OPEN PDF automatically after successful export.
+                    try {
+                        val pdfIntent =
+                            Intent(
+                                Intent.ACTION_VIEW
+                            ).apply {
+                                setDataAndType(
+                                    it,
+                                    "application/pdf"
+                                )
+                                addFlags(
+                                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                )
+                                addFlags(
+                                    Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                )
+                                addFlags(
+                                    Intent.FLAG_ACTIVITY_NEW_TASK
+                                )
+                                clipData =
+                                    ClipData.newRawUri(
+                                        "PDF",
+                                        it
+                                    )
+                            }
+
+                        if (
+                            pdfIntent.resolveActivity(
+                                context.packageManager
+                            ) != null
+                        ) {
+                            context.startActivity(
+                                pdfIntent
+                            )
+                        } else {
+                            val shareIntent =
+                                Intent(
+                                    Intent.ACTION_SEND
+                                ).apply {
+                                    type =
+                                        "application/pdf"
+                                    putExtra(
+                                        Intent.EXTRA_STREAM,
+                                        it
+                                    )
+                                    addFlags(
+                                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                    )
+                                    clipData =
+                                        ClipData.newRawUri(
+                                            "PDF",
+                                            it
+                                        )
+                                }
+
+                            context.startActivity(
+                                Intent.createChooser(
+                                    shareIntent,
+                                    "PDF খুলুন"
+                                )
+                            )
+                        }
+
+                    } catch (
+                        e: Exception
+                    ) {
+                        Toast.makeText(
+                            context,
+                            "PDF save হয়েছে, কিন্তু খোলার জন্য PDF viewer পাওয়া যায়নি।",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+                    // Clear selected PDF only after export/open processing.
+                    sharingLoanPdf = null
                 }
             }
         }
@@ -743,13 +820,14 @@ fun AmarHisabApp(
                     // CREATE PDF
                     // =================================================
 
-                    viewModel.exportPersonStatementPdf(
+                    ReportExporter.exportPersonStatement(
                         context,
                         savedUri,
                         lending.person,
                         lending.amount,
                         history,
-                        true
+                        true,
+                        lending.date
                     )
 
                     // =================================================
@@ -855,7 +933,7 @@ fun AmarHisabApp(
                     }
                 }
 
-                // Clear selected PDF
+                // Clear selected PDF only after export/open processing.
                 sharingLendingPdf = null
             }
         }
@@ -3036,13 +3114,9 @@ fun AmarHisabApp(
             )
         }
 
-        if (sharingLoanPdf != null) {
-            sharingLoanPdf = null
-        }
-
-        if (sharingLendingPdf != null) {
-            sharingLendingPdf = null
-        }
+        // PDF selection states are cleared inside their result callbacks.
+        // Do NOT clear them here during recomposition, otherwise CreateDocument
+        // may return after the state has already been reset.
     }
 
     WarningPopupHost()

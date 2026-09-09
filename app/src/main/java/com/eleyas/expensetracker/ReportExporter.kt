@@ -1,3 +1,4 @@
+
 package com.eleyas.expensetracker
 
 import android.content.Context
@@ -164,6 +165,95 @@ object ReportExporter {
 
             var y = 45f
 
+            // -------------------------------------------------
+            // Helpers
+            // -------------------------------------------------
+
+            fun fitText(
+                value: String,
+                maxWidth: Float
+            ): String {
+
+                if (paint.measureText(value) <= maxWidth) {
+                    return value
+                }
+
+                var result = value
+
+                while (
+                    result.isNotEmpty() &&
+                    paint.measureText("$result…") > maxWidth
+                ) {
+                    result = result.dropLast(1)
+                }
+
+                return if (result.isEmpty()) "…" else "$result…"
+            }
+
+            fun drawTableHeader() {
+
+                paint.color =
+                    Color.BLACK
+
+                paint.textSize =
+                    11f
+
+                paint.isFakeBoldText =
+                    true
+
+                canvas.drawText(
+                    "তারিখ",
+                    40f,
+                    y,
+                    paint
+                )
+
+                canvas.drawText(
+                    "বিভাগ",
+                    110f,
+                    y,
+                    paint
+                )
+
+                canvas.drawText(
+                    "কারণ",
+                    205f,
+                    y,
+                    paint
+                )
+
+                canvas.drawText(
+                    "ধরন",
+                    395f,
+                    y,
+                    paint
+                )
+
+                canvas.drawText(
+                    "পরিমাণ",
+                    465f,
+                    y,
+                    paint
+                )
+
+                y += 8f
+
+                paint.strokeWidth = 1f
+
+                canvas.drawLine(
+                    40f,
+                    y,
+                    555f,
+                    y,
+                    paint
+                )
+
+                y += 20f
+
+                paint.isFakeBoldText =
+                    false
+            }
+
             // =================================================
             // TITLE
             // =================================================
@@ -172,13 +262,13 @@ object ReportExporter {
                 Color.BLACK
 
             paint.textSize =
-                20f
+                24f
 
             paint.isFakeBoldText =
                 true
 
             canvas.drawText(
-                "Amar Hisab - Financial Report",
+                "Amar Hisab - আর্থিক প্রতিবেদন",
                 40f,
                 y,
                 paint
@@ -191,13 +281,13 @@ object ReportExporter {
             // =================================================
 
             paint.textSize =
-                10f
+                12f
 
             paint.isFakeBoldText =
                 false
 
             canvas.drawText(
-                "Report Generated: $dateStr",
+                "প্রতিবেদন তৈরির সময়: $dateStr",
                 40f,
                 y,
                 paint
@@ -211,16 +301,16 @@ object ReportExporter {
 
             paint.color =
                 Color.rgb(
-                    240,
-                    240,
-                    240
+                    245,
+                    243,
+                    246
                 )
 
             canvas.drawRect(
                 40f,
                 y,
                 555f,
-                y + 65f,
+                y + 100f,
                 paint
             )
 
@@ -228,107 +318,68 @@ object ReportExporter {
                 Color.BLACK
 
             paint.textSize =
-                12f
+                14f
 
             paint.isFakeBoldText =
                 true
 
             canvas.drawText(
-                "Summary",
+                "সারসংক্ষেপ",
                 55f,
-                y + 20f,
+                y + 22f,
                 paint
             )
 
             paint.textSize =
-                10f
+                12f
 
             paint.isFakeBoldText =
                 false
 
             canvas.drawText(
-                "Total Income: BDT ${money(totalIncome)}",
+                fitText(
+                    "মোট আয়: BDT ${money(totalIncome)}",
+                    220f
+                ),
                 55f,
-                y + 43f,
+                y + 48f,
                 paint
             )
 
             canvas.drawText(
-                "Total Expense: BDT ${money(totalExpense)}",
-                245f,
-                y + 43f,
+                fitText(
+                    "মোট খরচ: BDT ${money(totalExpense)}",
+                    220f
+                ),
+                55f,
+                y + 72f,
                 paint
             )
 
             canvas.drawText(
-                "Balance: BDT ${money(balance)}",
-                430f,
-                y + 43f,
+                fitText(
+                    "বর্তমান ব্যালেন্স: BDT ${money(balance)}",
+                    250f
+                ),
+                300f,
+                y + 60f,
                 paint
             )
 
-            y += 95f
+            y += 125f
 
             // =================================================
             // TABLE HEADER
             // =================================================
 
-            paint.textSize =
-                10f
-
-            paint.isFakeBoldText =
-                true
-
-            canvas.drawText(
-                "Date",
-                40f,
-                y,
-                paint
-            )
-
-            canvas.drawText(
-                "Category",
-                110f,
-                y,
-                paint
-            )
-
-            canvas.drawText(
-                "Reason",
-                210f,
-                y,
-                paint
-            )
-
-            canvas.drawText(
-                "Type",
-                390f,
-                y,
-                paint
-            )
-
-            canvas.drawText(
-                "Amount",
-                480f,
-                y,
-                paint
-            )
-
-            y += 6f
-
-            canvas.drawLine(
-                40f,
-                y,
-                555f,
-                y,
-                paint
-            )
-
-            y += 18f
+            drawTableHeader()
 
             // =================================================
             // TRANSACTIONS
             // =================================================
+
+            paint.textSize =
+                11f
 
             paint.isFakeBoldText =
                 false
@@ -358,109 +409,86 @@ object ReportExporter {
                     canvas =
                         page.canvas
 
-                    y = 45f
+                    y = 50f
 
-                    // Repeat header
-                    paint.color =
-                        Color.BLACK
-
-                    paint.textSize =
-                        10f
-
-                    paint.isFakeBoldText =
-                        true
-
-                    canvas.drawText(
-                        "Date",
-                        40f,
-                        y,
-                        paint
-                    )
-
-                    canvas.drawText(
-                        "Category",
-                        110f,
-                        y,
-                        paint
-                    )
-
-                    canvas.drawText(
-                        "Reason",
-                        210f,
-                        y,
-                        paint
-                    )
-
-                    canvas.drawText(
-                        "Type",
-                        390f,
-                        y,
-                        paint
-                    )
-
-                    canvas.drawText(
-                        "Amount",
-                        480f,
-                        y,
-                        paint
-                    )
-
-                    y += 6f
-
-                    canvas.drawLine(
-                        40f,
-                        y,
-                        555f,
-                        y,
-                        paint
-                    )
-
-                    y += 18f
-
-                    paint.isFakeBoldText =
-                        false
+                    drawTableHeader()
                 }
 
+                val dateText =
+                    fitText(
+                        trans.date.take(12),
+                        62f
+                    )
+
+                val categoryText =
+                    fitText(
+                        trans.category.replace(
+                            "\n",
+                            " "
+                        ),
+                        82f
+                    )
+
+                val reasonText =
+                    fitText(
+                        trans.reason.replace(
+                            "\n",
+                            " "
+                        ),
+                        175f
+                    )
+
+                val typeText =
+                    when (
+                        trans.type.uppercase()
+                    ) {
+                        "INCOME" -> "আয়"
+                        "EXPENSE" -> "খরচ"
+                        else -> trans.type.take(8)
+                    }
+
+                val amountText =
+                    fitText(
+                        money(trans.amount),
+                        85f
+                    )
+
                 canvas.drawText(
-                    trans.date.take(12),
+                    dateText,
                     40f,
                     y,
                     paint
                 )
 
                 canvas.drawText(
-                    trans.category.take(14),
+                    categoryText,
                     110f,
                     y,
                     paint
                 )
 
                 canvas.drawText(
-                    trans.reason
-                        .replace("\n", " ")
-                        .take(27),
-                    210f,
+                    reasonText,
+                    205f,
                     y,
                     paint
                 )
 
                 canvas.drawText(
-                    trans.type
-                        .uppercase()
-                        .take(8),
-                    390f,
+                    typeText,
+                    395f,
                     y,
                     paint
                 )
 
                 canvas.drawText(
-                    money(trans.amount),
-                    480f,
+                    amountText,
+                    465f,
                     y,
                     paint
                 )
 
-                y += 18f
+                y += 22f
             }
 
             // Finish final page
@@ -468,13 +496,12 @@ object ReportExporter {
                 page
             )
 
-            // Write complete PDF
             writePdf(
                 context = context,
                 uri = uri,
                 document = pdfDocument,
                 successMessage =
-                    "✅ PDF Report Saved"
+                    "✅ PDF প্রতিবেদন সংরক্ষণ হয়েছে"
             )
 
         } catch (e: Exception) {
@@ -491,7 +518,6 @@ object ReportExporter {
             ).show()
         }
     }
-
 
     // =========================================================
     // CSV EXPORT
@@ -585,7 +611,8 @@ object ReportExporter {
         personName: String,
         initialAmount: Double,
         transactions: List<Pair<String, Double>>,
-        isLending: Boolean
+        isLending: Boolean,
+        transactionDate: String = ""
     ) {
 
         val pdfDocument =
@@ -656,9 +683,9 @@ object ReportExporter {
 
                 canvas.drawText(
                     if (isLending) {
-                        "Lending Statement"
+                        "ধার দেওয়ার বিবরণ"
                     } else {
-                        "Loan Statement"
+                        "ধার নেওয়ার বিবরণ"
                     },
                     40f,
                     y,
@@ -680,7 +707,7 @@ object ReportExporter {
                     ).format(Date())
 
                 canvas.drawText(
-                    "Generated: $generated",
+                    "তৈরির সময়: $generated",
                     40f,
                     y,
                     paint
@@ -710,7 +737,7 @@ object ReportExporter {
                 40f,
                 y,
                 555f,
-                y + 75f,
+                y + 100f,
                 paint
             )
 
@@ -718,20 +745,20 @@ object ReportExporter {
                 Color.BLACK
 
             paint.textSize =
-                10f
+                16f
 
             paint.isFakeBoldText =
                 false
 
             canvas.drawText(
-                "Person",
+                "ব্যক্তির নাম",
                 55f,
                 y + 22f,
                 paint
             )
 
             paint.textSize =
-                16f
+                18f
 
             paint.isFakeBoldText =
                 true
@@ -743,17 +770,34 @@ object ReportExporter {
                 paint
             )
 
+            // Original loan/lending transaction date
             paint.textSize =
-                10f
+                11f
+
+            paint.isFakeBoldText =
+                false
+
+            canvas.drawText(
+                "লেনদেনের তারিখ: ${
+                    if (transactionDate.isBlank()) "তারিখ পাওয়া যায়নি"
+                    else transactionDate.take(20)
+                }",
+                55f,
+                y + 75f,
+                paint
+            )
+
+            paint.textSize =
+                16f
 
             paint.isFakeBoldText =
                 false
 
             canvas.drawText(
                 if (isLending) {
-                    "Amount Given"
+                    "ধার দেওয়া টাকা"
                 } else {
-                    "Amount Borrowed"
+                    "ধার নেওয়া টাকা"
                 },
                 365f,
                 y + 22f,
@@ -761,7 +805,7 @@ object ReportExporter {
             )
 
             paint.textSize =
-                15f
+                19f
 
             paint.isFakeBoldText =
                 true
@@ -773,7 +817,7 @@ object ReportExporter {
                 paint
             )
 
-            y += 105f
+            y += 130f
 
             // =================================================
             // HISTORY HEADER
@@ -794,9 +838,9 @@ object ReportExporter {
 
                 canvas.drawText(
                     if (continued) {
-                        "Payment History (Continued)"
+                        "ফেরতের ইতিহাস (চলমান)"
                     } else {
-                        "Payment History"
+                        "ফেরতের ইতিহাস"
                     },
                     40f,
                     y,
@@ -806,7 +850,7 @@ object ReportExporter {
                 y += 25f
 
                 canvas.drawText(
-                    "Date",
+                    "তারিখ",
                     40f,
                     y,
                     paint
@@ -814,9 +858,9 @@ object ReportExporter {
 
                 canvas.drawText(
                     if (isLending) {
-                        "Amount Returned"
+                        "ফেরত দেওয়া"
                     } else {
-                        "Amount Paid"
+                        "পরিশোধ করা"
                     },
                     240f,
                     y,
@@ -957,16 +1001,16 @@ object ReportExporter {
             y += 25f
 
             paint.textSize =
-                11f
+                13f
 
             paint.isFakeBoldText =
                 true
 
             canvas.drawText(
                 if (isLending) {
-                    "Total Returned:"
+                    "মোট ফেরত:"
                 } else {
-                    "Total Paid:"
+                    "মোট পরিশোধ:"
                 },
                 40f,
                 y,
@@ -991,16 +1035,16 @@ object ReportExporter {
                     )
 
             paint.textSize =
-                14f
+                16f
 
             paint.isFakeBoldText =
                 true
 
             canvas.drawText(
                 if (isLending) {
-                    "Remaining Receivable:"
+                    "এখনও পাওনা:"
                 } else {
-                    "Remaining Loan:"
+                    "বাকি ধার:"
                 },
                 40f,
                 y,
@@ -1021,7 +1065,7 @@ object ReportExporter {
             // =================================================
 
             paint.textSize =
-                8f
+                10f
 
             paint.isFakeBoldText =
                 false
@@ -1030,7 +1074,7 @@ object ReportExporter {
                 Color.DKGRAY
 
             canvas.drawText(
-                "Generated by Amar Hisab",
+                "Amar Hisab দ্বারা তৈরি",
                 40f,
                 y,
                 paint
