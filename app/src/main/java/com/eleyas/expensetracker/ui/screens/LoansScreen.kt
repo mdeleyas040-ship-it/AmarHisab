@@ -1,3 +1,4 @@
+
 package com.eleyas.expensetracker.ui.screens
 
 import androidx.compose.foundation.background
@@ -1779,6 +1780,290 @@ private fun LoanPremiumCard(
                                 }
                             }
                         }
+                }
+
+                // =================================================
+                // PAYMENT HISTORY
+                // =================================================
+
+                Spacer(
+                    Modifier.height(16.dp)
+                )
+
+                Text(
+                    "💰 পরিশোধের ইতিহাস (${loanPayments.count { it.loanId == loan.id }} বার)",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+
+                Spacer(
+                    Modifier.height(8.dp)
+                )
+
+                val paymentHistory =
+                    loanPayments
+                        .filter {
+                            it.loanId == loan.id
+                        }
+                        .sortedByDescending {
+                            it.date
+                        }
+
+                if (paymentHistory.isEmpty()) {
+
+                    Surface(
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        shape =
+                            RoundedCornerShape(14.dp),
+
+                        color =
+                            MaterialTheme
+                                .colorScheme
+                                .surfaceVariant
+                                .copy(
+                                    alpha = 0.30f
+                                )
+                    ) {
+
+                        Text(
+                            "এখনও কোনো টাকা পরিশোধ করা হয়নি।",
+                            modifier =
+                                Modifier.padding(12.dp),
+                            fontSize = 12.sp,
+                            color =
+                                MaterialTheme
+                                    .colorScheme
+                                    .onSurfaceVariant
+                        )
+                    }
+
+                } else {
+
+                    paymentHistory.forEachIndexed {
+                            index,
+                            payment ->
+
+                        val fromHome =
+                            payment.note.contains(
+                                "বাড়িতে পাঠানো"
+                            ) ||
+                                    payment.note.contains(
+                                        "বাড়িতে পাঠানো"
+                                    )
+
+                        Surface(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(
+                                        vertical = 4.dp
+                                    ),
+
+                            shape =
+                                RoundedCornerShape(16.dp),
+
+                            color =
+                                IncomeGreen.copy(
+                                    alpha = 0.07f
+                                )
+                        ) {
+
+                            Row(
+                                modifier =
+                                    Modifier.padding(12.dp),
+
+                                verticalAlignment =
+                                    Alignment.CenterVertically
+                            ) {
+
+                                Surface(
+                                    shape =
+                                        CircleShape,
+
+                                    color =
+                                        IncomeGreen.copy(
+                                            alpha = 0.12f
+                                        ),
+
+                                    modifier =
+                                        Modifier.size(38.dp)
+                                ) {
+
+                                    Box(
+                                        contentAlignment =
+                                            Alignment.Center
+                                    ) {
+
+                                        Text(
+                                            "${index + 1}",
+                                            fontSize = 12.sp,
+                                            fontWeight =
+                                                FontWeight.Bold,
+                                            color =
+                                                IncomeGreen
+                                        )
+                                    }
+                                }
+
+                                Spacer(
+                                    Modifier.width(11.dp)
+                                )
+
+                                Column(
+                                    modifier =
+                                        Modifier.weight(1f)
+                                ) {
+
+                                    Text(
+                                        "৳${
+                                            formatMoney(
+                                                payment.amount
+                                            )
+                                        } পরিশোধ",
+
+                                        fontSize = 14.sp,
+
+                                        fontWeight =
+                                            FontWeight.ExtraBold,
+
+                                        color =
+                                            IncomeGreen
+                                    )
+
+                                    Spacer(
+                                        Modifier.height(2.dp)
+                                    )
+
+                                    Text(
+                                        displayLoanDate(
+                                            payment.date
+                                        ),
+
+                                        fontSize = 11.sp,
+
+                                        color =
+                                            MaterialTheme
+                                                .colorScheme
+                                                .onSurfaceVariant
+                                    )
+
+                                    if (fromHome) {
+
+                                        Spacer(
+                                            Modifier.height(5.dp)
+                                        )
+
+                                        Surface(
+                                            shape =
+                                                RoundedCornerShape(8.dp),
+
+                                            color =
+                                                TealGreen.copy(
+                                                    alpha = 0.12f
+                                                )
+                                        ) {
+
+                                            Text(
+                                                "🏠 বাড়িতে পাঠানো টাকা থেকে",
+
+                                                modifier =
+                                                    Modifier.padding(
+                                                        horizontal = 8.dp,
+                                                        vertical = 4.dp
+                                                    ),
+
+                                                fontSize = 10.sp,
+
+                                                fontWeight =
+                                                    FontWeight.Bold,
+
+                                                color =
+                                                    TealGreen
+                                            )
+                                        }
+
+                                    } else if (
+                                        payment.note.isNotBlank()
+                                    ) {
+
+                                        Spacer(
+                                            Modifier.height(3.dp)
+                                        )
+
+                                        Text(
+                                            payment.note,
+                                            fontSize = 11.sp,
+                                            color =
+                                                MaterialTheme
+                                                    .colorScheme
+                                                    .onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (paymentHistory.isNotEmpty()) {
+
+                    Spacer(
+                        Modifier.height(8.dp)
+                    )
+
+                    Surface(
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        shape =
+                            RoundedCornerShape(14.dp),
+
+                        color =
+                            IncomeGreen.copy(
+                                alpha = 0.10f
+                            )
+                    ) {
+
+                        Row(
+                            modifier =
+                                Modifier.padding(
+                                    horizontal = 12.dp,
+                                    vertical = 10.dp
+                                ),
+
+                            horizontalArrangement =
+                                Arrangement.SpaceBetween,
+
+                            verticalAlignment =
+                                Alignment.CenterVertically
+                        ) {
+
+                            Text(
+                                "মোট পরিশোধ",
+                                fontSize = 12.sp,
+                                fontWeight =
+                                    FontWeight.Bold
+                            )
+
+                            Text(
+                                "৳${
+                                    formatMoney(
+                                        paid
+                                    )
+                                }",
+
+                                fontSize = 14.sp,
+
+                                fontWeight =
+                                    FontWeight.ExtraBold,
+
+                                color =
+                                    IncomeGreen
+                            )
+                        }
+                    }
                 }
 
                 Spacer(
