@@ -732,10 +732,72 @@ class MainViewModel : ViewModel() {
     }
 
     fun updateLoan(context: Context, loan: LoanAccount, name: String, type: String, amount: Double, monthly: Double, date: String, note: String, dueDate: String? = null) {
-        val updated = loan.copy(name = name, sourceType = type, principal = amount, monthlyInstallment = monthly, startDate = date, note = note, lastEditedDate = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date()), editHistory = loan.editHistory + SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date()), dueDate = dueDate)
-        loans = loans.map { if (it.id == loan.id) updated else it }
+        if (amount <= 0.0) {
+            WarningPopupManager.show(
+                title = "ঋণের পরিমাণ সঠিক নয়",
+                message = "ঋণের পরিমাণ ০-এর বেশি দিন।"
+            )
+            return
+        }
+
+        val existingInterest =
+            loanInterestTerms
+                .firstOrNull { it.loanId == loan.id }
+                ?.totalInterest
+                ?: 0.0
+
+        val alreadyPaid =
+            loanPayments
+                .filter { it.loanId == loan.id }
+                .sumOf { it.amount }
+
+        val newTotalPayable =
+            amount + existingInterest
+
+        if (newTotalPayable + 0.000001 < alreadyPaid) {
+            WarningPopupManager.show(
+                title = "ঋণের পরিমাণ কমানো যাবে না",
+                message =
+                    "এই Loan-এ ইতিমধ্যে ৳${formatMoney(alreadyPaid)} পরিশোধ হয়েছে।\n\n" +
+                            "বর্তমান Interest সহ মোট payable ৳${formatMoney(newTotalPayable)}।\n\n" +
+                            "তাই পরিশোধিত টাকার চেয়ে কম Loan amount দেওয়া যাবে না।"
+            )
+            return
+        }
+
+        val updated = loan.copy(
+            name = name,
+            sourceType = type,
+            principal = amount,
+            monthlyInstallment = monthly,
+            startDate = date,
+            note = note,
+            lastEditedDate =
+                SimpleDateFormat(
+                    "dd/MM/yyyy HH:mm",
+                    Locale.getDefault()
+                ).format(Date()),
+            editHistory =
+                loan.editHistory +
+                        SimpleDateFormat(
+                            "dd/MM/yyyy HH:mm",
+                            Locale.getDefault()
+                        ).format(Date()),
+            dueDate = dueDate
+        )
+
+        loans =
+            loans.map {
+                if (it.id == loan.id) updated else it
+            }
+
         persistLoanData(context)
-        makeText(context, "✅ ঋণের তথ্য আপডেট হয়েছে", Toast.LENGTH_SHORT).show()
+
+        makeText(
+            context,
+            "✅ ঋণের তথ্য আপডেট হয়েছে",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     /**
@@ -835,11 +897,23 @@ class MainViewModel : ViewModel() {
             return false
         }
 
-        val alreadyPaid = loanPayments
-            .filter { it.loanId == loan.id }
-            .sumOf { it.amount }
+        val interest =
+            loanInterestTerms
+                .firstOrNull { it.loanId == loan.id }
+                ?.totalInterest
+                ?: 0.0
 
-        val remaining = (loan.principal - alreadyPaid).coerceAtLeast(0.0)
+        val alreadyPaid =
+            loanPayments
+                .filter { it.loanId == loan.id }
+                .sumOf { it.amount }
+
+        val totalPayable =
+            loan.principal + interest
+
+        val remaining =
+            (totalPayable - alreadyPaid)
+                .coerceAtLeast(0.0)
 
         if (amount > remaining + 0.000001) {
             WarningPopupManager.show(
@@ -906,10 +980,23 @@ class MainViewModel : ViewModel() {
             return
         }
 
-        val alreadyPaid = loanPayments
-            .filter { it.loanId == loan.id }
-            .sumOf { it.amount }
-        val remaining = (loan.principal - alreadyPaid).coerceAtLeast(0.0)
+        val interest =
+            loanInterestTerms
+                .firstOrNull { it.loanId == loan.id }
+                ?.totalInterest
+                ?: 0.0
+
+        val alreadyPaid =
+            loanPayments
+                .filter { it.loanId == loan.id }
+                .sumOf { it.amount }
+
+        val totalPayable =
+            loan.principal + interest
+
+        val remaining =
+            (totalPayable - alreadyPaid)
+                .coerceAtLeast(0.0)
 
         if (amount <= 0.0 || amount > remaining + 0.000001) {
             WarningPopupManager.show(
@@ -924,6 +1011,7 @@ class MainViewModel : ViewModel() {
         persistLoanData(context)
         makeText(context, "✅ পরিশোধের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
     }
+
 
     fun updateLoanPayment(
         context: Context,
@@ -941,7 +1029,9 @@ class MainViewModel : ViewModel() {
             return false
         }
 
-        val loan = loans.firstOrNull { it.id == payment.loanId }
+        val loan = loans.firstOrNull {
+            it.id == payment.loanId
+        }
 
         if (loan == null) {
             WarningPopupManager.show(
@@ -951,42 +1041,57 @@ class MainViewModel : ViewModel() {
             return false
         }
 
-        // বর্তমান payment বাদ দিয়ে বাকি হিসাব
-        val paidWithoutCurrent = loanPayments
-            .filter {
-                it.loanId == payment.loanId &&
-                        it.id != payment.id
-            }
-            .sumOf { it.amount }
+        val interest =
+            loanInterestTerms
+                .firstOrNull { it.loanId == loan.id }
+                ?.totalInterest
+                ?: 0.0
 
-        val remainingAvailable =
-            (loan.principal - paidWithoutCurrent).coerceAtLeast(0.0)
+        val totalPayable =
+            loan.principal + interest
 
-        if (amount > remainingAvailable + 0.000001) {
+        val paidWithoutCurrent =
+            loanPayments
+                .filter {
+                    it.loanId == payment.loanId &&
+                            it.id != payment.id
+                }
+                .sumOf { it.amount }
+
+        val remainingForThisPayment =
+            (totalPayable - paidWithoutCurrent)
+                .coerceAtLeast(0.0)
+
+        if (amount > remainingForThisPayment + 0.000001) {
             WarningPopupManager.show(
                 title = "Loan amount-এর বেশি",
                 message =
-                    "এই Loan-এ সর্বোচ্চ ৳${formatMoney(remainingAvailable)} দেওয়া যাবে।\n\n" +
-                            "আপনি ৳${formatMoney(amount)} দিতে চাচ্ছেন।"
+                    "এই Loan-এ সর্বোচ্চ ৳${formatMoney(remainingForThisPayment)} দেওয়া যাবে।"
             )
             return false
         }
 
-        val updatedPayment = payment.copy(
-            amount = amount,
-            date = date,
-            note = note
-        )
+        val updatedPayment =
+            payment.copy(
+                amount = amount,
+                date = date,
+                note = note
+            )
 
-        loanPayments = loanPayments.map {
-            if (it.id == payment.id) updatedPayment else it
-        }
+        loanPayments =
+            loanPayments.map {
+                if (it.id == payment.id) {
+                    updatedPayment
+                } else {
+                    it
+                }
+            }
 
         persistLoanData(context)
 
-        // Firestore-এর পুরোনো payment document update
         if (currentUserId != "guest") {
-            firestore.collection("users")
+            firestore
+                .collection("users")
                 .document(currentUserId)
                 .collection("loanPayments")
                 .document(payment.id.toString())
@@ -999,15 +1104,11 @@ class MainViewModel : ViewModel() {
                         "note" to updatedPayment.note
                     )
                 )
-                .addOnFailureListener { e ->
-                    WarningPopupManager.show(
-                        title = "Cloud Update Failed",
-                        message = "Loan payment Cloud-এ update করা যায়নি।\n\n${e.message}"
-                    )
-                }
         }
 
-        SoundHapticHelper.playTransactionUpdatedFeedback(context)
+        SoundHapticHelper.playTransactionUpdatedFeedback(
+            context
+        )
 
         makeText(
             context,
@@ -1018,15 +1119,16 @@ class MainViewModel : ViewModel() {
         return true
     }
 
-
     fun deleteLoanPayment(
         context: Context,
         payment: LoanPayment
     ): Boolean {
 
-        val exists = loanPayments.any { it.id == payment.id }
-
-        if (!exists) {
+        if (
+            loanPayments.none {
+                it.id == payment.id
+            }
+        ) {
             WarningPopupManager.show(
                 title = "Payment পাওয়া যায়নি",
                 message = "এই Loan payment আর পাওয়া যাচ্ছে না।"
@@ -1034,28 +1136,25 @@ class MainViewModel : ViewModel() {
             return false
         }
 
-        loanPayments = loanPayments.filter {
-            it.id != payment.id
-        }
+        loanPayments =
+            loanPayments.filter {
+                it.id != payment.id
+            }
 
         persistLoanData(context)
 
-        // Firestore থেকেও payment delete
         if (currentUserId != "guest") {
-            firestore.collection("users")
+            firestore
+                .collection("users")
                 .document(currentUserId)
                 .collection("loanPayments")
                 .document(payment.id.toString())
                 .delete()
-                .addOnFailureListener { e ->
-                    WarningPopupManager.show(
-                        title = "Cloud Delete Failed",
-                        message = "Loan payment Cloud থেকে delete করা যায়নি।\n\n${e.message}"
-                    )
-                }
         }
 
-        SoundHapticHelper.playTransactionDeletedFeedback(context)
+        SoundHapticHelper.playTransactionDeletedFeedback(
+            context
+        )
 
         makeText(
             context,
@@ -1074,10 +1173,52 @@ class MainViewModel : ViewModel() {
     }
 
     fun addLendingReturn(context: Context, lending: LendingAccount, amount: Double, date: String, note: String) {
-        val ret = LendingReturn(System.currentTimeMillis(), lending.id, amount, date, note)
-        lendingReturns = lendingReturns + ret
+        if (amount <= 0.0) {
+            WarningPopupManager.show(
+                title = "ফেরতের পরিমাণ সঠিক নয়",
+                message = "ধার ফেরতের পরিমাণ ০-এর বেশি দিন।"
+            )
+            return
+        }
+
+        val alreadyReturned =
+            lendingReturns
+                .filter { it.lendingId == lending.id }
+                .sumOf { it.amount }
+
+        val outstanding =
+            (lending.amount - alreadyReturned)
+                .coerceAtLeast(0.0)
+
+        if (amount > outstanding + 0.000001) {
+            WarningPopupManager.show(
+                title = "ফেরতের পরিমাণ বেশি",
+                message =
+                    "এই ধার থেকে সর্বোচ্চ ৳${formatMoney(outstanding)} ফেরত নেওয়া যাবে।\n\n" +
+                            "আপনি ৳${formatMoney(amount)} দিতে চাচ্ছেন।"
+            )
+            return
+        }
+
+        val ret =
+            LendingReturn(
+                System.currentTimeMillis(),
+                lending.id,
+                amount,
+                date,
+                note
+            )
+
+        lendingReturns =
+            lendingReturns + ret
+
         persistLoanData(context)
-        makeText(context, "✅ ধার ফেরতের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
+
+        makeText(
+            context,
+            "✅ ধার ফেরতের তথ্য সেভ হয়েছে",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     fun updateBorrowing(context: Context, loan: LoanAccount, borrowing: LoanBorrowing, amount: Double, date: String, note: String) {
