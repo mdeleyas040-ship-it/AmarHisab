@@ -3485,7 +3485,10 @@ fun AddTransactionDialog(
             String
         ) -> Unit
     ) {
+
         val context = LocalContext.current
+        val scheme = MaterialTheme.colorScheme
+        val accent = IncomeGreen
 
         var amount by remember {
             mutableStateOf("")
@@ -3511,43 +3514,212 @@ fun AddTransactionDialog(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                shape = RoundedCornerShape(28.dp)
+                    .padding(horizontal = 10.dp),
+                shape = RoundedCornerShape(30.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = scheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 14.dp
+                )
             ) {
 
                 Column(
-                    Modifier.padding(20.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp)
                 ) {
 
+                    // =====================================================
+                    // PREMIUM HEADER
+                    // =====================================================
+
                     Row(
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
 
-                        Icon(
-                            Icons.Default.Paid,
-                            contentDescription = null,
-                            tint = IncomeGreen
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .background(
+                                    color = accent.copy(
+                                        alpha = 0.12f
+                                    ),
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+
+                            Icon(
+                                Icons.Default.Paid,
+                                contentDescription = null,
+                                tint = accent,
+                                modifier = Modifier.size(30.dp)
+                            )
+                        }
 
                         Spacer(
-                            Modifier.width(8.dp)
+                            Modifier.width(13.dp)
                         )
 
-                        Text(
-                            "ধার ফেরত পেলাম",
-                            fontSize = 21.sp,
-                            fontWeight = FontWeight.ExtraBold
-                        )
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+
+                            Text(
+                                "ধার ফেরত পেলাম",
+                                fontSize = 21.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = scheme.onSurface
+                            )
+
+                            Spacer(
+                                Modifier.height(2.dp)
+                            )
+
+                            Text(
+                                "ফেরত পাওয়া টাকা হিসাবে যোগ করুন",
+                                fontSize = 11.sp,
+                                color = scheme.onSurfaceVariant,
+                                maxLines = 1,
+                                softWrap = false
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.size(38.dp)
+                        ) {
+
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "বন্ধ করুন",
+                                tint = scheme.onSurfaceVariant,
+                                modifier = Modifier.size(21.dp)
+                            )
+                        }
                     }
 
+                    Spacer(
+                        Modifier.height(16.dp)
+                    )
+
+                    // =====================================================
+                    // PERSON INFO CARD
+                    // =====================================================
+
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        color = accent.copy(
+                            alpha = 0.07f
+                        )
+                    ) {
+
+                        Row(
+                            modifier = Modifier.padding(
+                                horizontal = 14.dp,
+                                vertical = 13.dp
+                            ),
+                            verticalAlignment =
+                                Alignment.CenterVertically
+                        ) {
+
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .background(
+                                        color = accent.copy(
+                                            alpha = 0.13f
+                                        ),
+                                        shape = CircleShape
+                                    ),
+                                contentAlignment =
+                                    Alignment.Center
+                            ) {
+
+                                Icon(
+                                    Icons.Default.Person,
+                                    contentDescription = null,
+                                    tint = accent,
+                                    modifier =
+                                        Modifier.size(23.dp)
+                                )
+                            }
+
+                            Spacer(
+                                Modifier.width(11.dp)
+                            )
+
+                            Column(
+                                modifier =
+                                    Modifier.weight(1f)
+                            ) {
+
+                                Text(
+                                    "কার কাছ থেকে ফেরত",
+                                    fontSize = 10.sp,
+                                    color =
+                                        scheme.onSurfaceVariant
+                                )
+
+                                Spacer(
+                                    Modifier.height(2.dp)
+                                )
+
+                                Text(
+                                    lending.person.ifBlank {
+                                        "ব্যক্তি"
+                                    },
+                                    fontSize = 15.sp,
+                                    fontWeight =
+                                        FontWeight.Bold,
+                                    color =
+                                        scheme.onSurface
+                                )
+                            }
+
+                            Column(
+                                horizontalAlignment =
+                                    Alignment.End
+                            ) {
+
+                                Text(
+                                    "মূল ধার",
+                                    fontSize = 9.sp,
+                                    color =
+                                        scheme.onSurfaceVariant
+                                )
+
+                                Text(
+                                    "৳${formatMoney(lending.amount)}",
+                                    fontSize = 13.sp,
+                                    fontWeight =
+                                        FontWeight.ExtraBold,
+                                    color = accent
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(
+                        Modifier.height(16.dp)
+                    )
+
+                    // =====================================================
+                    // AMOUNT LABEL
+                    // =====================================================
+
                     Text(
-                        lending.person,
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        "ফেরত পাওয়া টাকা",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = scheme.onSurface
                     )
 
                     Spacer(
-                        Modifier.height(14.dp)
+                        Modifier.height(7.dp)
                     )
 
                     OutlinedTextField(
@@ -3555,18 +3727,58 @@ fun AddTransactionDialog(
                         onValueChange = {
                             amount = it
                         },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number
-                        ),
-                        label = {
-                            Text("ফেরত পাওয়া টাকা")
-                        },
+                        modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        keyboardOptions =
+                            KeyboardOptions(
+                                keyboardType =
+                                    KeyboardType.Number
+                            ),
+                        placeholder = {
+                            Text(
+                                "যেমন: 5000"
+                            )
+                        },
+                        leadingIcon = {
+
+                            Text(
+                                "৳",
+                                fontSize = 20.sp,
+                                fontWeight =
+                                    FontWeight.Bold,
+                                color = accent
+                            )
+                        },
+                        shape =
+                            RoundedCornerShape(17.dp),
+                        colors =
+                            OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor =
+                                    accent,
+                                focusedLabelColor =
+                                    accent,
+                                cursorColor =
+                                    accent
+                            )
                     )
 
                     Spacer(
-                        Modifier.height(10.dp)
+                        Modifier.height(14.dp)
+                    )
+
+                    // =====================================================
+                    // DATE
+                    // =====================================================
+
+                    Text(
+                        "ফেরত পাওয়ার তারিখ",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = scheme.onSurface
+                    )
+
+                    Spacer(
+                        Modifier.height(7.dp)
                     )
 
                     OutlinedButton(
@@ -3574,6 +3786,20 @@ fun AddTransactionDialog(
 
                             val calendar =
                                 Calendar.getInstance()
+
+                            try {
+
+                                SimpleDateFormat(
+                                    "dd/MM/yyyy",
+                                    Locale.getDefault()
+                                )
+                                    .parse(date)
+                                    ?.let {
+                                        calendar.time = it
+                                    }
+
+                            } catch (_: Exception) {
+                            }
 
                             DatePickerDialog(
                                 context,
@@ -3586,21 +3812,123 @@ fun AddTransactionDialog(
                                             year
                                         )
                                 },
-                                calendar.get(Calendar.YEAR),
-                                calendar.get(Calendar.MONTH),
-                                calendar.get(Calendar.DAY_OF_MONTH)
+                                calendar.get(
+                                    Calendar.YEAR
+                                ),
+                                calendar.get(
+                                    Calendar.MONTH
+                                ),
+                                calendar.get(
+                                    Calendar.DAY_OF_MONTH
+                                )
                             ).show()
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp)
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(58.dp),
+                        shape =
+                            RoundedCornerShape(17.dp),
+                        contentPadding =
+                            PaddingValues(
+                                horizontal = 14.dp
+                            ),
+                        colors =
+                            ButtonDefaults.outlinedButtonColors(
+                                contentColor =
+                                    scheme.onSurface
+                            )
                     ) {
-                        Text(
-                            "📅  $date"
-                        )
+
+                        Row(
+                            modifier =
+                                Modifier.fillMaxWidth(),
+                            verticalAlignment =
+                                Alignment.CenterVertically
+                        ) {
+
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .background(
+                                        accent.copy(
+                                            alpha = 0.10f
+                                        ),
+                                        CircleShape
+                                    ),
+                                contentAlignment =
+                                    Alignment.Center
+                            ) {
+
+                                Icon(
+                                    Icons.Default.Event,
+                                    contentDescription = null,
+                                    tint = accent,
+                                    modifier =
+                                        Modifier.size(19.dp)
+                                )
+                            }
+
+                            Spacer(
+                                Modifier.width(10.dp)
+                            )
+
+                            Column(
+                                modifier =
+                                    Modifier.weight(1f),
+                                horizontalAlignment =
+                                    Alignment.Start
+                            ) {
+
+                                Text(
+                                    "তারিখ",
+                                    fontSize = 9.sp,
+                                    color =
+                                        scheme.onSurfaceVariant
+                                )
+
+                                Spacer(
+                                    Modifier.height(2.dp)
+                                )
+
+                                Text(
+                                    displayLoanDate(date),
+                                    fontSize = 13.sp,
+                                    fontWeight =
+                                        FontWeight.Bold,
+                                    color =
+                                        scheme.onSurface
+                                )
+                            }
+
+                            Icon(
+                                Icons.Default.KeyboardArrowDown,
+                                contentDescription = null,
+                                tint =
+                                    scheme.onSurfaceVariant,
+                                modifier =
+                                    Modifier.size(21.dp)
+                            )
+                        }
                     }
 
                     Spacer(
-                        Modifier.height(10.dp)
+                        Modifier.height(14.dp)
+                    )
+
+                    // =====================================================
+                    // NOTE
+                    // =====================================================
+
+                    Text(
+                        "নোট",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = scheme.onSurface
+                    )
+
+                    Spacer(
+                        Modifier.height(7.dp)
                     )
 
                     OutlinedTextField(
@@ -3608,62 +3936,175 @@ fun AddTransactionDialog(
                         onValueChange = {
                             note = it
                         },
-                        label = {
-                            Text("নোট")
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 2,
+                        maxLines = 3,
+                        placeholder = {
+                            Text(
+                                "যেমন: নগদে ফেরত দিয়েছে"
+                            )
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        leadingIcon = {
+
+                            Icon(
+                                Icons.Default.Description,
+                                contentDescription = null,
+                                tint = accent
+                            )
+                        },
+                        shape =
+                            RoundedCornerShape(17.dp),
+                        colors =
+                            OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor =
+                                    accent,
+                                focusedLabelColor =
+                                    accent,
+                                cursorColor =
+                                    accent
+                            )
                     )
 
                     Spacer(
-                        Modifier.height(14.dp)
+                        Modifier.height(18.dp)
                     )
 
+                    // =====================================================
+                    // ACTION BUTTONS
+                    // =====================================================
+
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
+                        modifier =
+                            Modifier.fillMaxWidth(),
+                        horizontalArrangement =
+                            Arrangement.spacedBy(9.dp)
                     ) {
 
-                        TextButton(
-                            onClick = onDismiss
+                        OutlinedButton(
+                            onClick = onDismiss,
+                            modifier =
+                                Modifier
+                                    .weight(0.72f)
+                                    .height(54.dp),
+                            shape =
+                                RoundedCornerShape(17.dp)
                         ) {
-                            Text("বাতিল")
-                        }
 
-                        Spacer(
-                            Modifier.width(8.dp)
-                        )
+                            Text(
+                                "বাতিল",
+                                fontSize = 13.sp,
+                                fontWeight =
+                                    FontWeight.Bold
+                            )
+                        }
 
                         Button(
                             onClick = {
 
-                                val value =
+                                val parsedAmount =
                                     amount
                                         .replace(",", "")
                                         .trim()
                                         .toDoubleOrNull()
 
                                 if (
-                                    value != null &&
-                                    value > 0.0
+                                    parsedAmount == null ||
+                                    parsedAmount <= 0.0
                                 ) {
-                                    onSave(
-                                        value,
-                                        date,
-                                        note.trim()
-                                    )
-                                } else {
+
                                     WarningPopupManager.show(
-                                        title = "ফেরতের টাকা সঠিক নয়",
-                                        message = "দয়া করে সঠিক ফেরতের টাকা দিন।"
+                                        title =
+                                            "ফেরতের টাকা সঠিক নয়",
+                                        message =
+                                            "দয়া করে সঠিক ফেরত পাওয়া টাকার পরিমাণ দিন।"
                                     )
+
+                                    return@Button
                                 }
+
+                                onSave(
+                                    parsedAmount,
+                                    date,
+                                    note.trim()
+                                )
                             },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = IncomeGreen
-                            )
+                            modifier =
+                                Modifier
+                                    .weight(1.28f)
+                                    .height(54.dp),
+                            shape =
+                                RoundedCornerShape(17.dp),
+                            colors =
+                                ButtonDefaults.buttonColors(
+                                    containerColor =
+                                        accent,
+                                    contentColor =
+                                        Color.White
+                                ),
+                            elevation =
+                                ButtonDefaults.buttonElevation(
+                                    defaultElevation = 5.dp
+                                )
                         ) {
-                            Text("ফেরত সংরক্ষণ")
+
+                            Icon(
+                                Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                modifier =
+                                    Modifier.size(21.dp)
+                            )
+
+                            Spacer(
+                                Modifier.width(6.dp)
+                            )
+
+                            Text(
+                                "ফেরত সংরক্ষণ",
+                                fontSize = 13.sp,
+                                fontWeight =
+                                    FontWeight.ExtraBold
+                            )
                         }
+                    }
+
+                    Spacer(
+                        Modifier.height(10.dp)
+                    )
+
+                    // =====================================================
+                    // SECURITY FOOTER
+                    // =====================================================
+
+                    Row(
+                        modifier =
+                            Modifier.fillMaxWidth(),
+                        horizontalArrangement =
+                            Arrangement.Center,
+                        verticalAlignment =
+                            Alignment.CenterVertically
+                    ) {
+
+                        Icon(
+                            Icons.Default.VerifiedUser,
+                            contentDescription = null,
+                            tint =
+                                accent.copy(
+                                    alpha = 0.75f
+                                ),
+                            modifier =
+                                Modifier.size(15.dp)
+                        )
+
+                        Spacer(
+                            Modifier.width(5.dp)
+                        )
+
+                        Text(
+                            "ফেরতের তথ্য আপনার হিসাবের সাথে নিরাপদে সংরক্ষিত হবে",
+                            fontSize = 9.sp,
+                            color =
+                                scheme.onSurfaceVariant
+                        )
                     }
                 }
             }

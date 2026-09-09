@@ -4,8 +4,9 @@ package com.eleyas.expensetracker
 
 import android.content.Context
 import android.net.Uri
+import android.content.ClipData
+import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -49,6 +50,7 @@ import android.app.NotificationManager
 import android.os.Build
 import android.Manifest
 import androidx.core.app.ActivityCompat
+import android.widget.Toast
 
 class MainActivity : FragmentActivity() {
 
@@ -724,29 +726,137 @@ fun AmarHisabApp(
                 )
         ) { uri: Uri? ->
 
-            uri?.let {
+            uri?.let { savedUri ->
 
                 sharingLendingPdf?.let { lending ->
 
                     val history =
                         viewModel.lendingReturns
                             .filter {
-                                it.lendingId ==
-                                        lending.id
+                                it.lendingId == lending.id
                             }
                             .map {
                                 it.date to it.amount
                             }
 
+                    // =================================================
+                    // CREATE PDF
+                    // =================================================
+
                     viewModel.exportPersonStatementPdf(
                         context,
-                        it,
+                        savedUri,
                         lending.person,
                         lending.amount,
                         history,
                         true
                     )
+
+                    // =================================================
+                    // OPEN PDF
+                    // =================================================
+
+                    try {
+
+                        val pdfIntent =
+                            Intent(
+                                Intent.ACTION_VIEW
+                            ).apply {
+
+                                setDataAndType(
+                                    savedUri,
+                                    "application/pdf"
+                                )
+
+                                // Give PDF viewer access to this URI
+                                addFlags(
+                                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                )
+
+                                addFlags(
+                                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                                )
+
+                                addFlags(
+                                    Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                )
+
+                                addFlags(
+                                    Intent.FLAG_ACTIVITY_NEW_TASK
+                                )
+
+                                clipData =
+                                    ClipData.newRawUri(
+                                        "PDF",
+                                        savedUri
+                                    )
+                            }
+
+                        val resolver =
+                            context.packageManager
+
+                        if (
+                            pdfIntent.resolveActivity(
+                                resolver
+                            ) != null
+                        ) {
+
+                            context.startActivity(
+                                pdfIntent
+                            )
+
+                        } else {
+
+                            // =================================================
+                            // FALLBACK: SHARE/OPEN WITH ANOTHER APP
+                            // =================================================
+
+                            val shareIntent =
+                                Intent(
+                                    Intent.ACTION_SEND
+                                ).apply {
+
+                                    type =
+                                        "application/pdf"
+
+                                    putExtra(
+                                        Intent.EXTRA_STREAM,
+                                        savedUri
+                                    )
+
+                                    addFlags(
+                                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                    )
+
+                                    clipData =
+                                        ClipData.newRawUri(
+                                            "PDF",
+                                            savedUri
+                                        )
+                                }
+
+                            context.startActivity(
+                                Intent.createChooser(
+                                    shareIntent,
+                                    "PDF খুলুন"
+                                )
+                            )
+                        }
+
+                    } catch (
+                        e: Exception
+                    ) {
+
+                        Toast.makeText(
+                            context,
+                            "PDF save হয়েছে, কিন্তু খোলার জন্য PDF viewer পাওয়া যায়নি।",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
+
+                // Clear selected PDF
+                sharingLendingPdf = null
             }
         }
 
