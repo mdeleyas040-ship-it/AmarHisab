@@ -1400,6 +1400,17 @@ fun AmarHisabApp(
                             loan to borrowing
                     },
                     {
+                        // Loan payment Edit
+                        // Dedicated edit dialog will be connected separately.
+                    },
+                    {
+                            payment ->
+                        viewModel.deleteLoanPayment(
+                            context,
+                            payment
+                        )
+                    },
+                    {
                         showLendingDialog = true
                     },
                     {
@@ -2380,6 +2391,7 @@ fun AmarHisabApp(
                 loans,
                 loanPayments,
                 wallets,
+                viewModel.homeBalance,
                 customCategories,
 
                 {
@@ -2462,7 +2474,7 @@ fun AmarHisabApp(
                 },
 
                 {
-                        id, a, d ->
+                        id, a, d, extraHomeAmount ->
 
                     loans
                         .firstOrNull {
@@ -2470,13 +2482,13 @@ fun AmarHisabApp(
                         }
                         ?.let {
 
-                            viewModel.addLoanPayment(
-                                context,
-                                it,
-                                a,
-                                d,
-                                "বাড়িতে পাঠানো টাকা থেকে Loan payment",
-                                true
+                            viewModel.addHomeLoanPayment(
+                                context = context,
+                                loan = it,
+                                amount = a,
+                                date = d,
+                                note = "বাড়িতে পাঠানো টাকা থেকে Loan payment",
+                                extraHomeAmount = extraHomeAmount
                             )
                         }
                 }

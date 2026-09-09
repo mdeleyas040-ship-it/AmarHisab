@@ -36,6 +36,8 @@ fun LoansScreen(
     onEditLoan: (LoanAccount) -> Unit,
     onEditBorrowing: (LoanAccount, LoanBorrowing) -> Unit,
     onDeleteBorrowing: (LoanAccount, LoanBorrowing) -> Unit,
+    onEditLoanPayment: (LoanPayment) -> Unit = {},
+    onDeleteLoanPayment: (LoanPayment) -> Unit = {},
     onAddLending: () -> Unit,
     onAddLendingReturn: (LendingAccount) -> Unit,
     onEditLending: (LendingAccount) -> Unit = {},
@@ -534,7 +536,11 @@ fun LoansScreen(
                         onEditBorrowing =
                             onEditBorrowing,
                         onDeleteBorrowing =
-                            onDeleteBorrowing
+                            onDeleteBorrowing,
+                        onEditLoanPayment =
+                            onEditLoanPayment,
+                        onDeleteLoanPayment =
+                            onDeleteLoanPayment
                     )
                 }
             }
@@ -1406,7 +1412,11 @@ private fun LoanPremiumCard(
     onEditBorrowing:
         (LoanAccount, LoanBorrowing) -> Unit,
     onDeleteBorrowing:
-        (LoanAccount, LoanBorrowing) -> Unit
+        (LoanAccount, LoanBorrowing) -> Unit,
+    onEditLoanPayment:
+        (LoanPayment) -> Unit,
+    onDeleteLoanPayment:
+        (LoanPayment) -> Unit
 ) {
 
     val paid =
@@ -2001,6 +2011,48 @@ private fun LoanPremiumCard(
                                                     .onSurfaceVariant
                                         )
                                     }
+                                }
+
+                                Spacer(
+                                    Modifier.width(4.dp)
+                                )
+
+                                IconButton(
+                                    onClick = {
+                                        onEditLoanPayment(payment)
+                                    },
+                                    modifier =
+                                        Modifier.size(34.dp)
+                                ) {
+
+                                    Icon(
+                                        Icons.Default.Edit,
+                                        contentDescription = "পরিশোধ এডিট",
+                                        tint =
+                                            MaterialTheme
+                                                .colorScheme
+                                                .primary,
+                                        modifier =
+                                            Modifier.size(18.dp)
+                                    )
+                                }
+
+                                IconButton(
+                                    onClick = {
+                                        onDeleteLoanPayment(payment)
+                                    },
+                                    modifier =
+                                        Modifier.size(34.dp)
+                                ) {
+
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = "পরিশোধ মুছুন",
+                                        tint =
+                                            ExpenseRed,
+                                        modifier =
+                                            Modifier.size(18.dp)
+                                    )
                                 }
                             }
                         }

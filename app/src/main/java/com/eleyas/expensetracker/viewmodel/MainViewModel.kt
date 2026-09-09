@@ -74,6 +74,27 @@ class MainViewModel : ViewModel() {
     val totalExpense by derivedStateOf { transactions.filter { it.type == "expense" }.sumOf { convertToBdt(it.amount, it.currency) } }
     val totalHome by derivedStateOf { transactions.filter { it.type == "home" }.sumOf { convertToBdt(it.amount, it.currency) } }
     val totalHomeExpense by derivedStateOf { transactions.filter { it.type == "home_expense" }.sumOf { convertToBdt(it.amount, it.currency) } }
+
+    // Home-only adjustment. এটি Personal balance-এ যাবে না।
+    val totalHomeAdjustment by derivedStateOf {
+        transactions
+            .filter { it.type == "home_adjustment" }
+            .sumOf { convertToBdt(it.amount, it.currency) }
+    }
+
+    // যে Loan payment Home-এর টাকা থেকে করা হয়েছে, শুধু সেগুলো Home balance কমাবে।
+    val totalHomeLoanPaid by derivedStateOf {
+        loanPayments
+            .filter { isHomeLoanPayment(it) }
+            .sumOf { it.amount }
+    }
+
+    val totalPersonalLoanPaid by derivedStateOf {
+        loanPayments
+            .filterNot { isHomeLoanPayment(it) }
+            .sumOf { it.amount }
+    }
+
     val totalLoanReceived by derivedStateOf { loans.sumOf { it.principal } }
     val totalLoanInterest by derivedStateOf { loans.sumOf { loan -> loanInterestTerms.firstOrNull { it.loanId == loan.id }?.totalInterest ?: 0.0 } }
     val totalLoanPaid by derivedStateOf { loanPayments.sumOf { it.amount } }
@@ -81,8 +102,28 @@ class MainViewModel : ViewModel() {
     val totalMoneyLent by derivedStateOf { lendings.sumOf { it.amount } }
     val totalMoneyReturned by derivedStateOf { lendingReturns.sumOf { it.amount } }
     val totalMoneyToReceive by derivedStateOf { (totalMoneyLent - totalMoneyReturned).coerceAtLeast(0.0) }
-    val homeBalance by derivedStateOf { totalHome - totalHomeExpense }
-    val balance by derivedStateOf { wallets.sumOf { it.initialBalance } + totalIncome + totalLoanReceived + totalMoneyReturned - totalExpense - totalHome - totalLoanPaid - totalMoneyLent }
+
+    // Home balance = Home transfer + Home adjustment - Home expense - Home-funded Loan payment.
+    val homeBalance by derivedStateOf {
+        (
+                totalHome +
+                        totalHomeAdjustment -
+                        totalHomeExpense -
+                        totalHomeLoanPaid
+                ).coerceAtLeast(0.0)
+    }
+
+    // Home-funded Loan payment Personal balance-এ আরেকবার subtract হবে না।
+    val balance by derivedStateOf {
+        wallets.sumOf { it.initialBalance } +
+                totalIncome +
+                totalLoanReceived +
+                totalMoneyReturned -
+                totalExpense -
+                totalHome -
+                totalPersonalLoanPaid -
+                totalMoneyLent
+    }
 
     var rateLoading by mutableStateOf(false)
         private set
@@ -95,7 +136,7 @@ class MainViewModel : ViewModel() {
 
     private var currentUserId: String = "guest"
     private lateinit var prefs: SharedPreferences
-    
+
     private val registrations = mutableListOf<ListenerRegistration>()
 
     private var householdRegistration: ListenerRegistration? = null
@@ -103,15 +144,15 @@ class MainViewModel : ViewModel() {
 
     fun init(context: Context, userId: String, sharedPrefs: SharedPreferences) {
         if (currentUserId == userId && ::prefs.isInitialized) return
-        
+
         currentUserId = userId
         prefs = sharedPrefs
-        
+
         // Clear old registrations
         registrations.forEach { it.remove() }
         registrations.clear()
         detachHouseholdListeners()
-        
+
         // Load local data
         personalTransactions = loadTransactions(prefs)
         loans = loadLoans(prefs)
@@ -126,9 +167,9 @@ class MainViewModel : ViewModel() {
         birthday = getBirthday(prefs)
         usdToBdt = prefs.getFloat("usd_to_bdt", 0f).toDouble()
         usdToMvr = prefs.getFloat("usd_to_mvr", 0f).toDouble()
-        
+
         refreshRate()
-        
+
         if (userId != "guest") {
             setupFirestoreListeners(userId)
 
@@ -136,21 +177,21 @@ class MainViewModel : ViewModel() {
             household = HouseholdStorage.loadHouseholdCache(context, userId)
             HouseholdStorage.loadHouseholdId(context, userId)?.let { attachHouseholdListeners(context, it) }
         }
-        
+
         checkDueReminders(context)
     }
 
     private fun checkDueReminders(context: Context) {
         val today = Calendar.getInstance()
         val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        
+
         // Check Loans
         loans.filter { it.dueDate != null }.forEach { loan ->
             try {
                 val due = Calendar.getInstance().apply { time = format.parse(loan.dueDate!!)!! }
                 val paid = loanPayments.filter { it.loanId == loan.id }.sumOf { it.amount }
                 val remaining = loan.principal - paid
-                
+
                 if (remaining > 0) {
                     val diffDays = (due.timeInMillis - today.timeInMillis) / (24 * 60 * 60 * 1000)
                     if (diffDays in 0..2) {
@@ -161,14 +202,14 @@ class MainViewModel : ViewModel() {
                 }
             } catch (_: Exception) {}
         }
-        
+
         // Check Lendings
         lendings.filter { it.dueDate != null }.forEach { lending ->
             try {
                 val due = Calendar.getInstance().apply { time = format.parse(lending.dueDate!!)!! }
                 val returned = lendingReturns.filter { it.lendingId == lending.id }.sumOf { it.amount }
                 val remaining = lending.amount - returned
-                
+
                 if (remaining > 0) {
                     val diffDays = (due.timeInMillis - today.timeInMillis) / (24 * 60 * 60 * 1000)
                     if (diffDays in 0..2) {
@@ -190,7 +231,7 @@ class MainViewModel : ViewModel() {
 
     private fun setupFirestoreListeners(userId: String) {
         cloudLoading = true
-        
+
         val transReg = firestore.collection("users").document(userId).collection("transactions")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -405,7 +446,13 @@ class MainViewModel : ViewModel() {
 
             // পরিবারের shared mark করা home লেনদেন লোকাল থেকেও সরিয়ে ফেলা হয়
             personalTransactions = personalTransactions.filter {
-                !((it.type == "home" || it.type == "home_expense") && it.addedByUid != null)
+                !(
+                        (
+                                it.type == "home" ||
+                                        it.type == "home_expense" ||
+                                        it.type == "home_adjustment"
+                                ) && it.addedByUid != null
+                        )
             }
             saveTransactions(prefs, personalTransactions)
             saveAutoBackup(context)
@@ -455,11 +502,19 @@ class MainViewModel : ViewModel() {
     /** Join/Create করার পর নিজের পুরনো home লেনদেনগুলো shared collection-এ পাঠানো হয়। */
     private fun markAndUploadHomeTransactions(householdId: String) {
         val myName = FirebaseAuth.getInstance().currentUser?.displayName ?: ""
-        val homeTxns = personalTransactions.filter { it.type == "home" || it.type == "home_expense" }
+        val homeTxns = personalTransactions.filter {
+            it.type == "home" ||
+                    it.type == "home_expense" ||
+                    it.type == "home_adjustment"
+        }
         if (homeTxns.isEmpty()) return
 
         personalTransactions = personalTransactions.map { t ->
-            if (t.type == "home" || t.type == "home_expense") {
+            if (
+                t.type == "home" ||
+                t.type == "home_expense" ||
+                t.type == "home_adjustment"
+            ) {
                 t.copy(addedByUid = currentUserId, addedByName = myName ?: "")
             } else t
         }
@@ -524,7 +579,8 @@ class MainViewModel : ViewModel() {
         )
 
         // পরিবারের shared home লেনদেন হলে addedBy mark করা হয়
-        val isSharedHome = household != null && (type == "home" || type == "home_expense")
+        val isSharedHome = household != null &&
+                (type == "home" || type == "home_expense" || type == "home_adjustment")
         val marked = if (isSharedHome) transaction.copy(
             addedByUid = currentUserId,
             addedByName = FirebaseAuth.getInstance().currentUser?.displayName ?: ""
@@ -682,11 +738,332 @@ class MainViewModel : ViewModel() {
         makeText(context, "✅ ঋণের তথ্য আপডেট হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
+    /**
+     * Note-based compatibility helper.
+     * পুরোনো LoanPayment data-তে আলাদা source field নেই, তাই existing note দেখে
+     * Home-funded payment চিহ্নিত করা হচ্ছে।
+     */
+    private fun isHomeLoanPayment(payment: LoanPayment): Boolean {
+        val note = payment.note.lowercase(Locale.getDefault())
+        return note.contains("বাড়িতে পাঠানো") ||
+                note.contains("বাড়িতে পাঠানো") ||
+                note.contains("home loan payment") ||
+                note.contains("home-funded loan")
+    }
+
+    /**
+     * Home → Loan payment-এর জন্য available Home balance যাচাই।
+     * Extra ছাড়া shortage থাকলে payment save হবে না।
+     */
+    fun getHomeLoanShortage(amount: Double): Double {
+        if (amount <= 0.0) return 0.0
+        return (amount - homeBalance).coerceAtLeast(0.0)
+    }
+
+    /**
+     * Home-only Extra/Adjustment history-তে রাখা হয়।
+     * এটি Personal balance বা Personal expense নয়।
+     */
+    private fun addHomeAdjustment(
+        context: Context,
+        amount: Double,
+        date: String,
+        reason: String
+    ) {
+        if (amount <= 0.0) return
+
+        val adjustment = Transaction(
+            id = System.currentTimeMillis(),
+            type = "home_adjustment",
+            amount = amount,
+            currency = "BDT",
+            category = "Home Adjustment",
+            reason = reason,
+            date = date,
+            walletId = "default_cash"
+        )
+
+        personalTransactions = (personalTransactions + adjustment).distinctBy { it.id }
+        saveTransactions(prefs, personalTransactions)
+        saveAutoBackup(context)
+
+        if (currentUserId != "guest") {
+            saveTransactionToFirestore(
+                firestore,
+                currentUserId,
+                adjustment,
+                {},
+                {}
+            )
+        }
+
+        // Household থাকলে adjustment-টিও Home ledger-এ shared করা হয়।
+        household?.let {
+            HouseholdRepository.saveSharedHomeTransaction(
+                firestore,
+                it.id,
+                adjustment
+            )
+        }
+    }
+
+    /**
+     * Home → Loan payment save করার নতুন নিরাপদ path।
+     *
+     * extraHomeAmount:
+     * - shortage না থাকলে 0 রাখা হবে; Extra UI দেখানোর প্রয়োজন নেই।
+     * - shortage থাকলে অন্তত shortage পরিমাণ হতে হবে।
+     * - Extra shortage-এর চেয়ে বেশি হলেও allowed; অতিরিক্তটাও Home adjustment হিসেবে থাকবে।
+     *
+     * return:
+     * - true = payment save হয়েছে
+     * - false = validation fail, কিছু save হয়নি
+     */
+    fun addHomeLoanPayment(
+        context: Context,
+        loan: LoanAccount,
+        amount: Double,
+        date: String,
+        note: String,
+        extraHomeAmount: Double
+    ): Boolean {
+        if (amount <= 0.0) {
+            WarningPopupManager.show(
+                title = "পরিশোধের পরিমাণ সঠিক নয়",
+                message = "Loan payment-এর পরিমাণ ০-এর বেশি দিন।"
+            )
+            return false
+        }
+
+        val alreadyPaid = loanPayments
+            .filter { it.loanId == loan.id }
+            .sumOf { it.amount }
+
+        val remaining = (loan.principal - alreadyPaid).coerceAtLeast(0.0)
+
+        if (amount > remaining + 0.000001) {
+            WarningPopupManager.show(
+                title = "Loan amount-এর বেশি",
+                message = "এই Loan-এর বাকি পরিমাণ ৳${formatMoney(remaining)}।\n\n" +
+                        "আপনি ৳${formatMoney(amount)} দিতে চাচ্ছেন।"
+            )
+            return false
+        }
+
+        val shortage = getHomeLoanShortage(amount)
+        val extra = extraHomeAmount.coerceAtLeast(0.0)
+
+        if (shortage > 0.000001 && extra + 0.000001 < shortage) {
+            WarningPopupManager.show(
+                title = "Home balance যথেষ্ট নয়",
+                message = "এই payment-এর জন্য আরও ৳${formatMoney(shortage)} দরকার।\n\n" +
+                        "Extra/Adjustment কমপক্ষে ৳${formatMoney(shortage)} হতে হবে।"
+            )
+            return false
+        }
+
+        // Extra থাকলে আগে Home adjustment হিসেবে history-তে যোগ হবে।
+        if (extra > 0.000001) {
+            addHomeAdjustment(
+                context = context,
+                amount = extra,
+                date = date,
+                reason = "Home Loan Payment Extra/Adjustment"
+            )
+        }
+
+        val payment = LoanPayment(
+            System.currentTimeMillis(),
+            loan.id,
+            amount,
+            date,
+            if (note.isBlank()) "বাড়িতে পাঠানো টাকা থেকে Loan payment" else note
+        )
+
+        loanPayments = loanPayments + payment
+        persistLoanData(context)
+
+        makeText(
+            context,
+            "✅ Home থেকে Loan payment সেভ হয়েছে",
+            Toast.LENGTH_SHORT
+        ).show()
+
+        return true
+    }
+
     fun addLoanPayment(context: Context, loan: LoanAccount, amount: Double, date: String, note: String, isHome: Boolean) {
+        if (isHome) {
+            // পুরোনো callback compatibility: Extra দেওয়া না হলে shortage-এ save বন্ধ থাকবে।
+            addHomeLoanPayment(
+                context = context,
+                loan = loan,
+                amount = amount,
+                date = date,
+                note = note,
+                extraHomeAmount = 0.0
+            )
+            return
+        }
+
+        val alreadyPaid = loanPayments
+            .filter { it.loanId == loan.id }
+            .sumOf { it.amount }
+        val remaining = (loan.principal - alreadyPaid).coerceAtLeast(0.0)
+
+        if (amount <= 0.0 || amount > remaining + 0.000001) {
+            WarningPopupManager.show(
+                title = "Loan payment সঠিক নয়",
+                message = "এই Loan-এর সর্বোচ্চ বাকি পরিমাণ ৳${formatMoney(remaining)}।"
+            )
+            return
+        }
+
         val payment = LoanPayment(System.currentTimeMillis(), loan.id, amount, date, note)
         loanPayments = loanPayments + payment
         persistLoanData(context)
-        if (!isHome) makeText(context, "✅ পরিশোধের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "✅ পরিশোধের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
+    }
+
+    fun updateLoanPayment(
+        context: Context,
+        payment: LoanPayment,
+        amount: Double,
+        date: String,
+        note: String
+    ): Boolean {
+
+        if (amount <= 0.0) {
+            WarningPopupManager.show(
+                title = "পরিশোধের পরিমাণ সঠিক নয়",
+                message = "Loan payment-এর পরিমাণ ০-এর বেশি দিন।"
+            )
+            return false
+        }
+
+        val loan = loans.firstOrNull { it.id == payment.loanId }
+
+        if (loan == null) {
+            WarningPopupManager.show(
+                title = "Loan পাওয়া যায়নি",
+                message = "এই payment-এর সাথে যুক্ত Loan খুঁজে পাওয়া যায়নি।"
+            )
+            return false
+        }
+
+        // বর্তমান payment বাদ দিয়ে বাকি হিসাব
+        val paidWithoutCurrent = loanPayments
+            .filter {
+                it.loanId == payment.loanId &&
+                        it.id != payment.id
+            }
+            .sumOf { it.amount }
+
+        val remainingAvailable =
+            (loan.principal - paidWithoutCurrent).coerceAtLeast(0.0)
+
+        if (amount > remainingAvailable + 0.000001) {
+            WarningPopupManager.show(
+                title = "Loan amount-এর বেশি",
+                message =
+                    "এই Loan-এ সর্বোচ্চ ৳${formatMoney(remainingAvailable)} দেওয়া যাবে।\n\n" +
+                            "আপনি ৳${formatMoney(amount)} দিতে চাচ্ছেন।"
+            )
+            return false
+        }
+
+        val updatedPayment = payment.copy(
+            amount = amount,
+            date = date,
+            note = note
+        )
+
+        loanPayments = loanPayments.map {
+            if (it.id == payment.id) updatedPayment else it
+        }
+
+        persistLoanData(context)
+
+        // Firestore-এর পুরোনো payment document update
+        if (currentUserId != "guest") {
+            firestore.collection("users")
+                .document(currentUserId)
+                .collection("loanPayments")
+                .document(payment.id.toString())
+                .set(
+                    mapOf(
+                        "id" to updatedPayment.id,
+                        "loanId" to updatedPayment.loanId,
+                        "amount" to updatedPayment.amount,
+                        "date" to updatedPayment.date,
+                        "note" to updatedPayment.note
+                    )
+                )
+                .addOnFailureListener { e ->
+                    WarningPopupManager.show(
+                        title = "Cloud Update Failed",
+                        message = "Loan payment Cloud-এ update করা যায়নি।\n\n${e.message}"
+                    )
+                }
+        }
+
+        SoundHapticHelper.playTransactionUpdatedFeedback(context)
+
+        makeText(
+            context,
+            "✏️ Loan payment আপডেট হয়েছে",
+            Toast.LENGTH_SHORT
+        ).show()
+
+        return true
+    }
+
+
+    fun deleteLoanPayment(
+        context: Context,
+        payment: LoanPayment
+    ): Boolean {
+
+        val exists = loanPayments.any { it.id == payment.id }
+
+        if (!exists) {
+            WarningPopupManager.show(
+                title = "Payment পাওয়া যায়নি",
+                message = "এই Loan payment আর পাওয়া যাচ্ছে না।"
+            )
+            return false
+        }
+
+        loanPayments = loanPayments.filter {
+            it.id != payment.id
+        }
+
+        persistLoanData(context)
+
+        // Firestore থেকেও payment delete
+        if (currentUserId != "guest") {
+            firestore.collection("users")
+                .document(currentUserId)
+                .collection("loanPayments")
+                .document(payment.id.toString())
+                .delete()
+                .addOnFailureListener { e ->
+                    WarningPopupManager.show(
+                        title = "Cloud Delete Failed",
+                        message = "Loan payment Cloud থেকে delete করা যায়নি।\n\n${e.message}"
+                    )
+                }
+        }
+
+        SoundHapticHelper.playTransactionDeletedFeedback(context)
+
+        makeText(
+            context,
+            "🗑️ Loan payment মুছে ফেলা হয়েছে",
+            Toast.LENGTH_SHORT
+        ).show()
+
+        return true
     }
 
     fun addLending(context: Context, person: String, amount: Double, date: String, note: String, dueDate: String? = null) {
@@ -766,7 +1143,7 @@ class MainViewModel : ViewModel() {
         val income = walletTransactions.filter { it.type == "income" }.sumOf { convertToBdt(it.amount, it.currency) }
         val expense = walletTransactions.filter { it.type == "expense" }.sumOf { convertToBdt(it.amount, it.currency) }
         val home = walletTransactions.filter { it.type == "home" }.sumOf { convertToBdt(it.amount, it.currency) }
-        
+
         // Simplified: assuming loans/lendings are from default wallet for now
         // If we want per-wallet loans, we'd need to update those models too.
         return wallet.initialBalance + income - expense - home
@@ -781,10 +1158,10 @@ class MainViewModel : ViewModel() {
         lendingReturns = emptyList()
         categoryBudgets = emptyList()
         notifications = emptyList()
-        
+
         prefs.edit().clear().apply()
         NotificationStorage.save(context, emptyList(), currentUserId)
-        
+
         if (currentUserId != "guest") {
             // Delete from Firestore logic can be added here
         }
@@ -901,7 +1278,7 @@ class MainViewModel : ViewModel() {
         lendings = cloudLendings
         lendingReturns = cloudReturns
         if (cloudWallets.isNotEmpty()) wallets = cloudWallets
-        
+
         saveTransactions(prefs, transactions)
         saveLoans(prefs, loans)
         saveLoanPayments(prefs, loanPayments)
@@ -914,7 +1291,7 @@ class MainViewModel : ViewModel() {
         val payments = loanPayments.filter { it.loanId == loan.id }
         val totalPaid = payments.sumOf { it.amount }
         val remaining = loan.principal - totalPaid
-        
+
         val sb = StringBuilder()
         sb.append("📋 ঋণ স্টেটমেন্ট\n")
         sb.append("ব্যাংক/ব্যক্তি: ${loan.name}\n")
@@ -922,7 +1299,7 @@ class MainViewModel : ViewModel() {
         sb.append("পরিশোধ হয়েছে: ৳${formatMoney(totalPaid)}\n")
         sb.append("বাকি আছে: ৳${formatMoney(remaining)}\n")
         if (loan.dueDate != null) sb.append("পরিশোধের তারিখ: ${loan.dueDate}\n")
-        
+
         if (payments.isNotEmpty()) {
             sb.append("\nপরিশোধের ইতিহাস:\n")
             payments.forEach { p -> sb.append("- ${p.date}: ৳${formatMoney(p.amount)}\n") }
@@ -934,7 +1311,7 @@ class MainViewModel : ViewModel() {
         val returns = lendingReturns.filter { it.lendingId == lending.id }
         val totalReturned = returns.sumOf { it.amount }
         val remaining = lending.amount - totalReturned
-        
+
         val sb = StringBuilder()
         sb.append("🤝 পাওনা স্টেটমেন্ট\n")
         sb.append("ব্যক্তি: ${lending.person}\n")
@@ -942,7 +1319,7 @@ class MainViewModel : ViewModel() {
         sb.append("ফেরত পাওয়া: ৳${formatMoney(totalReturned)}\n")
         sb.append("বাকি পাওনা: ৳${formatMoney(remaining)}\n")
         if (lending.dueDate != null) sb.append("ফেরত পাওয়ার তারিখ: ${lending.dueDate}\n")
-        
+
         if (returns.isNotEmpty()) {
             sb.append("\nফেরত পাওয়ার ইতিহাস:\n")
             returns.forEach { r -> sb.append("- ${r.date}: ৳${formatMoney(r.amount)}\n") }
@@ -976,13 +1353,13 @@ class MainViewModel : ViewModel() {
         val filtered = transactions.filter { it.reason.contains(query, ignoreCase = true) || it.category.contains(query, ignoreCase = true) }
         val income = filtered.filter { it.type == "income" }.sumOf { it.amount }
         val expense = filtered.filter { it.type != "income" }.sumOf { it.amount }
-        
+
         val sb = StringBuilder()
         sb.append("📊 সার্চ রেজাল্ট সামারি: $query\n")
         sb.append("মোট আয়: ৳${formatMoney(income)}\n")
         sb.append("মোট খরচ: ৳${formatMoney(expense)}\n")
         sb.append("নিট ব্যালেন্স: ৳${formatMoney(income - expense)}\n\n")
-        
+
         if (filtered.isNotEmpty()) {
             sb.append("লেনদেনের ইতিহাস:\n")
             filtered.sortedByDescending { it.date }.forEach { t ->
