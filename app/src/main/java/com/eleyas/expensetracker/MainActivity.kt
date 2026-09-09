@@ -393,6 +393,14 @@ fun AmarHisabApp(
         mutableStateOf<LoanAccount?>(null)
     }
 
+    var editingLoanPayment by remember(currentUserId) {
+        mutableStateOf<LoanPayment?>(null)
+    }
+
+    var deletingLoanPayment by remember(currentUserId) {
+        mutableStateOf<LoanPayment?>(null)
+    }
+
     var editingBorrowing by remember(currentUserId) {
         mutableStateOf<Pair<LoanAccount, LoanBorrowing>?>(null)
     }
@@ -1400,15 +1408,12 @@ fun AmarHisabApp(
                             loan to borrowing
                     },
                     {
-                        // Loan payment Edit
-                        // Dedicated edit dialog will be connected separately.
+                            payment ->
+                        editingLoanPayment = payment
                     },
                     {
                             payment ->
-                        viewModel.deleteLoanPayment(
-                            context,
-                            payment
-                        )
+                        deletingLoanPayment = payment
                     },
                     {
                         showLendingDialog = true
@@ -2785,6 +2790,56 @@ fun AmarHisabApp(
                     }
                 )
             }
+        }
+
+        if (editingLoanPayment != null) {
+
+            LoanPaymentEditDialog(
+                payment = editingLoanPayment!!,
+                onDismiss = {
+                    editingLoanPayment = null
+                },
+                onSave = { amount, date, note ->
+                    val updated = viewModel.updateLoanPayment(
+                        context = context,
+                        payment = editingLoanPayment!!,
+                        amount = amount,
+                        date = date,
+                        note = note
+                    )
+
+                    if (updated) {
+                        editingLoanPayment = null
+                    }
+                }
+            )
+        }
+
+        if (deletingLoanPayment != null) {
+
+            val targetPayment = deletingLoanPayment!!
+
+            PremiumDeleteDialog(
+                title = "Loan payment মুছে ফেলবেন?",
+                message =
+                    "পরিশোধের পরিমাণ\n" +
+                            "৳${formatMoney(targetPayment.amount)}\n\n" +
+                            "তারিখ\n" +
+                            "${displayLoanDate(targetPayment.date)}\n\n" +
+                            "এই payment-টি স্থায়ীভাবে মুছে যাবে।",
+                confirmText = "স্থায়ীভাবে মুছুন",
+                dismissText = "বাতিল",
+                onConfirm = {
+                    viewModel.deleteLoanPayment(
+                        context,
+                        targetPayment
+                    )
+                    deletingLoanPayment = null
+                },
+                onDismiss = {
+                    deletingLoanPayment = null
+                }
+            )
         }
 
         if (deletingLending != null) {
