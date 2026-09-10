@@ -64,6 +64,8 @@ class MainViewModel : ViewModel() {
         private set
     var shoppingItems by mutableStateOf<List<ShoppingItem>>(emptyList())
         private set
+    var wishlistItems by mutableStateOf<List<WishlistItem>>(emptyList())
+        private set
     var usdToBdt by mutableDoubleStateOf(0.0)
         private set
     var usdToMvr by mutableDoubleStateOf(0.0)
@@ -167,6 +169,7 @@ class MainViewModel : ViewModel() {
         wallets = loadWallets(prefs)
         savingsGoals = loadSavingsGoals(prefs)
         shoppingItems = ShoppingListStorage.load(context, userId)
+        wishlistItems = WishlistStorage.load(context, userId)
         notifications = NotificationStorage.load(context, userId)
         birthday = getBirthday(prefs)
         usdToBdt = prefs.getFloat("usd_to_bdt", 0f).toDouble()
@@ -1824,6 +1827,33 @@ class MainViewModel : ViewModel() {
 
     private fun persistShoppingList(context: Context) {
         ShoppingListStorage.save(context, currentUserId, shoppingItems)
+    }
+
+    private fun persistWishlist(context: Context) {
+        WishlistStorage.save(context, currentUserId, wishlistItems)
+    }
+
+    fun addWishlistItem(context: Context, name: String, price: Double) {
+        wishlistItems = wishlistItems + WishlistItem(name = name.trim(), price = price)
+        persistWishlist(context)
+    }
+
+    fun deleteWishlistItem(context: Context, id: Long) {
+        wishlistItems = wishlistItems.filterNot { it.id == id }
+        persistWishlist(context)
+    }
+
+    fun notifyAffordableWishlistItems(context: Context) {
+        val affordableItems = wishlistItems.filter { !it.notifiedAffordable && balance >= it.price }
+        if (affordableItems.isEmpty()) return
+
+        val notifiedIds = affordableItems
+            .filter { WishlistNotificationManager.notifyAffordable(context, it) }
+            .map { it.id }
+        wishlistItems = wishlistItems.map { item ->
+            if (item.id in notifiedIds) item.copy(notifiedAffordable = true) else item
+        }
+        persistWishlist(context)
     }
 
     fun addShoppingItem(context: Context, name: String, amount: Double, currency: String, category: String, note: String) {

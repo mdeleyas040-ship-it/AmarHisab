@@ -10,3 +10,10 @@ data class ShoppingItem(
     val checked: Boolean = false,
     val addedToExpense: Boolean = false
 )
+
+data class WishlistItem(
+    val id: Long = System.currentTimeMillis(),
+    val name: String,
+    val price: Double,
+    val notifiedAffordable: Boolean = false
+)

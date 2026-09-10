@@ -490,6 +490,13 @@ fun AmarHisabApp(
     var showSavingsScreen by remember {
         mutableStateOf(false)
     }
+    var showWishlistScreen by remember {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(viewModel.balance, viewModel.wishlistItems) {
+        viewModel.notifyAffordableWishlistItems(context)
+    }
 
     var showVehicleModule by remember {
         mutableStateOf(false)
@@ -998,6 +1005,7 @@ fun AmarHisabApp(
                     showShoppingList ||
                     showScratchpad ||
                             showSavingsScreen ||
+                            showWishlistScreen ||
                             showVehicleModule ||
                     showOnThisDayScreen ||
                     showNotificationScreen ||
@@ -1032,6 +1040,9 @@ fun AmarHisabApp(
 
             showSavingsScreen ->
                 showSavingsScreen = false
+
+            showWishlistScreen ->
+                showWishlistScreen = false
 
             showNotificationScreen ->
                 showNotificationScreen = false
@@ -1074,6 +1085,7 @@ fun AmarHisabApp(
                 !showShoppingList &&
                 !showScratchpad &&
                 !showSavingsScreen &&
+                !showWishlistScreen &&
                 !showNotificationScreen &&
                 !showSettingsScreen &&
                 !isSearchActive
@@ -1133,6 +1145,10 @@ fun AmarHisabApp(
 
                                     onSavings = {
                                         showSavingsScreen = true
+                                    },
+
+                                    onWishlist = {
+                                        showWishlistScreen = true
                                     },
 
                                     // NEW
@@ -1977,6 +1993,20 @@ fun AmarHisabApp(
                     },
                     onDeleteGoal = { goalId ->
                         viewModel.deleteSavingsGoal(context, goalId)
+                    }
+                )
+            }
+
+            if (showWishlistScreen) {
+                WishlistScreen(
+                    items = viewModel.wishlistItems,
+                    balance = viewModel.balance,
+                    onBack = { showWishlistScreen = false },
+                    onAdd = { name, price ->
+                        viewModel.addWishlistItem(context, name, price)
+                    },
+                    onDelete = { id ->
+                        viewModel.deleteWishlistItem(context, id)
                     }
                 )
             }
