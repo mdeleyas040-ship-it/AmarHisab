@@ -68,7 +68,11 @@ data class LoanPayment(
     val amount: Double,
     val date: String,
     val note: String,
-    val fundSource: String = "personal"
+    val fundSource: String = "personal",
+
+    // Home → Loan payment-এর মূল Home transaction-এর ID
+    // পুরোনো payment-এর জন্য null থাকবে।
+    val sourceTransactionId: Long? = null
 )
 
 data class LendingAccount(

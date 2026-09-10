@@ -232,125 +232,527 @@ class MainViewModel : ViewModel() {
     private fun setupFirestoreListeners(userId: String) {
         cloudLoading = true
 
-        val transReg = firestore.collection("users").document(userId).collection("transactions")
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    cloudError = "Cloud data load হয়নি: ${error.message}"
+        // =====================================================
+        // TRANSACTIONS
+        // =====================================================
+
+        val transReg =
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("transactions")
+                .addSnapshotListener { snapshot, error ->
+
+                    if (error != null) {
+                        cloudError =
+                            "Cloud data load হয়নি: ${error.message}"
+                        cloudLoading = false
+                        return@addSnapshotListener
+                    }
+
+                    val cloudTransactions =
+                        snapshot
+                            ?.documents
+                            ?.mapNotNull {
+                                firestoreDocumentToTransaction(it)
+                            }
+                            ?: emptyList()
+
+                    val deletedIds =
+                        prefs.getStringSet(
+                            "deleted_transaction_ids",
+                            emptySet()
+                        )
+                            ?.mapNotNull {
+                                it.toLongOrNull()
+                            }
+                            ?.toSet()
+                            ?: emptySet()
+
+                    val activeCloudTransactions =
+                        cloudTransactions.filter {
+                            it.id !in deletedIds
+                        }
+
+                    personalTransactions =
+                        activeCloudTransactions
+
+                    saveTransactions(
+                        prefs,
+                        activeCloudTransactions
+                    )
+
                     cloudLoading = false
-                    return@addSnapshotListener
+                    cloudError = ""
                 }
-                val cloudTransactions = snapshot?.documents?.mapNotNull { firestoreDocumentToTransaction(it) } ?: emptyList()
-                val deletedIds = prefs.getStringSet("deleted_transaction_ids", emptySet())?.mapNotNull { it.toLongOrNull() }?.toSet() ?: emptySet()
-                val activeCloudTransactions = cloudTransactions.filter { it.id !in deletedIds }
-                personalTransactions = activeCloudTransactions
-                saveTransactions(prefs, activeCloudTransactions)
-                cloudLoading = false
-                cloudError = ""
-            }
+
         registrations.add(transReg)
 
-        val loansReg = firestore.collection("users").document(userId).collection("loans")
-            .addSnapshotListener { snapshot, error ->
-                if (error == null && snapshot != null) {
-                    val cloudLoans = snapshot.documents.mapNotNull { doc ->
-                        try {
-                            val borrowingArray = doc.get("borrowings") as? List<Map<String, Any>>
-                            val borrowings = borrowingArray?.map { b ->
-                                LoanBorrowing(
-                                    id = (b["id"] as? Number)?.toLong() ?: 0L,
-                                    loanId = (b["loanId"] as? Number)?.toLong() ?: 0L,
-                                    amount = (b["amount"] as? Number)?.toDouble() ?: 0.0,
-                                    date = b["date"] as? String ?: "",
-                                    note = b["note"] as? String ?: ""
-                                )
-                            } ?: emptyList()
 
-                            LoanAccount(
-                                id = doc.getLong("id") ?: 0L,
-                                name = doc.getString("name") ?: "",
-                                sourceType = doc.getString("sourceType") ?: "bank",
-                                principal = doc.getDouble("principal") ?: 0.0,
-                                monthlyInstallment = doc.getDouble("monthlyInstallment") ?: 0.0,
-                                startDate = doc.getString("startDate") ?: "",
-                                note = doc.getString("note") ?: "",
-                                lastEditedDate = doc.getString("lastEditedDate") ?: "",
-                                editHistory = doc.get("editHistory") as? List<String> ?: emptyList(),
-                                borrowings = borrowings
-                            )
-                        } catch (e: Exception) { null }
+        // =====================================================
+        // LOANS
+        // =====================================================
+
+        val loansReg =
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("loans")
+                .addSnapshotListener { snapshot, error ->
+
+                    if (error != null) {
+                        cloudError =
+                            "Loan Cloud data load হয়নি: ${error.message}"
+                        return@addSnapshotListener
                     }
-                    if (cloudLoans.isNotEmpty()) {
-                        loans = cloudLoans
-                        saveLoans(prefs, cloudLoans)
-                    }
+
+                    if (snapshot == null) return@addSnapshotListener
+
+                    val cloudLoans =
+                        snapshot.documents.mapNotNull { doc ->
+
+                            try {
+
+                                val borrowingArray =
+                                    doc.get(
+                                        "borrowings"
+                                    ) as? List<Map<String, Any>>
+
+                                val borrowings =
+                                    borrowingArray
+                                        ?.map { b ->
+
+                                            LoanBorrowing(
+                                                id =
+                                                    (
+                                                            b["id"]
+                                                                    as? Number
+                                                            )
+                                                        ?.toLong()
+                                                        ?: 0L,
+
+                                                loanId =
+                                                    (
+                                                            b["loanId"]
+                                                                    as? Number
+                                                            )
+                                                        ?.toLong()
+                                                        ?: 0L,
+
+                                                amount =
+                                                    (
+                                                            b["amount"]
+                                                                    as? Number
+                                                            )
+                                                        ?.toDouble()
+                                                        ?: 0.0,
+
+                                                date =
+                                                    b["date"]
+                                                            as? String
+                                                        ?: "",
+
+                                                note =
+                                                    b["note"]
+                                                            as? String
+                                                        ?: ""
+                                            )
+                                        }
+                                        ?: emptyList()
+
+                                LoanAccount(
+                                    id =
+                                        doc.getLong("id")
+                                            ?: 0L,
+
+                                    name =
+                                        doc.getString("name")
+                                            ?: "",
+
+                                    sourceType =
+                                        doc.getString(
+                                            "sourceType"
+                                        )
+                                            ?: "bank",
+
+                                    principal =
+                                        doc.getDouble(
+                                            "principal"
+                                        )
+                                            ?: 0.0,
+
+                                    monthlyInstallment =
+                                        doc.getDouble(
+                                            "monthlyInstallment"
+                                        )
+                                            ?: 0.0,
+
+                                    startDate =
+                                        doc.getString(
+                                            "startDate"
+                                        )
+                                            ?: "",
+
+                                    note =
+                                        doc.getString("note")
+                                            ?: "",
+
+                                    lastEditedDate =
+                                        doc.getString(
+                                            "lastEditedDate"
+                                        )
+                                            ?: "",
+
+                                    editHistory =
+                                        doc.get(
+                                            "editHistory"
+                                        ) as? List<String>
+                                            ?: emptyList(),
+
+                                    borrowings =
+                                        borrowings,
+
+                                    // NEW:
+                                    // Cloud থেকে dueDate restore হবে
+                                    dueDate =
+                                        doc.getString(
+                                            "dueDate"
+                                        )
+                                            ?.ifBlank {
+                                                null
+                                            }
+                                )
+
+                            } catch (_: Exception) {
+                                null
+                            }
+                        }
+
+                    // IMPORTANT:
+                    // Cloud empty হলে local data clear হবে।
+                    loans = cloudLoans
+                    saveLoans(
+                        prefs,
+                        cloudLoans
+                    )
                 }
-            }
+
         registrations.add(loansReg)
 
-        val paymentsReg = firestore.collection("users").document(userId).collection("loanPayments")
-            .addSnapshotListener { snapshot, error ->
-                if (error == null && snapshot != null) {
-                    val cloudPayments = snapshot.documents.mapNotNull { doc ->
-                        try {
-                            LoanPayment(
-                                id = doc.getLong("id") ?: 0L,
-                                loanId = doc.getLong("loanId") ?: 0L,
-                                amount = doc.getDouble("amount") ?: 0.0,
-                                date = doc.getString("date") ?: "",
-                                note = doc.getString("note") ?: ""
-                            )
-                        } catch (e: Exception) { null }
+
+        // =====================================================
+        // LOAN PAYMENTS
+        // =====================================================
+
+        val paymentsReg =
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("loanPayments")
+                .addSnapshotListener { snapshot, error ->
+
+                    if (error != null) {
+                        cloudError =
+                            "Loan payment Cloud data load হয়নি: ${error.message}"
+                        return@addSnapshotListener
                     }
-                    if (cloudPayments.isNotEmpty()) {
-                        loanPayments = cloudPayments
-                        saveLoanPayments(prefs, cloudPayments)
-                    }
+
+                    if (snapshot == null) return@addSnapshotListener
+
+                    val cloudPayments =
+                        snapshot.documents.mapNotNull { doc ->
+
+                            try {
+
+                                LoanPayment(
+                                    id =
+                                        doc.getLong("id")
+                                            ?: 0L,
+
+                                    loanId =
+                                        doc.getLong(
+                                            "loanId"
+                                        )
+                                            ?: 0L,
+
+                                    amount =
+                                        doc.getDouble(
+                                            "amount"
+                                        )
+                                            ?: 0.0,
+
+                                    date =
+                                        doc.getString("date")
+                                            ?: "",
+
+                                    note =
+                                        doc.getString("note")
+                                            ?: "",
+
+                                    // NEW:
+                                    // Home / Personal source
+                                    fundSource =
+                                        doc.getString(
+                                            "fundSource"
+                                        )
+                                            ?.ifBlank {
+                                                "personal"
+                                            }
+                                            ?: "personal"
+                                )
+
+                            } catch (_: Exception) {
+                                null
+                            }
+                        }
+
+                    // IMPORTANT:
+                    // Cloud empty হলে local data clear হবে।
+                    loanPayments =
+                        cloudPayments
+
+                    saveLoanPayments(
+                        prefs,
+                        cloudPayments
+                    )
                 }
-            }
+
         registrations.add(paymentsReg)
 
-        val lendingsReg = firestore.collection("users").document(userId).collection("lendings")
-            .addSnapshotListener { snapshot, error ->
-                if (error == null && snapshot != null) {
-                    val cloudLendings = snapshot.documents.mapNotNull { doc ->
-                        try {
-                            LendingAccount(
-                                id = doc.getLong("id") ?: 0L,
-                                person = doc.getString("person") ?: "",
-                                amount = doc.getDouble("amount") ?: 0.0,
-                                date = doc.getString("date") ?: "",
-                                note = doc.getString("note") ?: ""
-                            )
-                        } catch (e: Exception) { null }
+
+        // =====================================================
+        // LOAN INTEREST TERMS
+        // =====================================================
+
+        val interestReg =
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("loanInterestTerms")
+                .addSnapshotListener { snapshot, error ->
+
+                    if (error != null) {
+                        cloudError =
+                            "Loan interest Cloud data load হয়নি: ${error.message}"
+                        return@addSnapshotListener
                     }
-                    if (cloudLendings.isNotEmpty()) {
-                        lendings = cloudLendings
-                        saveLendings(prefs, cloudLendings)
-                    }
+
+                    if (snapshot == null) return@addSnapshotListener
+
+                    val cloudInterestTerms =
+                        snapshot.documents.mapNotNull { doc ->
+
+                            try {
+
+                                LoanInterestTerms(
+                                    loanId =
+                                        doc.getLong(
+                                            "loanId"
+                                        )
+                                            ?: 0L,
+
+                                    interestRate =
+                                        doc.getDouble(
+                                            "interestRate"
+                                        )
+                                            ?: 0.0,
+
+                                    totalInterest =
+                                        doc.getDouble(
+                                            "totalInterest"
+                                        )
+                                            ?: 0.0,
+
+                                    interestType =
+                                        doc.getString(
+                                            "interestType"
+                                        )
+                                            ?: "fixed"
+                                )
+
+                            } catch (_: Exception) {
+                                null
+                            }
+                        }
+
+                    // IMPORTANT:
+                    // Cloud empty হলে local data clear হবে।
+                    loanInterestTerms =
+                        cloudInterestTerms
+
+                    saveLoanInterestTerms(
+                        prefs,
+                        cloudInterestTerms
+                    )
                 }
-            }
+
+        registrations.add(interestReg)
+
+
+        // =====================================================
+        // LENDINGS
+        // =====================================================
+
+        val lendingsReg =
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("lendings")
+                .addSnapshotListener { snapshot, error ->
+
+                    if (error != null) {
+                        cloudError =
+                            "Lending Cloud data load হয়নি: ${error.message}"
+                        return@addSnapshotListener
+                    }
+
+                    if (snapshot == null) return@addSnapshotListener
+
+                    val cloudLendings =
+                        snapshot.documents.mapNotNull { doc ->
+
+                            try {
+
+                                LendingAccount(
+                                    id =
+                                        doc.getLong("id")
+                                            ?: 0L,
+
+                                    person =
+                                        doc.getString(
+                                            "person"
+                                        )
+                                            ?: "",
+
+                                    amount =
+                                        doc.getDouble(
+                                            "amount"
+                                        )
+                                            ?: 0.0,
+
+                                    date =
+                                        doc.getString("date")
+                                            ?: "",
+
+                                    note =
+                                        doc.getString("note")
+                                            ?: "",
+
+                                    // NEW:
+                                    dueDate =
+                                        doc.getString(
+                                            "dueDate"
+                                        )
+                                            ?.ifBlank {
+                                                null
+                                            },
+
+                                    // NEW:
+                                    fundSource =
+                                        doc.getString(
+                                            "fundSource"
+                                        )
+                                            ?.ifBlank {
+                                                "personal"
+                                            }
+                                            ?: "personal"
+                                )
+
+                            } catch (_: Exception) {
+                                null
+                            }
+                        }
+
+                    // IMPORTANT:
+                    // Cloud empty হলে local data clear হবে।
+                    lendings =
+                        cloudLendings
+
+                    saveLendings(
+                        prefs,
+                        cloudLendings
+                    )
+                }
+
         registrations.add(lendingsReg)
 
-        val returnsReg = firestore.collection("users").document(userId).collection("lendingReturns")
-            .addSnapshotListener { snapshot, error ->
-                if (error == null && snapshot != null) {
-                    val cloudReturns = snapshot.documents.mapNotNull { doc ->
-                        try {
-                            LendingReturn(
-                                id = doc.getLong("id") ?: 0L,
-                                lendingId = doc.getLong("lendingId") ?: 0L,
-                                amount = doc.getDouble("amount") ?: 0.0,
-                                date = doc.getString("date") ?: "",
-                                note = doc.getString("note") ?: ""
-                            )
-                        } catch (e: Exception) { null }
+
+        // =====================================================
+        // LENDING RETURNS
+        // =====================================================
+
+        val returnsReg =
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("lendingReturns")
+                .addSnapshotListener { snapshot, error ->
+
+                    if (error != null) {
+                        cloudError =
+                            "Lending return Cloud data load হয়নি: ${error.message}"
+                        return@addSnapshotListener
                     }
-                    if (cloudReturns.isNotEmpty()) {
-                        lendingReturns = cloudReturns
-                        saveLendingReturns(prefs, cloudReturns)
-                    }
+
+                    if (snapshot == null) return@addSnapshotListener
+
+                    val cloudReturns =
+                        snapshot.documents.mapNotNull { doc ->
+
+                            try {
+
+                                LendingReturn(
+                                    id =
+                                        doc.getLong("id")
+                                            ?: 0L,
+
+                                    lendingId =
+                                        doc.getLong(
+                                            "lendingId"
+                                        )
+                                            ?: 0L,
+
+                                    amount =
+                                        doc.getDouble(
+                                            "amount"
+                                        )
+                                            ?: 0.0,
+
+                                    date =
+                                        doc.getString("date")
+                                            ?: "",
+
+                                    note =
+                                        doc.getString("note")
+                                            ?: "",
+
+                                    // NEW:
+                                    fundSource =
+                                        doc.getString(
+                                            "fundSource"
+                                        )
+                                            ?.ifBlank {
+                                                "personal"
+                                            }
+                                            ?: "personal"
+                                )
+
+                            } catch (_: Exception) {
+                                null
+                            }
+                        }
+
+                    // IMPORTANT:
+                    // Cloud empty হলে local data clear হবে।
+                    lendingReturns =
+                        cloudReturns
+
+                    saveLendingReturns(
+                        prefs,
+                        cloudReturns
+                    )
                 }
-            }
+
         registrations.add(returnsReg)
     }
 
@@ -1246,7 +1648,15 @@ class MainViewModel : ViewModel() {
         saveAutoBackup(context)
 
         if (currentUserId != "guest") {
-            syncAllLoanAndLendingData(firestore, currentUserId, loans, loanPayments, lendings, lendingReturns)
+            syncAllLoanAndLendingData(
+                firestore = firestore,
+                userId = currentUserId,
+                loans = loans,
+                loanPayments = loanPayments,
+                lendings = lendings,
+                lendingReturns = lendingReturns,
+                loanInterestTerms = loanInterestTerms
+            )
         }
     }
 

@@ -428,6 +428,11 @@ fun saveLoanPayments(
                     "fundSource",
                     payment.fundSource
                 )
+
+                put(
+                    "sourceTransactionId",
+                    payment.sourceTransactionId ?: 0L
+                )
             }
         )
     }
@@ -462,7 +467,13 @@ fun loadLoanPayments(
                 fundSource = o.optString(
                     "fundSource",
                     "personal"
-                )
+                ),
+
+                        sourceTransactionId =
+                        o.optLong(
+                        "sourceTransactionId",
+                0L
+            ).takeIf { it != 0L }
             )
         }
     } catch (_: Exception) {
@@ -945,6 +956,11 @@ fun buildBackupJson(
                     "fundSource",
                     payment.fundSource
                 )
+
+                put(
+                    "sourceTransactionId",
+                    payment.sourceTransactionId ?: 0L
+                )
             }
         )
     }
@@ -1333,7 +1349,15 @@ fun parseBackupJson(
                             o.optString(
                                 "fundSource",
                                 "personal"
-                            )
+                            ),
+
+                        sourceTransactionId =
+                            o.optLong(
+                                "sourceTransactionId",
+                                0L
+                            ).takeIf {
+                                it != 0L
+                            }
                     )
                 )
             }
@@ -1634,4 +1658,150 @@ fun exportBackupToUri(
     } catch (_: Exception) {
         false
     }
+}
+
+// =====================================================
+// LOAN INTEREST TERMS
+// =====================================================
+
+private const val LOAN_INTEREST_TERMS_KEY =
+    "loan_interest_terms_v1"
+
+fun saveLoanInterestTerms(
+    prefs: SharedPreferences,
+    terms: List<LoanInterestTerms>
+) {
+    val array = JSONArray()
+
+    terms.forEach { item ->
+        array.put(
+            JSONObject().apply {
+                put("loanId", item.loanId)
+                put("interestRate", item.interestRate)
+                put("totalInterest", item.totalInterest)
+                put("interestType", item.interestType)
+            }
+        )
+    }
+
+    prefs.edit()
+        .putString(
+            LOAN_INTEREST_TERMS_KEY,
+            array.toString()
+        )
+        .apply()
+}
+
+fun loadLoanInterestTerms(
+    prefs: SharedPreferences
+): List<LoanInterestTerms> {
+
+    val raw =
+        prefs.getString(
+            LOAN_INTEREST_TERMS_KEY,
+            null
+        ) ?: return emptyList()
+
+    return try {
+
+        val array = JSONArray(raw)
+
+        List(array.length()) { index ->
+
+            val item =
+                array.getJSONObject(index)
+
+            LoanInterestTerms(
+                loanId =
+                    item.optLong(
+                        "loanId"
+                    ),
+
+                interestRate =
+                    item.optDouble(
+                        "interestRate",
+                        0.0
+                    ),
+
+                totalInterest =
+                    item.optDouble(
+                        "totalInterest",
+                        0.0
+                    ),
+
+                interestType =
+                    item.optString(
+                        "interestType",
+                        "fixed"
+                    )
+            )
+        }
+
+    } catch (_: Exception) {
+        emptyList()
+    }
+}
+
+
+// =====================================================
+// BIRTHDAY
+// =====================================================
+
+private const val BIRTHDAY_MONTH_KEY =
+    "birthday_month"
+
+private const val BIRTHDAY_DAY_KEY =
+    "birthday_day"
+
+fun getBirthday(
+    prefs: SharedPreferences
+): Pair<Int, Int>? {
+
+    if (
+        !prefs.contains(BIRTHDAY_MONTH_KEY) ||
+        !prefs.contains(BIRTHDAY_DAY_KEY)
+    ) {
+        return null
+    }
+
+    val month =
+        prefs.getInt(
+            BIRTHDAY_MONTH_KEY,
+            -1
+        )
+
+    val day =
+        prefs.getInt(
+            BIRTHDAY_DAY_KEY,
+            -1
+        )
+
+    if (
+        month < 0 ||
+        day <= 0
+    ) {
+        return null
+    }
+
+    return Pair(
+        month,
+        day
+    )
+}
+
+fun saveBirthday(
+    prefs: SharedPreferences,
+    month: Int,
+    day: Int
+) {
+    prefs.edit()
+        .putInt(
+            BIRTHDAY_MONTH_KEY,
+            month
+        )
+        .putInt(
+            BIRTHDAY_DAY_KEY,
+            day
+        )
+        .apply()
 }
