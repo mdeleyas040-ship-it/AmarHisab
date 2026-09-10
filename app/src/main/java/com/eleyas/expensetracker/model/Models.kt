@@ -40,6 +40,16 @@ data class SavingsGoal(
     val frequency: String = "daily"
 )
 
+data class FinancialMilestone(
+    val id: Long,
+    val title: String,
+    val amount: Double,
+    val currency: String,
+    val date: String,
+    val note: String = "",
+    val linkedTransactionId: Long? = null
+)
+
 data class BackupData(
     val transactions: List<Transaction>,
     val usdToBdt: Double,

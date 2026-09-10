@@ -62,6 +62,8 @@ class MainViewModel : ViewModel() {
         private set
     var savingsGoals by mutableStateOf<List<SavingsGoal>>(emptyList())
         private set
+    var financialMilestones by mutableStateOf<List<FinancialMilestone>>(emptyList())
+        private set
     var shoppingItems by mutableStateOf<List<ShoppingItem>>(emptyList())
         private set
     var wishlistItems by mutableStateOf<List<WishlistItem>>(emptyList())
@@ -168,6 +170,7 @@ class MainViewModel : ViewModel() {
         lendingReturns = loadLendingReturns(prefs)
         wallets = loadWallets(prefs)
         savingsGoals = loadSavingsGoals(prefs)
+        financialMilestones = loadFinancialMilestones(prefs)
         shoppingItems = ShoppingListStorage.load(context, userId)
         wishlistItems = WishlistStorage.load(context, userId)
         notifications = NotificationStorage.load(context, userId)
@@ -1182,6 +1185,20 @@ class MainViewModel : ViewModel() {
         saveAutoBackup(context)
     }
 
+    fun saveFinancialMilestone(context: Context, milestone: FinancialMilestone) {
+        financialMilestones = financialMilestones
+            .filterNot { it.id == milestone.id }
+            .plus(milestone.copy(title = milestone.title.trim(), note = milestone.note.trim()))
+        saveFinancialMilestones(prefs, financialMilestones)
+        saveAutoBackup(context)
+    }
+
+    fun deleteFinancialMilestone(context: Context, milestoneId: Long) {
+        financialMilestones = financialMilestones.filterNot { it.id == milestoneId }
+        saveFinancialMilestones(prefs, financialMilestones)
+        saveAutoBackup(context)
+    }
+
     fun addLoan(context: Context, name: String, type: String, amount: Double, monthly: Double, date: String, note: String, dueDate: String? = null) {
         val newLoan = LoanAccount(System.currentTimeMillis(), name, type, amount, monthly, date, note, dueDate = dueDate)
         loans = loans + newLoan
@@ -1789,6 +1806,7 @@ class MainViewModel : ViewModel() {
         lendingReturns = emptyList()
         categoryBudgets = emptyList()
         notifications = emptyList()
+        financialMilestones = emptyList()
 
         prefs.edit().clear().apply()
         NotificationStorage.save(context, emptyList(), currentUserId)

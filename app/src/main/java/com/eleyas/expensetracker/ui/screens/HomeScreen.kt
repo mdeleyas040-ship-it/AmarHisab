@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eleyas.expensetracker.model.*
 import com.eleyas.expensetracker.ui.components.AchievementBadgesCard
@@ -69,6 +70,7 @@ fun HomeScreen(
     onReminderClick: (SmartReminder) -> Unit = {}
 ) {
     val firestore = remember { FirebaseFirestore.getInstance() }
+    val context = LocalContext.current
     val appViewModel: MainViewModel = viewModel()
     var showHomeMoneyFlow by remember { mutableStateOf(false) }
     var serverNotice by remember { mutableStateOf<String?>(null) }
@@ -365,6 +367,15 @@ fun HomeScreen(
                     currentUserId = currentUserId,
                     transactions = transactions,
                     loanRemaining = loanRemaining
+                )
+            }
+
+            item {
+                FinancialMemoryTimeline(
+                    milestones = appViewModel.financialMilestones,
+                    transactions = transactions,
+                    onSave = { appViewModel.saveFinancialMilestone(context, it) },
+                    onDelete = { appViewModel.deleteFinancialMilestone(context, it) }
                 )
             }
 

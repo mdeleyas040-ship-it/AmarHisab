@@ -127,6 +127,48 @@ fun loadSavingsGoals(prefs: SharedPreferences): List<SavingsGoal> {
     }
 }
 
+fun saveFinancialMilestones(
+    prefs: SharedPreferences,
+    milestones: List<FinancialMilestone>
+) {
+    val array = JSONArray()
+    milestones.forEach { milestone ->
+        array.put(
+            JSONObject().apply {
+                put("id", milestone.id)
+                put("title", milestone.title)
+                put("amount", milestone.amount)
+                put("currency", milestone.currency)
+                put("date", milestone.date)
+                put("note", milestone.note)
+                put("linkedTransactionId", milestone.linkedTransactionId)
+            }
+        )
+    }
+    prefs.edit().putString("financial_milestones", array.toString()).apply()
+}
+
+fun loadFinancialMilestones(prefs: SharedPreferences): List<FinancialMilestone> {
+    return try {
+        val array = JSONArray(prefs.getString("financial_milestones", "[]") ?: "[]")
+        List(array.length()) { index ->
+            val item = array.getJSONObject(index)
+            FinancialMilestone(
+                id = item.getLong("id"),
+                title = item.getString("title"),
+                amount = item.getDouble("amount"),
+                currency = item.optString("currency", "BDT"),
+                date = item.getString("date"),
+                note = item.optString("note", ""),
+                linkedTransactionId = item.takeIf { !it.isNull("linkedTransactionId") }
+                    ?.getLong("linkedTransactionId")
+            )
+        }
+    } catch (_: Exception) {
+        emptyList()
+    }
+}
+
 fun loadCategoryBudgets(
     prefs: SharedPreferences
 ): List<CategoryBudget> {
