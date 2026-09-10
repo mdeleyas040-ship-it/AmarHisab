@@ -990,6 +990,10 @@ class MainViewModel : ViewModel() {
         transactionId: Long? = null,
         onComplete: () -> Unit
     ) {
+        // "home" (প্রবাস থেকে দেশে রেমিট্যান্স) লেনদেনের জন্য তখনকার exchange rate সংরক্ষণ করা হয়,
+        // যাতে পরে মাস অনুযায়ী rate change ট্র্যাক করা যায়।
+        val exchangeRateUsed = if (type == "home" && usdToBdt > 0.0) usdToBdt else null
+
         val transaction = Transaction(
             id = transactionId ?: System.currentTimeMillis(),
             type = type,
@@ -1000,7 +1004,8 @@ class MainViewModel : ViewModel() {
             date = date,
             receiptImage = receiptImage,
             audioMemoPath = audioMemoPath,
-            walletId = walletId
+            walletId = walletId,
+            exchangeRateUsed = exchangeRateUsed
         )
 
         // পরিবারের shared home লেনদেন হলে addedBy mark করা হয়

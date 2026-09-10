@@ -384,6 +384,10 @@ fun AmarHisabApp(
         mutableStateOf(false)
     }
 
+    var showRemittanceHistoryScreen by remember {
+        mutableStateOf(false)
+    }
+
     var addType by remember(currentUserId) {
         mutableStateOf("income")
     }
@@ -1024,6 +1028,7 @@ fun AmarHisabApp(
         enabled =
             showBirthdayScreen ||
                     showZakatCharityScreen ||
+                    showRemittanceHistoryScreen ||
                     showCalendarScreen ||
                     showCalculatorScreen ||
                     showShoppingList ||
@@ -1046,6 +1051,9 @@ fun AmarHisabApp(
 
             showZakatCharityScreen ->
                 showZakatCharityScreen = false
+
+            showRemittanceHistoryScreen ->
+                showRemittanceHistoryScreen = false
 
             showOnThisDayScreen ->
                 showOnThisDayScreen = false
@@ -1104,6 +1112,7 @@ fun AmarHisabApp(
             if (
                 !showBirthdayScreen &&
                 !showZakatCharityScreen &&
+                !showRemittanceHistoryScreen &&
                 !showCalendarScreen &&
                 !showCalculatorScreen &&
                 !showShoppingList &&
@@ -1184,6 +1193,10 @@ fun AmarHisabApp(
                                         showZakatCharityScreen = true
                                     },
 
+                                    onRemittanceHistory = {
+                                        showRemittanceHistoryScreen = true
+                                    },
+
                                     onSettings = {
                                         showSettingsScreen = true
                                     }
@@ -1248,6 +1261,7 @@ fun AmarHisabApp(
             if (
                 !showBirthdayScreen &&
                 !showZakatCharityScreen &&
+                !showRemittanceHistoryScreen &&
                 !showCalendarScreen &&
                 !showCalculatorScreen &&
                 !showShoppingList &&
@@ -1649,6 +1663,18 @@ fun AmarHisabApp(
                     userId = currentUserId,
                     onBack = {
                         showZakatCharityScreen = false
+                    }
+                )
+            }
+
+            if (showRemittanceHistoryScreen) {
+                RemittanceHistoryScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    transactions = transactions,
+                    usdToBdt = usdToBdt,
+                    usdToMvr = usdToMvr,
+                    onBack = {
+                        showRemittanceHistoryScreen = false
                     }
                 )
             }

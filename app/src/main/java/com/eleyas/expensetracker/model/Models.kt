@@ -12,7 +12,10 @@ data class Transaction(
     val audioMemoPath: String? = null,
     val walletId: String = "default_cash",
     val addedByUid: String? = null,
-    val addedByName: String? = null
+    val addedByName: String? = null,
+    // "home" (remittance) transaction পাঠানোর সময়ে ব্যবহৃত exchange rate (1 USD = কত BDT)।
+    // ঐতিহাসিক rate ট্র্যাক করার জন্য save করা হয়, পুরনো entry-তে null থাকবে।
+    val exchangeRateUsed: Double? = null
 )
 
 data class ScratchNote(

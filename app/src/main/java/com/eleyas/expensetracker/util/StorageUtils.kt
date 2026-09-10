@@ -215,7 +215,8 @@ fun saveTransactionToFirestore(
                 "receiptImage" to (transaction.receiptImage ?: ""),
                 "walletId" to transaction.walletId,
                 "addedByUid" to (transaction.addedByUid ?: ""),
-                "addedByName" to (transaction.addedByName ?: "")
+                "addedByName" to (transaction.addedByName ?: ""),
+                "exchangeRateUsed" to (transaction.exchangeRateUsed ?: -1.0)
             )
         )
         .addOnSuccessListener {
@@ -266,7 +267,9 @@ fun firestoreDocumentToTransaction(
             addedByUid = doc.getString("addedByUid")
                 ?.ifBlank { null },
             addedByName = doc.getString("addedByName")
-                ?.ifBlank { null }
+                ?.ifBlank { null },
+            exchangeRateUsed = doc.getDouble("exchangeRateUsed")
+                ?.takeIf { it > 0.0 }
         )
     } catch (_: Exception) {
         null
@@ -316,6 +319,7 @@ fun saveTransactions(
                 put("walletId", it.walletId)
                 put("addedByUid", it.addedByUid ?: "")
                 put("addedByName", it.addedByName ?: "")
+                put("exchangeRateUsed", it.exchangeRateUsed ?: -1.0)
             }
         )
     }
@@ -355,7 +359,9 @@ fun loadTransactions(
                 addedByUid = o.optString("addedByUid")
                     .takeIf { it.isNotBlank() },
                 addedByName = o.optString("addedByName")
-                    .takeIf { it.isNotBlank() }
+                    .takeIf { it.isNotBlank() },
+                exchangeRateUsed = o.optDouble("exchangeRateUsed", -1.0)
+                    .takeIf { it > 0.0 }
             )
         }
     } catch (_: Exception) {
