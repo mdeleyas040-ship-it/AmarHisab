@@ -9,6 +9,7 @@ data class Transaction(
     val reason: String,
     val date: String,
     val receiptImage: String? = null,
+    val audioMemoPath: String? = null,
     val walletId: String = "default_cash",
     val addedByUid: String? = null,
     val addedByName: String? = null

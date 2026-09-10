@@ -2571,7 +2571,7 @@ fun AmarHisabApp(
                 },
 
                 {
-                        a, c, cat, r, d, w, i, transactionId ->
+                        a, c, cat, r, d, w, i, audio, transactionId ->
 
                     if (
                         editingTransaction != null &&
@@ -2587,7 +2587,8 @@ fun AmarHisabApp(
                                 reason = r,
                                 date = d,
                                 walletId = w,
-                                receiptImage = i
+                                receiptImage = i,
+                                audioMemoPath = audio
                             )
                         )
 
@@ -2603,6 +2604,7 @@ fun AmarHisabApp(
                             type = addType,
                             walletId = w,
                             receiptImage = i,
+                            audioMemoPath = audio,
                             transactionId = transactionId
                         ) {
                             showAddDialog = false

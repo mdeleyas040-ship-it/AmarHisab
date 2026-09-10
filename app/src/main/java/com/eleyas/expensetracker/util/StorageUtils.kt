@@ -270,6 +270,7 @@ fun saveTransactions(
                 put("reason", it.reason)
                 put("date", it.date)
                 put("receiptImage", it.receiptImage ?: "")
+                put("audioMemoPath", it.audioMemoPath ?: "")
                 put("walletId", it.walletId)
                 put("addedByUid", it.addedByUid ?: "")
                 put("addedByName", it.addedByName ?: "")
@@ -302,6 +303,8 @@ fun loadTransactions(
                 reason = o.getString("reason"),
                 date = o.getString("date"),
                 receiptImage = o.optString("receiptImage")
+                    .takeIf { it.isNotBlank() },
+                audioMemoPath = o.optString("audioMemoPath")
                     .takeIf { it.isNotBlank() },
                 walletId = o.optString(
                     "walletId",

@@ -983,6 +983,7 @@ class MainViewModel : ViewModel() {
         type: String,
         walletId: String,
         receiptImage: String? = null,
+        audioMemoPath: String? = null,
         transactionId: Long? = null,
         onComplete: () -> Unit
     ) {
@@ -995,6 +996,7 @@ class MainViewModel : ViewModel() {
             reason = reason,
             date = date,
             receiptImage = receiptImage,
+            audioMemoPath = audioMemoPath,
             walletId = walletId
         )
 

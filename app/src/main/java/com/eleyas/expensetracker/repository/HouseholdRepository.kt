@@ -118,6 +118,7 @@ object HouseholdRepository {
             "reason" to transaction.reason,
             "date" to transaction.date,
             "receiptImage" to (transaction.receiptImage ?: ""),
+            "audioMemoPath" to (transaction.audioMemoPath ?: ""),
             "walletId" to transaction.walletId,
             "addedByUid" to (transaction.addedByUid ?: ""),
             "addedByName" to (transaction.addedByName ?: "")
@@ -180,6 +181,7 @@ object HouseholdRepository {
             reason = doc.getString("reason") ?: "",
             date = doc.getString("date") ?: "",
             receiptImage = doc.getString("receiptImage")?.takeIf { it.isNotBlank() },
+            audioMemoPath = doc.getString("audioMemoPath")?.takeIf { it.isNotBlank() },
             walletId = doc.getString("walletId") ?: "default_cash",
             addedByUid = doc.getString("addedByUid")?.takeIf { it.isNotBlank() },
             addedByName = doc.getString("addedByName")?.takeIf { it.isNotBlank() }

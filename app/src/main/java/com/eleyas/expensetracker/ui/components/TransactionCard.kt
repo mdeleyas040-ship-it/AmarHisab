@@ -2,6 +2,8 @@
 package com.eleyas.expensetracker.ui.components
 
 import android.net.Uri
+import android.media.MediaPlayer
+import java.io.File
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -36,6 +38,15 @@ fun TransactionCard(
     val expenseRed = Color(0xFFD32F2F)
     val blue = Color(0xFF1976D2)
     val cardRadius = 18.dp
+    var audioPlayer by remember(transaction.audioMemoPath) { mutableStateOf<MediaPlayer?>(null) }
+    var isPlayingAudio by remember(transaction.audioMemoPath) { mutableStateOf(false) }
+
+    DisposableEffect(transaction.audioMemoPath) {
+        onDispose {
+            audioPlayer?.release()
+            audioPlayer = null
+        }
+    }
 
     val icon = when (transaction.type) {
         "income" -> Icons.Default.AddCircle
@@ -164,6 +175,47 @@ fun TransactionCard(
                 )
 
                 Row {
+                    if (transaction.audioMemoPath?.let { File(it).exists() } == true) {
+                        IconButton(
+                            onClick = {
+                                if (isPlayingAudio) {
+                                    audioPlayer?.stop()
+                                    audioPlayer?.release()
+                                    audioPlayer = null
+                                    isPlayingAudio = false
+                                } else {
+                                    try {
+                                        audioPlayer = MediaPlayer().apply {
+                                            setDataSource(transaction.audioMemoPath)
+                                            setOnCompletionListener {
+                                                release()
+                                                audioPlayer = null
+                                                isPlayingAudio = false
+                                            }
+                                            prepare()
+                                            start()
+                                        }
+                                        isPlayingAudio = true
+                                    } catch (exception: Exception) {
+                                        audioPlayer?.release()
+                                        audioPlayer = null
+                                        WarningPopupManager.show(
+                                            title = "ভয়েস নোট চালানো যাচ্ছে না",
+                                            message = exception.message ?: "অডিও ফাইলটি খোলা যায়নি।"
+                                        )
+                                    }
+                                }
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                if (isPlayingAudio) Icons.Default.Stop else Icons.Default.PlayArrow,
+                                contentDescription = "ভয়েস নোট",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
 
                     if (transaction.receiptImage != null) {
                         IconButton(

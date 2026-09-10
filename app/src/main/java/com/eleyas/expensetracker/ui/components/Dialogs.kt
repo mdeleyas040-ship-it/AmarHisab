@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.DatePickerDialog
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.media.MediaRecorder
 import android.net.Uri
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -34,6 +35,7 @@ import com.eleyas.expensetracker.model.*
 import com.eleyas.expensetracker.ui.theme.*
 import com.eleyas.expensetracker.util.*
 import kotlinx.coroutines.launch
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.ui.draw.clip
@@ -750,6 +752,7 @@ fun AddTransactionDialog(
         String,
         String,
         String?,
+        String?,
         Long
     ) -> Unit,
     onLoanPayment: (
@@ -839,6 +842,78 @@ fun AddTransactionDialog(
         mutableStateOf(
             existingTransaction?.receiptImage
         )
+    }
+
+    var audioMemoPath by remember(existingTransaction?.id) {
+        mutableStateOf(existingTransaction?.audioMemoPath)
+    }
+    var isRecordingAudio by remember { mutableStateOf(false) }
+    var audioRecorder by remember { mutableStateOf<MediaRecorder?>(null) }
+    var pendingAudioPath by remember { mutableStateOf<String?>(null) }
+
+    fun startAudioRecording() {
+        val file = File(
+            context.filesDir,
+            "audio_memos/memo_${System.currentTimeMillis()}.m4a"
+        ).apply { parentFile?.mkdirs() }
+        try {
+            audioRecorder = MediaRecorder(context).apply {
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setOutputFile(file.absolutePath)
+                prepare()
+                start()
+            }
+            pendingAudioPath = file.absolutePath
+            isRecordingAudio = true
+        } catch (exception: Exception) {
+            audioRecorder?.release()
+            audioRecorder = null
+            file.delete()
+            WarningPopupManager.show(
+                title = "রেকর্ডিং শুরু করা যায়নি",
+                message = exception.message ?: "মাইক্রোফোন ব্যবহার করা সম্ভব হয়নি।"
+            )
+        }
+    }
+
+    fun stopAudioRecording() {
+        val path = pendingAudioPath
+        try {
+            audioRecorder?.stop()
+            audioRecorder?.release()
+            if (path != null && File(path).length() > 0L) {
+                audioMemoPath = path
+                Toast.makeText(context, "✅ ভয়েস নোট সেভ হয়েছে", Toast.LENGTH_SHORT).show()
+            }
+        } catch (exception: Exception) {
+            path?.let { File(it).delete() }
+            WarningPopupManager.show(
+                title = "রেকর্ডিং সেভ করা যায়নি",
+                message = exception.message ?: "অডিও ফাইলটি তৈরি করা সম্ভব হয়নি।"
+            )
+        } finally {
+            audioRecorder = null
+            pendingAudioPath = null
+            isRecordingAudio = false
+        }
+    }
+
+    val audioPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) startAudioRecording() else WarningPopupManager.show(
+            title = "Microphone Permission প্রয়োজন",
+            message = "ভয়েস নোট রেকর্ড করতে Microphone permission দিতে হবে।"
+        )
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            audioRecorder?.release()
+            pendingAudioPath?.let { File(it).delete() }
+        }
     }
 
     val scope = rememberCoroutineScope()
@@ -1084,6 +1159,7 @@ fun AddTransactionDialog(
                                     modifier = Modifier.size(28.dp)
                                 )
                             }
+
                         }
 
                         Spacer(
@@ -1655,6 +1731,55 @@ fun AddTransactionDialog(
                         }
                     }
 
+                    Spacer(Modifier.height(10.dp))
+
+                    OutlinedButton(
+                        onClick = {
+                            if (isRecordingAudio) {
+                                stopAudioRecording()
+                            } else if (
+                                ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.RECORD_AUDIO
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                startAudioRecording()
+                            } else {
+                                audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(17.dp),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (isRecordingAudio) ExpenseRed else accent
+                        )
+                    ) {
+                        Icon(
+                            if (isRecordingAudio) Icons.Default.Stop else Icons.Default.Mic,
+                            contentDescription = null,
+                            tint = if (isRecordingAudio) ExpenseRed else accent
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            when {
+                                isRecordingAudio -> "রেকর্ডিং বন্ধ করুন"
+                                audioMemoPath != null -> "ভয়েস নোট আবার রেকর্ড করুন"
+                                else -> "ভয়েস নোট রেকর্ড করুন"
+                            },
+                            color = if (isRecordingAudio) ExpenseRed else accent
+                        )
+                    }
+
+                    if (audioMemoPath != null && !isRecordingAudio) {
+                        TextButton(
+                            onClick = { audioMemoPath = null },
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        ) {
+                            Text("ভয়েস নোট মুছুন", color = ExpenseRed, fontSize = 11.sp)
+                        }
+                    }
+
                     if (
                         type == "home" &&
                         loans.isNotEmpty()
@@ -2043,6 +2168,7 @@ fun AddTransactionDialog(
                                     date,
                                     selectedWalletId,
                                     receiptImage,
+                                    audioMemoPath,
                                     transactionId
                                 )
                             },

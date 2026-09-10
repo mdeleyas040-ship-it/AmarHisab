@@ -82,7 +82,8 @@ object FirestoreRepository {
             "category" to transaction.category,
             "reason" to transaction.reason,
             "date" to transaction.date,
-            "receiptImage" to (transaction.receiptImage ?: "")
+            "receiptImage" to (transaction.receiptImage ?: ""),
+            "audioMemoPath" to (transaction.audioMemoPath ?: "")
         )
 
         firestore
@@ -169,6 +170,10 @@ object FirestoreRepository {
                                 receiptImage =
                                     document
                                         .getString("receiptImage")
+                                        ?.ifBlank { null },
+                                audioMemoPath =
+                                    document
+                                        .getString("audioMemoPath")
                                         ?.ifBlank { null }
                             )
 
