@@ -477,6 +477,16 @@ fun AmarHisabApp(
         mutableStateOf(false)
     }
 
+    var showScratchpad by remember {
+        mutableStateOf(false)
+    }
+
+    var scratchNotes by remember(currentUserId) {
+        mutableStateOf(
+            ScratchpadStorage.load(context, currentUserId)
+        )
+    }
+
     var showSavingsScreen by remember {
         mutableStateOf(false)
     }
@@ -986,6 +996,7 @@ fun AmarHisabApp(
                     showCalendarScreen ||
                     showCalculatorScreen ||
                     showShoppingList ||
+                    showScratchpad ||
                             showSavingsScreen ||
                             showVehicleModule ||
                     showOnThisDayScreen ||
@@ -1015,6 +1026,9 @@ fun AmarHisabApp(
 
             showShoppingList ->
                 showShoppingList = false
+
+            showScratchpad ->
+                showScratchpad = false
 
             showSavingsScreen ->
                 showSavingsScreen = false
@@ -1058,6 +1072,7 @@ fun AmarHisabApp(
                 !showCalendarScreen &&
                 !showCalculatorScreen &&
                 !showShoppingList &&
+                !showScratchpad &&
                 !showSavingsScreen &&
                 !showNotificationScreen &&
                 !showSettingsScreen &&
@@ -1110,6 +1125,10 @@ fun AmarHisabApp(
 
                                     onShoppingList = {
                                         showShoppingList = true
+                                    },
+
+                                    onScratchpad = {
+                                        showScratchpad = true
                                     },
 
                                     onSavings = {
@@ -1192,6 +1211,7 @@ fun AmarHisabApp(
                 !showCalendarScreen &&
                 !showCalculatorScreen &&
                 !showShoppingList &&
+                !showScratchpad &&
                 !showSavingsScreen &&
                 !showNotificationScreen &&
                 !showSettingsScreen &&
@@ -1313,6 +1333,9 @@ fun AmarHisabApp(
                     },
                     onShoppingList = {
                        showShoppingList = true
+                    },
+                    onScratchpad = {
+                        showScratchpad = true
                     },
                     onVehicle = {
                         showVehicleModule = true
@@ -1914,6 +1937,24 @@ fun AmarHisabApp(
                         viewModel.clearAddedShoppingItems(
                             context
                         )
+                    }
+                )
+            }
+
+            if (showScratchpad) {
+                ScratchpadScreen(
+                    notes = scratchNotes,
+                    onBack = {
+                        showScratchpad = false
+                    },
+                    onSave = { note ->
+                        scratchNotes = (scratchNotes.filterNot { it.id == note.id } + note)
+                            .sortedByDescending { it.updatedAt }
+                        ScratchpadStorage.save(context, currentUserId, scratchNotes)
+                    },
+                    onDelete = { note ->
+                        scratchNotes = scratchNotes.filterNot { it.id == note.id }
+                        ScratchpadStorage.save(context, currentUserId, scratchNotes)
                     }
                 )
             }
