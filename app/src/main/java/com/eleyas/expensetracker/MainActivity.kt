@@ -55,11 +55,14 @@ class MainActivity : FragmentActivity() {
 
     var openOnThisDay by mutableStateOf(false)
         private set
+    var quickEntryType by mutableStateOf<String?>(null)
+        private set
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         openOnThisDay = shouldOpenOnThisDay(intent)
+        quickEntryType = QuickEntryManager.entryTypeFrom(intent)
 
         createNotificationChannel()
         SmartReminderScheduler.createNotificationChannel(this)
@@ -79,7 +82,11 @@ class MainActivity : FragmentActivity() {
         setContent {
             AmarHisabTheme {
                 AuthGate(
-                    openOnThisDay = openOnThisDay
+                    openOnThisDay = openOnThisDay,
+                    quickEntryType = quickEntryType,
+                    onQuickEntryHandled = {
+                        quickEntryType = null
+                    }
                 )
                 AppUpdateDialog(
                     context = LocalContext.current
@@ -95,6 +102,7 @@ class MainActivity : FragmentActivity() {
         if (shouldOpenOnThisDay(intent)) {
             openOnThisDay = true
         }
+        quickEntryType = QuickEntryManager.entryTypeFrom(intent)
     }
 
     private fun shouldOpenOnThisDay(
@@ -137,7 +145,9 @@ class MainActivity : FragmentActivity() {
 
 @Composable
 fun AuthGate(
-    openOnThisDay: Boolean = false
+    openOnThisDay: Boolean = false,
+    quickEntryType: String? = null,
+    onQuickEntryHandled: () -> Unit = {}
 ) {
     val context = LocalContext.current
 
@@ -172,6 +182,8 @@ fun AuthGate(
         AmarHisabApp(
             currentUserId = uid,
             openOnThisDay = openOnThisDay,
+            quickEntryType = quickEntryType,
+            onQuickEntryHandled = onQuickEntryHandled,
             onLogout = {
                 FirebaseAuth.getInstance().signOut()
 
@@ -207,6 +219,8 @@ fun AuthGate(
 fun AmarHisabApp(
     currentUserId: String,
     openOnThisDay: Boolean = false,
+    quickEntryType: String? = null,
+    onQuickEntryHandled: () -> Unit = {},
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
@@ -244,6 +258,7 @@ fun AmarHisabApp(
         SmartReminderScheduler.scheduleNext(
             context
         )
+        QuickEntryManager.publish(context)
     }
 
     LaunchedEffect(Unit) {
@@ -375,6 +390,15 @@ fun AmarHisabApp(
 
     var editingTransaction by remember(currentUserId) {
         mutableStateOf<Transaction?>(null)
+    }
+
+    LaunchedEffect(quickEntryType) {
+        quickEntryType?.let { type ->
+            addType = type
+            editingTransaction = null
+            showAddDialog = true
+            onQuickEntryHandled()
+        }
     }
 
     var deletingTransaction by remember(currentUserId) {

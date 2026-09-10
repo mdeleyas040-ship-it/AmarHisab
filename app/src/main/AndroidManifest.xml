@@ -47,6 +47,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="Amar Hisab"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.AmarHisab"
             android:windowSoftInputMode="adjustResize">
 
@@ -59,6 +60,17 @@
             </intent-filter>
 
         </activity>
+
+        <service
+            android:name=".QuickEntryTileService"
+            android:icon="@drawable/ic_notification_calendar"
+            android:label="দ্রুত খরচ এন্ট্রি"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
 
         <!-- Daily Reminder -->
         <receiver
