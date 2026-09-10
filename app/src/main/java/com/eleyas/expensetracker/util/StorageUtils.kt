@@ -1,4 +1,4 @@
-
+﻿
 package com.eleyas.expensetracker.util
 
 import android.app.DatePickerDialog
@@ -58,6 +58,7 @@ import com.eleyas.expensetracker.model.*
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -65,6 +66,7 @@ import java.io.File
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.random.Random
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.material.icons.Icons
@@ -89,6 +91,40 @@ fun saveCategoryBudgets(
     prefs.edit()
         .putString("category_budgets", array.toString())
         .apply()
+}
+
+fun saveSavingsGoals(prefs: SharedPreferences, goals: List<SavingsGoal>) {
+    val array = JSONArray()
+    goals.forEach { goal ->
+        array.put(JSONObject().apply {
+            put("id", goal.id)
+            put("name", goal.name)
+            put("targetAmount", goal.targetAmount)
+            put("savedAmount", goal.savedAmount)
+            put("targetDate", goal.targetDate)
+            put("frequency", goal.frequency)
+        })
+    }
+    prefs.edit().putString("savings_goals", array.toString()).apply()
+}
+
+fun loadSavingsGoals(prefs: SharedPreferences): List<SavingsGoal> {
+    return try {
+        val array = JSONArray(prefs.getString("savings_goals", "[]") ?: "[]")
+        List(array.length()) { index ->
+            val item = array.getJSONObject(index)
+            SavingsGoal(
+                id = item.getLong("id"),
+                name = item.getString("name"),
+                targetAmount = item.getDouble("targetAmount"),
+                savedAmount = item.optDouble("savedAmount", 0.0),
+                targetDate = item.getString("targetDate"),
+                frequency = item.optString("frequency", "daily")
+            )
+        }
+    } catch (_: Exception) {
+        emptyList()
+    }
 }
 
 fun loadCategoryBudgets(
@@ -649,7 +685,7 @@ fun loadWallets(
             listOf(
                 Wallet(
                     "default_cash",
-                    "ক্যাশ (নগদ)",
+                    "à¦•à§à¦¯à¦¾à¦¶ (à¦¨à¦—à¦¦)",
                     "Cash",
                     0.0,
                     "BDT",
@@ -687,7 +723,7 @@ fun loadWallets(
         listOf(
             Wallet(
                 "default_cash",
-                "ক্যাশ (নগদ)",
+                "à¦•à§à¦¯à¦¾à¦¶ (à¦¨à¦—à¦¦)",
                 "Cash",
                 0.0,
                 "BDT",

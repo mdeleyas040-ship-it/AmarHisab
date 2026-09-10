@@ -23,6 +23,15 @@ data class Wallet(
     val color: Int = 0xFF4CAF50.toInt()
 )
 
+data class SavingsGoal(
+    val id: Long,
+    val name: String,
+    val targetAmount: Double,
+    val savedAmount: Double,
+    val targetDate: String,
+    val frequency: String = "daily"
+)
+
 data class BackupData(
     val transactions: List<Transaction>,
     val usdToBdt: Double,

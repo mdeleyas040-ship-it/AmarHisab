@@ -265,6 +265,7 @@ fun AmarHisabApp(
     val lendings = viewModel.lendings
     val lendingReturns = viewModel.lendingReturns
     val wallets = viewModel.wallets
+    val savingsGoals = viewModel.savingsGoals
     val usdToBdt = viewModel.usdToBdt
     val usdToMvr = viewModel.usdToMvr
     val notifications = viewModel.notifications
@@ -473,6 +474,10 @@ fun AmarHisabApp(
     }
 
     var showShoppingList by remember {
+        mutableStateOf(false)
+    }
+
+    var showSavingsScreen by remember {
         mutableStateOf(false)
     }
 
@@ -981,7 +986,8 @@ fun AmarHisabApp(
                     showCalendarScreen ||
                     showCalculatorScreen ||
                     showShoppingList ||
-                    showVehicleModule ||
+                            showSavingsScreen ||
+                            showVehicleModule ||
                     showOnThisDayScreen ||
                     showNotificationScreen ||
                     showSettingsScreen ||
@@ -1009,6 +1015,9 @@ fun AmarHisabApp(
 
             showShoppingList ->
                 showShoppingList = false
+
+            showSavingsScreen ->
+                showSavingsScreen = false
 
             showNotificationScreen ->
                 showNotificationScreen = false
@@ -1049,6 +1058,7 @@ fun AmarHisabApp(
                 !showCalendarScreen &&
                 !showCalculatorScreen &&
                 !showShoppingList &&
+                !showSavingsScreen &&
                 !showNotificationScreen &&
                 !showSettingsScreen &&
                 !isSearchActive
@@ -1100,6 +1110,10 @@ fun AmarHisabApp(
 
                                     onShoppingList = {
                                         showShoppingList = true
+                                    },
+
+                                    onSavings = {
+                                        showSavingsScreen = true
                                     },
 
                                     // NEW
@@ -1178,6 +1192,7 @@ fun AmarHisabApp(
                 !showCalendarScreen &&
                 !showCalculatorScreen &&
                 !showShoppingList &&
+                !showSavingsScreen &&
                 !showNotificationScreen &&
                 !showSettingsScreen &&
                 !isSearchActive
@@ -1297,7 +1312,7 @@ fun AmarHisabApp(
                         showVoiceDialog = true
                     },
                     onShoppingList = {
-                        showShoppingList = true
+                       showShoppingList = true
                     },
                     onVehicle = {
                         showVehicleModule = true
@@ -1899,6 +1914,22 @@ fun AmarHisabApp(
                         viewModel.clearAddedShoppingItems(
                             context
                         )
+                    }
+                )
+            }
+
+            if (showSavingsScreen) {
+                SavingsScreen(
+                    goals = savingsGoals,
+                    onBack = { showSavingsScreen = false },
+                    onAddGoal = { name, amount, date, frequency ->
+                        viewModel.addSavingsGoal(context, name, amount, date, frequency)
+                    },
+                    onAddContribution = { goalId, amount ->
+                        viewModel.addSavingsContribution(context, goalId, amount)
+                    },
+                    onDeleteGoal = { goalId ->
+                        viewModel.deleteSavingsGoal(context, goalId)
                     }
                 )
             }

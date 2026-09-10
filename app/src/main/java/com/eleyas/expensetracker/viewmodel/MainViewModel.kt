@@ -60,6 +60,8 @@ class MainViewModel : ViewModel() {
         private set
     var wallets by mutableStateOf<List<Wallet>>(emptyList())
         private set
+    var savingsGoals by mutableStateOf<List<SavingsGoal>>(emptyList())
+        private set
     var shoppingItems by mutableStateOf<List<ShoppingItem>>(emptyList())
         private set
     var usdToBdt by mutableDoubleStateOf(0.0)
@@ -163,6 +165,7 @@ class MainViewModel : ViewModel() {
         lendings = loadLendings(prefs)
         lendingReturns = loadLendingReturns(prefs)
         wallets = loadWallets(prefs)
+        savingsGoals = loadSavingsGoals(prefs)
         shoppingItems = ShoppingListStorage.load(context, userId)
         notifications = NotificationStorage.load(context, userId)
         birthday = getBirthday(prefs)
@@ -1138,6 +1141,40 @@ class MainViewModel : ViewModel() {
         categoryBudgets = categoryBudgets.filterNot { it.month == budget.month && it.category == budget.category } + budget
         saveCategoryBudgets(prefs, categoryBudgets)
         makeText(context, "✅ ${budget.category} Budget Save হয়েছে", Toast.LENGTH_SHORT).show()
+    }
+
+    fun addSavingsGoal(
+        context: Context,
+        name: String,
+        targetAmount: Double,
+        targetDate: String,
+        frequency: String
+    ) {
+        val goal = SavingsGoal(
+            id = System.currentTimeMillis(),
+            name = name.trim(),
+            targetAmount = targetAmount,
+            savedAmount = 0.0,
+            targetDate = targetDate,
+            frequency = frequency
+        )
+        savingsGoals = savingsGoals + goal
+        saveSavingsGoals(prefs, savingsGoals)
+        saveAutoBackup(context)
+    }
+
+    fun addSavingsContribution(context: Context, goalId: Long, amount: Double) {
+        savingsGoals = savingsGoals.map { goal ->
+            if (goal.id == goalId) goal.copy(savedAmount = goal.savedAmount + amount) else goal
+        }
+        saveSavingsGoals(prefs, savingsGoals)
+        saveAutoBackup(context)
+    }
+
+    fun deleteSavingsGoal(context: Context, goalId: Long) {
+        savingsGoals = savingsGoals.filterNot { it.id == goalId }
+        saveSavingsGoals(prefs, savingsGoals)
+        saveAutoBackup(context)
     }
 
     fun addLoan(context: Context, name: String, type: String, amount: Double, monthly: Double, date: String, note: String, dueDate: String? = null) {
