@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eleyas.expensetracker.model.*
+import com.eleyas.expensetracker.ui.components.AchievementBadgesCard
 import com.eleyas.expensetracker.ui.components.HomeSummaryRow
 import com.eleyas.expensetracker.ui.components.SmartReminderCard
 import com.eleyas.expensetracker.ui.theme.*
@@ -57,6 +58,9 @@ fun HomeScreen(
     onShoppingList: () -> Unit = {},
     onVehicle: () -> Unit = {},
     transactions: List<Transaction> = emptyList(),
+    categoryBudgets: List<CategoryBudget> = emptyList(),
+    usdToBdt: Double = 0.0,
+    usdToMvr: Double = 0.0,
     household: Household? = null,
     onFamilyClick: () -> Unit = {},
     onDailyTipClick: () -> Unit = {},
@@ -69,6 +73,10 @@ fun HomeScreen(
 
     val smartReminders = remember(transactions) {
         SmartReminderManager.getTransactionReminders(transactions)
+    }
+
+    val achievementBadges = remember(transactions, categoryBudgets, usdToBdt, usdToMvr) {
+        AchievementCalculator.evaluate(transactions, categoryBudgets, usdToBdt, usdToMvr)
     }
 
     LaunchedEffect(Unit) {
@@ -148,6 +156,15 @@ fun HomeScreen(
                     currentUserId = currentUserId,
                     birthday = birthday,
                     onBirthdayChange = onBirthdayChange
+                )
+            }
+
+            item {
+                NetWorthDashboard(
+                    cashBalance = balance,
+                    homeBalance = homeBalance,
+                    moneyToReceive = moneyToReceive,
+                    loanRemaining = loanRemaining
                 )
             }
 
@@ -332,6 +349,10 @@ fun HomeScreen(
                     transactions = transactions,
                     loanRemaining = loanRemaining
                 )
+            }
+
+            item {
+                AchievementBadgesCard(badges = achievementBadges)
             }
 
             item {

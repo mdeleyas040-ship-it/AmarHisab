@@ -1,3 +1,4 @@
+
 package com.eleyas.expensetracker.util
 
 import android.app.DatePickerDialog
@@ -469,11 +470,11 @@ fun loadLoanPayments(
                     "personal"
                 ),
 
-                        sourceTransactionId =
-                        o.optLong(
+                sourceTransactionId =
+                    o.optLong(
                         "sourceTransactionId",
-                0L
-            ).takeIf { it != 0L }
+                        0L
+                    ).takeIf { it != 0L }
             )
         }
     } catch (_: Exception) {
@@ -1563,7 +1564,7 @@ fun saveAutoBackup(
     lendings: List<LendingAccount>,
     lendingReturns: List<LendingReturn>,
     wallets: List<Wallet>
-) {
+): Boolean {
     try {
         context
             .openFileOutput(
@@ -1592,7 +1593,9 @@ fun saveAutoBackup(
                     ).toByteArray()
                 )
             }
+        return true
     } catch (_: Exception) {
+        return false
     }
 }
 
@@ -1657,6 +1660,24 @@ fun exportBackupToUri(
         true
     } catch (_: Exception) {
         false
+    }
+}
+
+fun importBackupFromUri(
+    context: Context,
+    uri: Uri
+): BackupData? {
+    return try {
+        val json =
+            context.contentResolver
+                .openInputStream(uri)
+                ?.bufferedReader()
+                ?.use { it.readText() }
+                ?: return null
+
+        parseBackupJson(json)
+    } catch (_: Exception) {
+        null
     }
 }
 

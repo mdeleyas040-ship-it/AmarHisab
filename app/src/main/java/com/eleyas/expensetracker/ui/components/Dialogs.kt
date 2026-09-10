@@ -749,14 +749,16 @@ fun AddTransactionDialog(
         String,
         String,
         String,
-        String?
+        String?,
+        Long
     ) -> Unit,
     onLoanPayment: (
         Long,
         Double,
         String,
-        Double
-    ) -> Unit = { _, _, _, _ -> }
+        Double,
+        Long
+    ) -> Boolean = { _, _, _, _, _ -> true }
 ) {
     val context = LocalContext.current
     val scheme = MaterialTheme.colorScheme
@@ -1905,120 +1907,144 @@ fun AddTransactionDialog(
                                         .toDoubleOrNull()
 
                                 if (
-                                    value != null &&
-                                    value > 0 &&
-                                    date.isNotBlank()
+                                    value == null ||
+                                    value <= 0.0 ||
+                                    date.isBlank()
                                 ) {
-
-                                    val loanAmount =
-                                        if (
-                                            type == "home" &&
-                                            selectedLoanId != null &&
-                                            loanPaymentAmount.isNotBlank()
-                                        ) {
-                                            loanPaymentAmount
-                                                .replace(",", "")
-                                                .trim()
-                                                .toDoubleOrNull()
-                                        } else {
-                                            null
-                                        }
-
-                                    val extraAmount =
-                                        if (
-                                            type == "home" &&
-                                            selectedLoanId != null &&
-                                            loanAmount != null &&
-                                            loanAmount > 0.0 &&
-                                            loanAmount > homeBalance
-                                        ) {
-                                            extraHomeAmount
-                                                .replace(",", "")
-                                                .trim()
-                                                .toDoubleOrNull()
-                                                ?: 0.0
-                                        } else {
-                                            0.0
-                                        }
-
-                                    val shortage =
-                                        if (
-                                            type == "home" &&
-                                            selectedLoanId != null &&
-                                            loanAmount != null
-                                        ) {
-                                            (loanAmount - homeBalance)
-                                                .coerceAtLeast(0.0)
-                                        } else {
-                                            0.0
-                                        }
-
-                                    if (
-                                        type == "home" &&
-                                        selectedLoanId != null &&
-                                        loanPaymentAmount.isNotBlank()
-                                    ) {
-
-                                        if (
-                                            loanAmount == null ||
-                                            loanAmount <= 0.0
-                                        ) {
-
-                                            WarningPopupManager.show(
-                                                title = "Loan payment সঠিক নয়",
-                                                message = "দয়া করে সঠিক Loan payment-এর টাকা দিন।"
-                                            )
-
-                                            return@Button
-                                        }
-
-                                        if (
-                                            shortage > 0.0 &&
-                                            extraAmount < shortage
-                                        ) {
-
-                                            WarningPopupManager.show(
-                                                title = "Extra / Adjustment প্রয়োজন",
-                                                message = "বাড়ির ব্যালেন্স কম পড়ছে। কমপক্ষে ৳${formatMoney(shortage)} Extra / Adjustment দিতে হবে।"
-                                            )
-
-                                            return@Button
-                                        }
-                                    }
-
-                                    onSave(
-                                        value,
-                                        currency,
-                                        category,
-                                        reason.ifBlank {
-                                            category
-                                        },
-                                        date,
-                                        selectedWalletId,
-                                        receiptImage
-                                    )
-
-                                    if (
-                                        type == "home" &&
-                                        selectedLoanId != null &&
-                                        loanAmount != null &&
-                                        loanAmount > 0.0
-                                    ) {
-                                        onLoanPayment(
-                                            selectedLoanId!!,
-                                            loanAmount,
-                                            date,
-                                            extraAmount
-                                        )
-                                    }
-
-                                } else {
 
                                     WarningPopupManager.show(
                                         title = "সঠিক টাকার পরিমাণ দিন",
                                         message = "দয়া করে সঠিক টাকার পরিমাণ লিখুন।"
                                     )
+
+                                    return@Button
                                 }
+
+                                val loanAmount =
+                                    if (
+                                        type == "home" &&
+                                        selectedLoanId != null &&
+                                        loanPaymentAmount.isNotBlank()
+                                    ) {
+                                        loanPaymentAmount
+                                            .replace(",", "")
+                                            .trim()
+                                            .toDoubleOrNull()
+                                    } else {
+                                        null
+                                    }
+
+                                val extraAmount =
+                                    if (
+                                        type == "home" &&
+                                        selectedLoanId != null &&
+                                        loanAmount != null &&
+                                        loanAmount > homeBalance
+                                    ) {
+                                        extraHomeAmount
+                                            .replace(",", "")
+                                            .trim()
+                                            .toDoubleOrNull()
+                                            ?: 0.0
+                                    } else {
+                                        0.0
+                                    }
+
+                                val shortage =
+                                    if (
+                                        type == "home" &&
+                                        selectedLoanId != null &&
+                                        loanAmount != null
+                                    ) {
+                                        (loanAmount - homeBalance)
+                                            .coerceAtLeast(0.0)
+                                    } else {
+                                        0.0
+                                    }
+
+                                if (
+                                    type == "home" &&
+                                    selectedLoanId != null &&
+                                    loanPaymentAmount.isNotBlank()
+                                ) {
+
+                                    if (
+                                        loanAmount == null ||
+                                        loanAmount <= 0.0
+                                    ) {
+
+                                        WarningPopupManager.show(
+                                            title = "Loan payment সঠিক নয়",
+                                            message = "দয়া করে সঠিক Loan payment-এর টাকা দিন।"
+                                        )
+
+                                        return@Button
+                                    }
+
+                                    if (
+                                        shortage > 0.0 &&
+                                        extraAmount < shortage
+                                    ) {
+
+                                        WarningPopupManager.show(
+                                            title = "Extra / Adjustment প্রয়োজন",
+                                            message = "বাড়ির ব্যালেন্স কম পড়ছে। কমপক্ষে ৳${formatMoney(shortage)} Extra / Adjustment দিতে হবে।"
+                                        )
+
+                                        return@Button
+                                    }
+                                }
+
+                                /*
+                                 * একই ID দিয়ে Home transaction এবং LoanPayment
+                                 * link করা হবে।
+                                 */
+                                val transactionId =
+                                    System.currentTimeMillis()
+
+                                /*
+                                 * Home Loan payment আগে save হবে।
+                                 *
+                                 * যদি Loan payment validation fail করে,
+                                 * তাহলে Home transaction save হবে না।
+                                 */
+                                if (
+                                    type == "home" &&
+                                    selectedLoanId != null &&
+                                    loanAmount != null &&
+                                    loanAmount > 0.0
+                                ) {
+
+                                    val paymentSaved =
+                                        onLoanPayment(
+                                            selectedLoanId!!,
+                                            loanAmount,
+                                            date,
+                                            extraAmount,
+                                            transactionId
+                                        )
+
+                                    if (!paymentSaved) {
+                                        return@Button
+                                    }
+                                }
+
+                                /*
+                                 * Loan payment সফল হলে / সাধারণ transaction হলে
+                                 * এখন মূল transaction save হবে।
+                                 */
+                                onSave(
+                                    value,
+                                    currency,
+                                    category,
+                                    reason.ifBlank {
+                                        category
+                                    },
+                                    date,
+                                    selectedWalletId,
+                                    receiptImage,
+                                    transactionId
+                                )
                             },
                             shape = RoundedCornerShape(17.dp),
                             colors = ButtonDefaults.buttonColors(
@@ -2220,7 +2246,6 @@ fun AddTransactionDialog(
         )
     }
 }
-
 @Composable
 fun LoanDialog(
     onDismiss: () -> Unit,

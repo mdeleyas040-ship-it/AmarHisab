@@ -1,3 +1,4 @@
+
 package com.eleyas.expensetracker.viewmodel
 
 import android.content.Context
@@ -190,7 +191,12 @@ class MainViewModel : ViewModel() {
             try {
                 val due = Calendar.getInstance().apply { time = format.parse(loan.dueDate!!)!! }
                 val paid = loanPayments.filter { it.loanId == loan.id }.sumOf { it.amount }
-                val remaining = loan.principal - paid
+                val interest =
+                    loanInterestTerms
+                        .firstOrNull { it.loanId == loan.id }
+                        ?.totalInterest
+                        ?: 0.0
+                val remaining = loan.principal + interest - paid
 
                 if (remaining > 0) {
                     val diffDays = (due.timeInMillis - today.timeInMillis) / (24 * 60 * 60 * 1000)
@@ -498,7 +504,12 @@ class MainViewModel : ViewModel() {
                                             ?.ifBlank {
                                                 "personal"
                                             }
-                                            ?: "personal"
+                                            ?: "personal",
+
+                                    sourceTransactionId =
+                                        doc.getLong(
+                                            "sourceTransactionId"
+                                        )
                                 )
 
                             } catch (_: Exception) {
@@ -966,10 +977,11 @@ class MainViewModel : ViewModel() {
         type: String,
         walletId: String,
         receiptImage: String? = null,
+        transactionId: Long? = null,
         onComplete: () -> Unit
     ) {
         val transaction = Transaction(
-            id = System.currentTimeMillis(),
+            id = transactionId ?: System.currentTimeMillis(),
             type = type,
             amount = amount,
             currency = currency,
@@ -990,7 +1002,8 @@ class MainViewModel : ViewModel() {
 
         personalTransactions = (personalTransactions + marked).distinctBy { it.id }
         saveTransactions(prefs, personalTransactions)
-        saveAutoBackup(context)
+        val backupCreated = saveAutoBackup(context)
+        LocalBackupReminderManager.showAfterEntry(context, currentUserId, backupCreated)
 
         // নতুন লেনদেন সফলভাবে সেভ হলে sound + মৃদু vibration feedback
         SoundHapticHelper.playTransactionSavedFeedback(context)
@@ -1073,7 +1086,8 @@ class MainViewModel : ViewModel() {
                 HouseholdRepository.saveSharedHomeTransaction(firestore, it.id, updatedTransaction)
             }
         }
-        saveAutoBackup(context)
+        val backupCreated = saveAutoBackup(context)
+        LocalBackupReminderManager.showAfterEntry(context, currentUserId, backupCreated)
 
         // লেনদেন সফলভাবে এডিট হলে হালকা feedback
         SoundHapticHelper.playTransactionUpdatedFeedback(context)
@@ -1208,11 +1222,17 @@ class MainViewModel : ViewModel() {
      * Home-funded payment চিহ্নিত করা হচ্ছে।
      */
     private fun isHomeLoanPayment(payment: LoanPayment): Boolean {
-        val note = payment.note.lowercase(Locale.getDefault())
-        return note.contains("বাড়িতে পাঠানো") ||
-                note.contains("বাড়িতে পাঠানো") ||
-                note.contains("home loan payment") ||
-                note.contains("home-funded loan")
+        return when (payment.fundSource.lowercase(Locale.getDefault())) {
+            "home" -> true
+            "personal" -> false
+            else -> {
+                val note = payment.note.lowercase(Locale.getDefault())
+                note.contains("বাড়িতে পাঠানো") ||
+                        note.contains("বাড়িতে পাঠানো") ||
+                        note.contains("home loan payment") ||
+                        note.contains("home-funded loan")
+            }
+        }
     }
 
     /**
@@ -1289,7 +1309,8 @@ class MainViewModel : ViewModel() {
         amount: Double,
         date: String,
         note: String,
-        extraHomeAmount: Double
+        extraHomeAmount: Double,
+        sourceTransactionId: Long? = null
     ): Boolean {
         if (amount <= 0.0) {
             WarningPopupManager.show(
@@ -1349,11 +1370,19 @@ class MainViewModel : ViewModel() {
         }
 
         val payment = LoanPayment(
-            System.currentTimeMillis(),
-            loan.id,
-            amount,
-            date,
-            if (note.isBlank()) "বাড়িতে পাঠানো টাকা থেকে Loan payment" else note
+            id = System.currentTimeMillis(),
+            loanId = loan.id,
+            amount = amount,
+            date = date,
+            note = if (
+                note.isBlank()
+            ) {
+                "বাড়িতে পাঠানো টাকা থেকে Loan payment"
+            } else {
+                note
+            },
+            fundSource = "home",
+            sourceTransactionId = sourceTransactionId
         )
 
         loanPayments = loanPayments + payment
@@ -1408,7 +1437,14 @@ class MainViewModel : ViewModel() {
             return
         }
 
-        val payment = LoanPayment(System.currentTimeMillis(), loan.id, amount, date, note)
+        val payment = LoanPayment(
+            id = System.currentTimeMillis(),
+            loanId = loan.id,
+            amount = amount,
+            date = date,
+            note = note,
+            fundSource = "personal"
+        )
         loanPayments = loanPayments + payment
         persistLoanData(context)
         makeText(context, "✅ পরিশোধের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
@@ -1503,7 +1539,9 @@ class MainViewModel : ViewModel() {
                         "loanId" to updatedPayment.loanId,
                         "amount" to updatedPayment.amount,
                         "date" to updatedPayment.date,
-                        "note" to updatedPayment.note
+                        "note" to updatedPayment.note,
+                        "fundSource" to updatedPayment.fundSource,
+                        "sourceTransactionId" to updatedPayment.sourceTransactionId
                     )
                 )
         }
@@ -1728,8 +1766,19 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun saveAutoBackup(context: Context) {
-        saveAutoBackup(context, currentUserId, transactions, usdToBdt, usdToMvr, loans, loanPayments, lendings, lendingReturns, wallets)
+    fun saveAutoBackup(context: Context): Boolean {
+        return saveAutoBackup(
+            context,
+            currentUserId,
+            transactions,
+            usdToBdt,
+            usdToMvr,
+            loans,
+            loanPayments,
+            lendings,
+            lendingReturns,
+            wallets
+        )
     }
 
     // --------------------------------------------------

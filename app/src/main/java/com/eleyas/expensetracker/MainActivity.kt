@@ -1,5 +1,3 @@
-
-
 package com.eleyas.expensetracker
 
 import android.content.Context
@@ -45,6 +43,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import com.eleyas.expensetracker.ui.vehicle.VehicleModule
 import com.eleyas.expensetracker.ui.birthday.BirthdayScreen
+import com.eleyas.expensetracker.ui.screens.ZakatCharityScreen
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
@@ -362,6 +361,10 @@ fun AmarHisabApp(
 
     // NEW: Birthday management screen
     var showBirthdayScreen by remember {
+        mutableStateOf(false)
+    }
+
+    var showZakatCharityScreen by remember {
         mutableStateOf(false)
     }
 
@@ -974,6 +977,7 @@ fun AmarHisabApp(
     BackHandler(
         enabled =
             showBirthdayScreen ||
+                    showZakatCharityScreen ||
                     showCalendarScreen ||
                     showCalculatorScreen ||
                     showShoppingList ||
@@ -990,6 +994,9 @@ fun AmarHisabApp(
 
             showBirthdayScreen ->
                 showBirthdayScreen = false
+
+            showZakatCharityScreen ->
+                showZakatCharityScreen = false
 
             showOnThisDayScreen ->
                 showOnThisDayScreen = false
@@ -1038,6 +1045,7 @@ fun AmarHisabApp(
 
             if (
                 !showBirthdayScreen &&
+                !showZakatCharityScreen &&
                 !showCalendarScreen &&
                 !showCalculatorScreen &&
                 !showShoppingList &&
@@ -1097,6 +1105,10 @@ fun AmarHisabApp(
                                     // NEW
                                     onBirthday = {
                                         showBirthdayScreen = true
+                                    },
+
+                                    onZakatCharity = {
+                                        showZakatCharityScreen = true
                                     },
 
                                     onSettings = {
@@ -1162,6 +1174,7 @@ fun AmarHisabApp(
 
             if (
                 !showBirthdayScreen &&
+                !showZakatCharityScreen &&
                 !showCalendarScreen &&
                 !showCalculatorScreen &&
                 !showShoppingList &&
@@ -1290,6 +1303,9 @@ fun AmarHisabApp(
                         showVehicleModule = true
                     },
                     transactions = transactions,
+                    categoryBudgets = categoryBudgets,
+                    usdToBdt = usdToBdt,
+                    usdToMvr = usdToMvr,
                     household = household,
                     onFamilyClick = {
                         showFamilyDialog = true
@@ -1539,6 +1555,16 @@ fun AmarHisabApp(
                     userId = currentUserId,
                     onBack = {
                         showBirthdayScreen = false
+                    }
+                )
+            }
+
+            if (showZakatCharityScreen) {
+                ZakatCharityScreen(
+                    context = context,
+                    userId = currentUserId,
+                    onBack = {
+                        showZakatCharityScreen = false
                     }
                 )
             }
@@ -2437,7 +2463,7 @@ fun AmarHisabApp(
                 },
 
                 {
-                        a, c, cat, r, d, w, i ->
+                        a, c, cat, r, d, w, i, transactionId ->
 
                     if (
                         editingTransaction != null &&
@@ -2460,15 +2486,16 @@ fun AmarHisabApp(
                     } else {
 
                         viewModel.saveTransaction(
-                            context,
-                            a,
-                            c,
-                            cat,
-                            r,
-                            d,
-                            addType,
-                            w,
-                            i
+                            context = context,
+                            amount = a,
+                            currency = c,
+                            category = cat,
+                            reason = r,
+                            date = d,
+                            type = addType,
+                            walletId = w,
+                            receiptImage = i,
+                            transactionId = transactionId
                         ) {
                             showAddDialog = false
                         }
@@ -2479,7 +2506,7 @@ fun AmarHisabApp(
                 },
 
                 {
-                        id, a, d, extraHomeAmount ->
+                        id, a, d, extraHomeAmount, transactionId ->
 
                     loans
                         .firstOrNull {
@@ -2493,9 +2520,10 @@ fun AmarHisabApp(
                                 amount = a,
                                 date = d,
                                 note = "বাড়িতে পাঠানো টাকা থেকে Loan payment",
-                                extraHomeAmount = extraHomeAmount
+                                extraHomeAmount = extraHomeAmount,
+                                sourceTransactionId = transactionId
                             )
-                        }
+                        } ?: false
                 }
             )
         }

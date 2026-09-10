@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.DropdownMenu
@@ -48,6 +49,7 @@ fun AmarHisabTopMenu(
     onCalendar: () -> Unit,
     onShoppingList: () -> Unit,
     onBirthday: () -> Unit,
+    onZakatCharity: () -> Unit,
     onSettings: () -> Unit
 ) {
     var showHelp by remember { mutableStateOf(false) }
@@ -119,6 +121,11 @@ fun AmarHisabTopMenu(
         TopMenuItem(Icons.Default.Cake, "জন্মদিন") {
             onDismiss()
             onBirthday()
+        }
+
+        TopMenuItem(Icons.Default.VolunteerActivism, "যাকাত ও চ্যারিটি") {
+            onDismiss()
+            onZakatCharity()
         }
 
         HorizontalDivider(
