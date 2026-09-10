@@ -2,6 +2,8 @@ package com.eleyas.expensetracker.util
 
 import android.content.Context
 import android.content.Intent
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.widget.Toast
 import com.eleyas.expensetracker.model.Transaction
 
@@ -30,10 +32,19 @@ fun shareTextReceipt(
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
         putExtra(Intent.EXTRA_TEXT, text)
+        putExtra(Intent.EXTRA_TITLE, chooserTitle)
+        clipData = ClipData.newPlainText("Amar Hisab রসিদ", text)
     }
-    if (intent.resolveActivity(context.packageManager) == null) {
-        Toast.makeText(context, "শেয়ার করার কোনো অ্যাপ পাওয়া যায়নি", Toast.LENGTH_SHORT).show()
-        return
+
+    try {
+        context.startActivity(Intent.createChooser(intent, chooserTitle))
+    } catch (_: android.content.ActivityNotFoundException) {
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipboard.setPrimaryClip(ClipData.newPlainText("Amar Hisab রসিদ", text))
+        Toast.makeText(
+            context,
+            "শেয়ার অ্যাপ পাওয়া যায়নি। রসিদটি কপি করা হয়েছে।",
+            Toast.LENGTH_LONG
+        ).show()
     }
-    context.startActivity(Intent.createChooser(intent, chooserTitle))
 }
