@@ -56,6 +56,7 @@ fun HomeScreen(
     getWalletBalance: (String) -> Double,
     onVoiceClick: () -> Unit,
     onShoppingList: () -> Unit = {},
+    onScratchpad: () -> Unit = {},
     onVehicle: () -> Unit = {},
     transactions: List<Transaction> = emptyList(),
     categoryBudgets: List<CategoryBudget> = emptyList(),
@@ -306,8 +307,14 @@ fun HomeScreen(
                         ) to onShoppingList,
 
                         Triple(
+                            Icons.Default.NoteAlt,
+                            "কুইক মেমো",
+                            Color(0xFF00897B)
+                        ) to onScratchpad,
+
+                        Triple(
                             Icons.Default.DirectionsCar,
-                            "গাড়ি ও রক্ষণাবেক্ষণ",
+                            "গাড়ি ও রক্ষণাবেক্ষণ",
                             Color(0xFF1565C0)
                         ) to onVehicle
                     )

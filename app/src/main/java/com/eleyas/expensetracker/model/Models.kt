@@ -14,6 +14,13 @@ data class Transaction(
     val addedByName: String? = null
 )
 
+data class ScratchNote(
+    val id: Long,
+    val title: String,
+    val content: String,
+    val updatedAt: Long
+)
+
 data class Wallet(
     val id: String,
     val name: String,
