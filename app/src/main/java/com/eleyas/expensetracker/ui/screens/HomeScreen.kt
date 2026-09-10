@@ -22,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eleyas.expensetracker.model.*
 import com.eleyas.expensetracker.ui.components.AchievementBadgesCard
 import com.eleyas.expensetracker.ui.components.HomeSummaryRow
+import com.eleyas.expensetracker.ui.components.MonthlyBalanceForecastCard
 import com.eleyas.expensetracker.ui.components.SmartReminderCard
 import com.eleyas.expensetracker.ui.theme.*
 import com.eleyas.expensetracker.util.*
@@ -166,6 +167,15 @@ fun HomeScreen(
                     homeBalance = homeBalance,
                     moneyToReceive = moneyToReceive,
                     loanRemaining = loanRemaining
+                )
+            }
+
+            item {
+                MonthlyBalanceForecastCard(
+                    balance = balance,
+                    transactions = transactions,
+                    usdToBdt = usdToBdt,
+                    usdToMvr = usdToMvr
                 )
             }
 
