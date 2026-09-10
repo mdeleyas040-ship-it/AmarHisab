@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,11 +36,56 @@ fun ExpenseScreen(
     onAddHome: () -> Unit,
     onEdit: (Transaction) -> Unit,
     onDelete: (Transaction) -> Unit,
+    onShare: (Transaction, String) -> Unit = { _, _ -> },
     splitBills: List<SplitBillGroup> = emptyList(),
     onAddSplitBill: () -> Unit = {},
     onSplitBillClick: (SplitBillGroup) -> Unit = {},
     targetTransactionId: Long? = null
 ) {
+    var receiptTransaction by remember { mutableStateOf<Transaction?>(null) }
+    var receiptNote by remember { mutableStateOf(TextFieldValue("")) }
+
+    receiptTransaction?.let { transaction ->
+        AlertDialog(
+            onDismissRequest = { receiptTransaction = null },
+            title = { Text("কাস্টম রসিদ শেয়ার") },
+            text = {
+                Column {
+                    Text(
+                        "রসিদের সঙ্গে একটি অতিরিক্ত নোট যোগ করতে পারেন।",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = receiptNote,
+                        onValueChange = { receiptNote = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("অতিরিক্ত নোট (ঐচ্ছিক)") },
+                        minLines = 2,
+                        maxLines = 4
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onShare(transaction, receiptNote.text)
+                        receiptTransaction = null
+                    }
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text("শেয়ার করুন")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { receiptTransaction = null }) {
+                    Text("বাতিল")
+                }
+            }
+        )
+    }
+
     val expenseTransactions = remember(transactions) {
         transactions.filter { it.type == "expense" || it.type == "home_expense" }
     }
@@ -295,7 +341,11 @@ fun ExpenseScreen(
                     usdToMvr,
                     walletName = wallet?.name ?: "",
                     onEdit = onEdit,
-                    onDelete = onDelete
+                    onDelete = onDelete,
+                    onShare = {
+                        receiptNote = TextFieldValue("")
+                        receiptTransaction = it
+                    }
                 )
             }
         }

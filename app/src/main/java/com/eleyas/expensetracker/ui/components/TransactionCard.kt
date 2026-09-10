@@ -28,7 +28,8 @@ fun TransactionCard(
     usdToMvr: Double,
     walletName: String = "",
     onEdit: (Transaction) -> Unit = {},
-    onDelete: (Transaction) -> Unit = {}
+    onDelete: (Transaction) -> Unit = {},
+    onShare: (Transaction) -> Unit = {}
 ) {
     val context = LocalContext.current
     val incomeGreen = Color(0xFF168A45)
@@ -201,6 +202,18 @@ fun TransactionCard(
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
+                    }
+
+                    IconButton(
+                        onClick = { onShare(transaction) },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Share,
+                            contentDescription = "রসিদ শেয়ার",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
 
                     IconButton(
