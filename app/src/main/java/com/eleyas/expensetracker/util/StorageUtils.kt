@@ -57,6 +57,7 @@ import com.eleyas.expensetracker.model.*
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -64,6 +65,7 @@ import java.io.File
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.random.Random
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.material.icons.Icons
@@ -88,6 +90,40 @@ fun saveCategoryBudgets(
     prefs.edit()
         .putString("category_budgets", array.toString())
         .apply()
+}
+
+fun saveSavingsGoals(prefs: SharedPreferences, goals: List<SavingsGoal>) {
+    val array = JSONArray()
+    goals.forEach { goal ->
+        array.put(JSONObject().apply {
+            put("id", goal.id)
+            put("name", goal.name)
+            put("targetAmount", goal.targetAmount)
+            put("savedAmount", goal.savedAmount)
+            put("targetDate", goal.targetDate)
+            put("frequency", goal.frequency)
+        })
+    }
+    prefs.edit().putString("savings_goals", array.toString()).apply()
+}
+
+fun loadSavingsGoals(prefs: SharedPreferences): List<SavingsGoal> {
+    return try {
+        val array = JSONArray(prefs.getString("savings_goals", "[]") ?: "[]")
+        List(array.length()) { index ->
+            val item = array.getJSONObject(index)
+            SavingsGoal(
+                id = item.getLong("id"),
+                name = item.getString("name"),
+                targetAmount = item.getDouble("targetAmount"),
+                savedAmount = item.optDouble("savedAmount", 0.0),
+                targetDate = item.getString("targetDate"),
+                frequency = item.optString("frequency", "daily")
+            )
+        }
+    } catch (_: Exception) {
+        emptyList()
+    }
 }
 
 fun loadCategoryBudgets(
@@ -1660,6 +1696,364 @@ fun exportBackupToUri(
     }
 }
 
+fun importBackupFromUri(
+    context: Context,
+    uri: Uri
+): BackupData? {
+    return try {
+        parseBackupJson(
+            context.contentResolver
+                .openInputStream(uri)
+                ?.bufferedReader()
+                ?.use { it.readText() }
+                ?: ""
+        )
+    } catch (_: Exception) {
+        null
+    }
+}
+
+// =====================================================
+// APP UPDATE CHECKER
+// =====================================================
+
+data class AppUpdateInfo(
+    val latestVersionCode: Long,
+    val latestVersionName: String,
+    val updateUrl: String,
+    val updateMessage: String,
+    val forceUpdate: Boolean
+)
+
+object AppUpdateChecker {
+
+    suspend fun checkForUpdate(): AppUpdateInfo? {
+        return try {
+
+            val document = FirebaseFirestore
+                .getInstance()
+                .collection("config")
+                .document("app_version")
+                .get()
+                .await()
+
+            if (!document.exists()) {
+                return null
+            }
+
+            val latestVersionCode =
+                document.getLong("latestVersionCode") ?: return null
+
+            val latestVersionName =
+                document.getString("latestVersionName") ?: ""
+
+            val updateUrl =
+                document.getString("updateUrl") ?: ""
+
+            val updateMessage =
+                document.getString("updateMessage")
+                    ?: "অ্যাপটির নতুন ভার্সন এসেছে।"
+
+            val forceUpdate =
+                document.getBoolean("forceUpdate") ?: false
+
+            AppUpdateInfo(
+                latestVersionCode = latestVersionCode,
+                latestVersionName = latestVersionName,
+                updateUrl = updateUrl,
+                updateMessage = updateMessage,
+                forceUpdate = forceUpdate
+            )
+
+        } catch (e: Exception) {
+
+            Log.e(
+                "AppUpdateChecker",
+                "Update check failed",
+                e
+            )
+
+            null
+        }
+    }
+
+    fun getCurrentVersionCode(context: Context): Long {
+
+        return try {
+
+            val packageInfo = context.packageManager.getPackageInfo(
+                context.packageName,
+                0
+            )
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+
+                packageInfo.longVersionCode
+
+            } else {
+
+                @Suppress("DEPRECATION")
+                packageInfo.versionCode.toLong()
+            }
+
+        } catch (e: Exception) {
+
+            0L
+        }
+    }
+
+    fun downloadAndInstall(
+        context: Context,
+        updateUrl: String,
+        versionName: String
+    ) {
+
+        try {
+
+            var downloadUrl = updateUrl
+
+            // Google Drive share link থেকে direct download link তৈরি
+            if (downloadUrl.contains("drive.google.com/file/d/")) {
+
+                val regex =
+                    Regex("drive\\.google\\.com/file/d/([^/]+)")
+
+                val match = regex.find(downloadUrl)
+
+                if (match != null) {
+
+                    val fileId = match.groupValues[1]
+
+                    downloadUrl =
+                        "https://drive.google.com/uc?export=download&id=$fileId"
+                }
+            }
+
+            Log.d(
+                "AppUpdateChecker",
+                "Download URL = $downloadUrl"
+            )
+
+            val fileName =
+                "AmarHisab-$versionName.apk"
+
+            val request =
+                DownloadManager.Request(Uri.parse(downloadUrl))
+
+            request.setTitle("Amar Hisab Update")
+
+            request.setDescription(
+                "Amar Hisab $versionName download হচ্ছে..."
+            )
+
+            request.setNotificationVisibility(
+                DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
+            )
+
+            request.setDestinationInExternalPublicDir(
+                Environment.DIRECTORY_DOWNLOADS,
+                fileName
+            )
+
+            request.setMimeType("application/vnd.android.package-archive")
+
+            val downloadManager =
+                context.getSystemService(
+                    Context.DOWNLOAD_SERVICE
+                ) as DownloadManager
+
+            val downloadId =
+                downloadManager.enqueue(request)
+
+            Log.d(
+                "AppUpdateChecker",
+                "Download started: $downloadId"
+            )
+
+            Handler(
+                Looper.getMainLooper()
+            ).postDelayed({
+
+                try {
+
+                    val downloadsDir =
+                        Environment.getExternalStoragePublicDirectory(
+                            Environment.DIRECTORY_DOWNLOADS
+                        )
+
+                    val apkFile =
+                        File(downloadsDir, fileName)
+
+                    if (!apkFile.exists()) {
+
+                        Log.e(
+                            "AppUpdateChecker",
+                            "APK file not found"
+                        )
+
+                        return@postDelayed
+                    }
+
+                    val apkUri =
+                        FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.fileprovider",
+                            apkFile
+                        )
+
+                    val installIntent =
+                        Intent(
+                            Intent.ACTION_VIEW
+                        ).apply {
+
+                            setDataAndType(
+                                apkUri,
+                                "application/vnd.android.package-archive"
+                            )
+
+                            addFlags(
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            )
+
+                            addFlags(
+                                Intent.FLAG_ACTIVITY_NEW_TASK
+                            )
+                        }
+
+                    context.startActivity(installIntent)
+
+                } catch (e: Exception) {
+
+                    Log.e(
+                        "AppUpdateChecker",
+                        "Install failed",
+                        e
+                    )
+                }
+
+            }, 8000)
+
+        } catch (e: Exception) {
+
+            Log.e(
+                "AppUpdateChecker",
+                "Download failed",
+                e
+            )
+        }
+    }
+}
+
+@Composable
+fun AppUpdateDialog(
+    context: Context
+) {
+
+    var updateInfo by remember {
+        mutableStateOf<AppUpdateInfo?>(null)
+    }
+
+    var showDialog by remember {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(Unit) {
+
+        val info =
+            AppUpdateChecker.checkForUpdate()
+
+        Log.d(
+            "AppUpdateChecker",
+            "Firestore info = $info"
+        )
+
+        if (info != null) {
+
+            val currentVersionCode =
+                AppUpdateChecker.getCurrentVersionCode(
+                    context
+                )
+
+            Log.d(
+                "AppUpdateChecker",
+                "Current versionCode = $currentVersionCode, Latest versionCode = ${info.latestVersionCode}"
+            )
+
+            if (info.latestVersionCode > currentVersionCode) {
+
+                updateInfo = info
+
+                showDialog = true
+            }
+        }
+    }
+
+    if (showDialog && updateInfo != null) {
+
+        val info = updateInfo!!
+
+        AlertDialog(
+
+            onDismissRequest = {
+
+                if (!info.forceUpdate) {
+                    showDialog = false
+                }
+            },
+
+            title = {
+                Text("নতুন আপডেট পাওয়া গেছে 🎉")
+            },
+
+            text = {
+
+                Text(
+                    "Amar Hisab-এর নতুন ভার্সন ${info.latestVersionName} এসেছে।\n\n" +
+                            info.updateMessage
+                )
+            },
+
+            confirmButton = {
+
+                Button(
+
+                    onClick = {
+
+                        AppUpdateChecker.downloadAndInstall(
+                            context = context,
+                            updateUrl = info.updateUrl,
+                            versionName = info.latestVersionName
+                        )
+
+                        showDialog = false
+                    }
+
+                ) {
+
+                    Text("Update")
+                }
+            },
+
+            dismissButton = {
+
+                if (!info.forceUpdate) {
+
+                    TextButton(
+
+                        onClick = {
+                            showDialog = false
+                        }
+
+                    ) {
+
+                        Text("পরে করব")
+                    }
+                }
+            }
+        )
+    }
+}
+
 // =====================================================
 // LOAN INTEREST TERMS
 // =====================================================
@@ -1805,3 +2199,306 @@ fun saveBirthday(
         )
         .apply()
 }
+
+// =====================================================
+// BIRTHDAY POPUP / CELEBRATION
+// =====================================================
+
+private fun isBirthdayToday(
+    birthday: Pair<Int, Int>
+): Boolean {
+
+    val today = Calendar.getInstance()
+
+    return today.get(Calendar.MONTH) ==
+            birthday.first &&
+            today.get(Calendar.DAY_OF_MONTH) ==
+            birthday.second
+}
+
+@Composable
+fun BirthdayPopupCheck(
+    userId: String,
+    birthday: Pair<Int, Int>?
+) {
+    val context = LocalContext.current
+    val prefs = remember(userId) { AccountStorage.getPrefs(context, userId) }
+
+    val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+    val lastShownYear = prefs.getInt("last_birthday_celebration_year", -1)
+
+    var showBirthday by remember(userId, birthday) {
+        mutableStateOf(
+            birthday != null &&
+            isBirthdayToday(birthday) &&
+            lastShownYear < currentYear
+        )
+    }
+
+    if (showBirthday) {
+        BirthdayCelebrationModal(
+            onDismiss = {
+                prefs.edit().putInt("last_birthday_celebration_year", currentYear).apply()
+                showBirthday = false
+            }
+        )
+    }
+}
+
+@Composable
+fun BirthdayCelebrationModal(
+    onDismiss: () -> Unit
+) {
+
+    val infiniteTransition =
+        rememberInfiniteTransition(
+            label = "birthday_animation"
+        )
+
+    val scale by
+    infiniteTransition.animateFloat(
+        initialValue = 0.96f,
+        targetValue = 1.04f,
+        animationSpec =
+            infiniteRepeatable(
+                animation =
+                    tween(
+                        durationMillis = 900,
+                        easing =
+                            FastOutSlowInEasing
+                    ),
+                repeatMode =
+                    RepeatMode.Reverse
+            ),
+        label = "cake_scale"
+    )
+
+    Box(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Color.Black.copy(
+                        alpha = 0.80f
+                    )
+                ),
+        contentAlignment =
+            Alignment.Center
+    ) {
+
+        BirthdayConfetti(
+            modifier =
+                Modifier.fillMaxSize()
+        )
+
+        Column(
+            modifier =
+                Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth()
+                    .background(
+                        color =
+                            Color(0xFF123C3A),
+                        shape =
+                            RoundedCornerShape(28.dp)
+                    )
+                    .padding(
+                        horizontal = 24.dp,
+                        vertical = 30.dp
+                    ),
+            horizontalAlignment =
+                Alignment.CenterHorizontally
+        ) {
+
+            Text(
+                text = "🎂",
+                fontSize = 60.sp,
+                modifier =
+                    Modifier.scale(scale)
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.height(10.dp)
+            )
+
+            Text(
+                text =
+                    "শুভ জন্মদিন! 🎉",
+                color =
+                    Color.White,
+                fontSize = 30.sp,
+                fontWeight =
+                    FontWeight.Bold,
+                textAlign =
+                    TextAlign.Center
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.height(12.dp)
+            )
+
+            Text(
+                text =
+                    "আজ তোমার বিশেষ দিন।\n" +
+                            "Amar Hisab-এর পক্ষ থেকে রইল\n" +
+                            "অনেক শুভকামনা! 💚",
+                color =
+                    Color.White.copy(
+                        alpha = 0.9f
+                    ),
+                fontSize = 17.sp,
+                lineHeight = 26.sp,
+                textAlign =
+                    TextAlign.Center
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.height(22.dp)
+            )
+
+            Text(
+                text =
+                    "🎁  ✨  🎂  ✨  🎁",
+                fontSize = 30.sp
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.height(25.dp)
+            )
+
+            Button(
+                onClick =
+                    onDismiss,
+                shape =
+                    RoundedCornerShape(18.dp),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor =
+                            Color(0xFF00E676)
+                    )
+            ) {
+
+                Text(
+                    text =
+                        "ধন্যবাদ ❤️",
+                    color =
+                        Color.Black,
+                    fontSize = 17.sp,
+                    fontWeight =
+                        FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BirthdayConfetti(
+    modifier: Modifier
+) {
+
+    val pieces = remember {
+
+        List(45) {
+
+            ConfettiPiece(
+                x =
+                    Random.nextFloat(),
+                y =
+                    Random.nextFloat(),
+                size =
+                    Random.nextInt(
+                        5,
+                        12
+                    ).toFloat(),
+                rotation =
+                    Random.nextFloat() * 360f,
+                color =
+                    listOf(
+                        Color(0xFF00E676),
+                        Color(0xFFFFD54F),
+                        Color(0xFFFF4081),
+                        Color(0xFF40C4FF),
+                        Color(0xFFFF6D00)
+                    ).random()
+            )
+        }
+    }
+
+    val infiniteTransition =
+        rememberInfiniteTransition(
+            label =
+                "confetti_animation"
+        )
+
+    val movement by
+    infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec =
+            infiniteRepeatable(
+                animation =
+                    tween(
+                        durationMillis = 3000
+                    ),
+                repeatMode =
+                    RepeatMode.Restart
+            ),
+        label =
+            "confetti_movement"
+    )
+
+    Canvas(
+        modifier = modifier
+    ) {
+
+        pieces.forEach { piece ->
+
+            val yPosition =
+                (
+                        (piece.y + movement) % 1f
+                        ) * size.height
+
+            rotate(
+                degrees =
+                    piece.rotation,
+                pivot =
+                    Offset(
+                        x =
+                            piece.x *
+                                    size.width,
+                        y =
+                            yPosition
+                    )
+            ) {
+
+                drawCircle(
+                    color =
+                        piece.color,
+                    radius =
+                        piece.size,
+                    center =
+                        Offset(
+                            x =
+                                piece.x *
+                                        size.width,
+                            y =
+                                yPosition
+                        )
+                )
+            }
+        }
+    }
+}
+
+private data class ConfettiPiece(
+    val x: Float,
+    val y: Float,
+    val size: Float,
+    val rotation: Float,
+    val color: Color
+)
