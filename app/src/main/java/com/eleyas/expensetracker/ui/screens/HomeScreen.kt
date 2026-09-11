@@ -156,6 +156,14 @@ fun HomeScreen(
                         )
                     },
                     second = {
+                        NetWorthDashboard(
+                            cashBalance = balance,
+                            homeBalance = homeBalance,
+                            moneyToReceive = moneyToReceive,
+                            loanRemaining = loanRemaining
+                        )
+                    },
+                    third = {
                         PremiumHomeAccountCard(
                             totalHome = totalHome,
                             totalHomeExpense = totalHomeExpense,
@@ -307,7 +315,8 @@ private fun SwipeableBalanceCards(
     page: Int,
     onPageChange: (Int) -> Unit,
     first: @Composable () -> Unit,
-    second: @Composable () -> Unit
+    second: @Composable () -> Unit,
+    third: @Composable () -> Unit
 ) {
     AnimatedContent(
         targetState = page,
@@ -322,8 +331,8 @@ private fun SwipeableBalanceCards(
                     },
                     onDragEnd = {
                         when {
-                            dragDistance > 80f && page == 0 -> onPageChange(1)
-                            dragDistance < -80f && page == 1 -> onPageChange(0)
+                            dragDistance > 80f && page < 2 -> onPageChange(page + 1)
+                            dragDistance < -80f && page > 0 -> onPageChange(page - 1)
                         }
                     }
                 )
@@ -339,7 +348,11 @@ private fun SwipeableBalanceCards(
             animation.using(SizeTransform(clip = false))
         }
     ) { currentPage ->
-        if (currentPage == 0) first() else second()
+        when (currentPage) {
+            0 -> first()
+            1 -> second()
+            else -> third()
+        }
     }
 }
 
