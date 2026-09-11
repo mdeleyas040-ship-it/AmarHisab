@@ -360,25 +360,6 @@ fun LoansScreen(
             // LOAN SUMMARY
             // -------------------------------------------------
 
-            item {
-
-                PremiumThreeSummary(
-                    firstTitle = "মোট নেওয়া",
-                    firstAmount = totalBorrowed,
-                    firstIcon = Icons.Default.CreditCard,
-                    firstColor = Blue,
-
-                    secondTitle = "পরিশোধ",
-                    secondAmount = totalPaid,
-                    secondIcon = Icons.Default.CheckCircle,
-                    secondColor = IncomeGreen,
-
-                    thirdTitle = "বাকি ঋণ",
-                    thirdAmount = totalRemaining,
-                    thirdIcon = Icons.Default.Error,
-                    thirdColor = ExpenseRed
-                )
-            }
 
             // -------------------------------------------------
             // ADD LOAN
@@ -551,29 +532,7 @@ fun LoansScreen(
             // LENDING MODE
             // =================================================
 
-            // -------------------------------------------------
-            // LENDING SUMMARY
-            // -------------------------------------------------
 
-            item {
-
-                PremiumThreeSummary(
-                    firstTitle = "মোট ধার",
-                    firstAmount = totalLent,
-                    firstIcon = Icons.Default.Handshake,
-                    firstColor = Blue,
-
-                    secondTitle = "ফেরত পেলাম",
-                    secondAmount = totalReturned,
-                    secondIcon = Icons.Default.Paid,
-                    secondColor = IncomeGreen,
-
-                    thirdTitle = "পাওনা আছে",
-                    thirdAmount = totalReceivable,
-                    thirdIcon = Icons.Default.Schedule,
-                    thirdColor = ExpenseRed
-                )
-            }
 
             // -------------------------------------------------
             // ADD LENDING
