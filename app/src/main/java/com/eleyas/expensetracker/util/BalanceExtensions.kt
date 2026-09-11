@@ -13,5 +13,7 @@ val MainViewModel.sourceAwareBalance: Double
         loans = loans,
         loanPayments = loanPayments,
         lendings = lendings,
-        lendingReturns = lendingReturns
+        lendingReturns = lendingReturns,
+        usdToBdt = usdToBdt,
+        usdToMvr = usdToMvr
     )
