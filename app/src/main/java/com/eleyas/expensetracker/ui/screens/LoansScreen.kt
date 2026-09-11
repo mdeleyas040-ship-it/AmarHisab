@@ -170,7 +170,7 @@ fun LoansScreen(
                     OutlinedButton(onClick = { onEditLending(lending) }, Modifier.weight(1f).height(46.dp), shape = RoundedCornerShape(12.dp)) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.Edit, null, Modifier.size(17.dp)); Spacer(Modifier.width(4.dp)); Text("Edit") } }
                     OutlinedButton(onClick = { onDeleteLending(lending) }, Modifier.weight(1f).height(46.dp), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.outlinedButtonColors(contentColor = ExpenseRed)) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.Delete, null, Modifier.size(17.dp)); Spacer(Modifier.width(4.dp)); Text("Delete") } }
                 }
-                Spacer(Modifier.height(8.dp)); Button(onClick = { onAddLendingReturn(lending) }, enabled = remaining > 0.0, Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Blue)) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(if (remaining > 0.0) Icons.Default.Add else Icons.Default.CheckCircle, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(if (remaining > 0.0) "ধার ফেরত যোগ করুন" else "পুরো টাকা ফেরত") } }
+                Spacer(Modifier.height(8.dp)); Button(onClick = { onAddLendingReturn(lending) }, Modifier.fillMaxWidth(), enabled = remaining > 0.0, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Blue)) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(if (remaining > 0.0) Icons.Default.Add else Icons.Default.CheckCircle, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(if (remaining > 0.0) "ধার ফেরত যোগ করুন" else "পুরো টাকা ফেরত") } }
             } }
         }
     }
