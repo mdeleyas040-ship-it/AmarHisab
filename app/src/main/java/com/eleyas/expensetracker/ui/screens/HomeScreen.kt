@@ -31,43 +31,23 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun HomeScreen(
-    modifier: Modifier,
-    currentUserId: String,
-    balance: Double,
-    totalIncome: Double,
-    totalExpense: Double,
-    totalHome: Double,
-    totalHomeExpense: Double,
-    homeBalance: Double,
-    loanReceived: Double = 0.0,
-    loanPaid: Double = 0.0,
-    loanRemaining: Double = 0.0,
-    moneyLent: Double = 0.0,
-    moneyReturned: Double = 0.0,
-    moneyToReceive: Double = 0.0,
-    birthday: Pair<Int, Int>?,
-    wallets: List<Wallet> = emptyList(),
-    onBirthdayChange: (Pair<Int, Int>?) -> Unit,
-    onAddIncome: () -> Unit,
-    onAddExpense: () -> Unit,
-    onAddHome: () -> Unit,
-    onAddHomeExpense: () -> Unit,
-    onAddWallet: () -> Unit,
-    onWalletClick: (Wallet) -> Unit,
-    getWalletBalance: (String) -> Double,
-    onVoiceClick: () -> Unit,
-    onShoppingList: () -> Unit = {},
-    onVehicle: () -> Unit = {},
-    transactions: List<Transaction> = emptyList(),
-    household: Household? = null,
-    onFamilyClick: () -> Unit = {},
-    onDailyTipClick: () -> Unit = {},
+    modifier: Modifier, currentUserId: String, balance: Double, totalIncome: Double, totalExpense: Double,
+    totalHome: Double, totalHomeExpense: Double, homeBalance: Double, loanReceived: Double = 0.0,
+    loanPaid: Double = 0.0, loanRemaining: Double = 0.0, moneyLent: Double = 0.0,
+    moneyReturned: Double = 0.0, moneyToReceive: Double = 0.0, birthday: Pair<Int, Int>?,
+    wallets: List<Wallet> = emptyList(), onBirthdayChange: (Pair<Int, Int>?) -> Unit,
+    onAddIncome: () -> Unit, onAddExpense: () -> Unit, onAddHome: () -> Unit,
+    onAddHomeExpense: () -> Unit, onAddWallet: () -> Unit, onWalletClick: (Wallet) -> Unit,
+    getWalletBalance: (String) -> Double, onVoiceClick: () -> Unit, onShoppingList: () -> Unit = {},
+    onVehicle: () -> Unit = {}, transactions: List<Transaction> = emptyList(), household: Household? = null,
+    onFamilyClick: () -> Unit = {}, onDailyTipClick: () -> Unit = {},
     onReminderClick: (SmartReminder) -> Unit = {}
 ) {
     val context = LocalContext.current
     val firestore = remember { FirebaseFirestore.getInstance() }
     val vm: MainViewModel = viewModel()
     val displayedBalance = vm.sourceAwareBalance
+    val reminders = remember(transactions) { SmartReminderManager.getTransactionReminders(transactions) }
     var serverNotice by remember { mutableStateOf<String?>(null) }
     var showHomeMoneyFlow by remember { mutableStateOf(false) }
     var debtMode by rememberSaveable { mutableStateOf(0) }
@@ -93,34 +73,32 @@ fun HomeScreen(
                     }
                 }
             }
-            val reminders = remember(transactions) { SmartReminderManager.getTransactionReminders(transactions) }
             if (reminders.isNotEmpty()) item { SmartReminderCard(reminders = reminders, onReminderClick = onReminderClick) }
 
             item {
-                PremiumDebtDashboard(
-                    mode = debtMode,
-                    onModeChange = { debtMode = it },
-                    loanReceived = loanReceived,
-                    loanPaid = loanPaid.coerceAtLeast(0.0),
-                    loanRemaining = loanRemaining.coerceAtLeast(0.0),
-                    moneyLent = moneyLent,
-                    moneyReturned = moneyReturned.coerceAtLeast(0.0),
-                    moneyToReceive = moneyToReceive.coerceAtLeast(0.0),
-                    onAddLoan = { showPremiumLoanDialog = true },
-                    onAddLending = { showPremiumLendingDialog = true }
-                )
+                PremiumDebtDashboard(mode = debtMode, onModeChange = { debtMode = it }, loanReceived = loanReceived,
+                    loanPaid = loanPaid.coerceAtLeast(0.0), loanRemaining = loanRemaining.coerceAtLeast(0.0),
+                    moneyLent = moneyLent, moneyReturned = moneyReturned.coerceAtLeast(0.0),
+                    moneyToReceive = moneyToReceive.coerceAtLeast(0.0), onAddLoan = { showPremiumLoanDialog = true },
+                    onAddLending = { showPremiumLendingDialog = true })
             }
 
             item {
-                Card(Modifier.fillMaxWidth().shadow(10.dp, RoundedCornerShape(CardRadius), Color.Black, AccentGreen.copy(alpha=.35f)), shape = RoundedCornerShape(CardRadius), colors = CardDefaults.cardColors(containerColor = Color(0xFF181B21))) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().shadow(
+                        elevation = 10.dp, shape = RoundedCornerShape(CardRadius), clip = false,
+                        ambientColor = Color.Black, spotColor = AccentGreen.copy(alpha = .35f)
+                    ),
+                    shape = RoundedCornerShape(CardRadius),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF181B21))
+                ) {
                     Box(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color(0xFF1E222A), Color(0xFF12141A))))) {
                         Column(Modifier.fillMaxWidth().padding(CardPadding)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
                                 Column { Text("মোট ব্যালেন্স", color = AccentGreen.copy(alpha=.8f), fontSize = 12.sp, fontWeight = FontWeight.Medium); Spacer(Modifier.height(4.dp)); Text("৳ ${formatMoney(displayedBalance)}", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold); Text("বাংলাদেশি টাকা (BDT)", color = Color.White.copy(alpha=.45f), fontSize = 10.sp) }
                                 Surface(Modifier.size(50.dp), RoundedCornerShape(14.dp), color = AccentGreen.copy(alpha=.1f)) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.AccountBalanceWallet, null, tint = AccentGreen, modifier = Modifier.size(28.dp)) } }
                             }
-                            Spacer(Modifier.height(24.dp))
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) { StatMiniBox(Modifier.weight(1f), "আয়", totalIncome, IncomeGreen); StatMiniBox(Modifier.weight(1f), "খরচ", totalExpense, ExpenseRed); StatMiniBox(Modifier.weight(1f), "বাড়িতে", totalHome, Blue) }
+                            Spacer(Modifier.height(24.dp)); Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) { StatMiniBox(Modifier.weight(1f), "আয়", totalIncome, IncomeGreen); StatMiniBox(Modifier.weight(1f), "খরচ", totalExpense, ExpenseRed); StatMiniBox(Modifier.weight(1f), "বাড়িতে", totalHome, Blue) }
                             Spacer(Modifier.height(16.dp)); BirthdayCountdownCard(currentUserId, birthday, { onBirthdayChange(it) }, isCompact = true)
                         }
                     }
@@ -130,7 +108,11 @@ fun HomeScreen(
             item {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text("আমার অ্যাকাউন্টসমূহ", fontSize = 19.sp, fontWeight = FontWeight.Bold); TextButton(onClick = onAddWallet) { Icon(Icons.Default.Add, null, Modifier.size(18.dp)); Spacer(Modifier.width(4.dp)); Text("নতুন", fontWeight = FontWeight.Bold) } }
                 Spacer(Modifier.height(8.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(wallets) { wallet -> Card(onClick={onWalletClick(wallet)}, Modifier.width(150.dp).height(100.dp), RoundedCornerShape(20.dp), colors=CardDefaults.cardColors(containerColor=Color(wallet.color.toLong() and 0xFFFFFFFFL))) { Column(Modifier.padding(14.dp).fillMaxSize(), verticalArrangement=Arrangement.SpaceBetween) { Text(wallet.name,color=Color.White,fontSize=13.sp,fontWeight=FontWeight.Bold,maxLines=1); Column { Text("৳${formatMoney(getWalletBalance(wallet.id))}",color=Color.White,fontSize=16.sp,fontWeight=FontWeight.ExtraBold); Text(wallet.type,color=Color.White.copy(alpha=.7f),fontSize=10.sp) } } } } }
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(wallets) { wallet ->
+                    Card(onClick = { onWalletClick(wallet) }, modifier = Modifier.width(150.dp).height(100.dp), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color(wallet.color.toLong() and 0xFFFFFFFFL))) {
+                        Column(Modifier.padding(14.dp).fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) { Text(wallet.name,color=Color.White,fontSize=13.sp,fontWeight=FontWeight.Bold,maxLines=1); Column { Text("৳${formatMoney(getWalletBalance(wallet.id))}",color=Color.White,fontSize=16.sp,fontWeight=FontWeight.ExtraBold); Text(wallet.type,color=Color.White.copy(alpha=.7f),fontSize=10.sp) } }
+                    }
+                } }
             }
 
             item { Text("দ্রুত অ্যাকশন", fontSize = 19.sp, fontWeight = FontWeight.Bold) }
@@ -140,12 +122,11 @@ fun HomeScreen(
             }
 
             item {
-                Card(onClick={showHomeMoneyFlow=true}, Modifier.fillMaxWidth(), RoundedCornerShape(20.dp), colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) { Column(Modifier.padding(18.dp)) { Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) { Row(verticalAlignment=Alignment.CenterVertically) { Surface(Modifier.size(42.dp),RoundedCornerShape(12.dp),color=MaterialTheme.colorScheme.primary.copy(alpha=.12f)) { Box(contentAlignment=Alignment.Center) { Icon(Icons.Default.HomeWork,null,tint=MaterialTheme.colorScheme.primary) } }; Spacer(Modifier.width(10.dp)); Column { Text("বাড়ির হিসাব",fontSize=17.sp,fontWeight=FontWeight.Bold); Text("বাড়ির সব টাকা এক জায়গায়",fontSize=11.sp,color=MaterialTheme.colorScheme.onSurfaceVariant) } }; Icon(Icons.Default.ChevronRight,null,tint=MaterialTheme.colorScheme.onSurfaceVariant) }; Spacer(Modifier.height(12.dp)); HomeSummaryRow("বাড়িতে পাঠানো",totalHome,Blue); HomeSummaryRow("বাড়ির খরচ",totalHomeExpense,Color(0xFFF59E0B)); HorizontalDivider(Modifier.padding(vertical=7.dp)); HomeSummaryRow("বাড়িতে অবশিষ্ট",homeBalance,IncomeGreen) } }
+                Card(onClick={showHomeMoneyFlow=true}, modifier=Modifier.fillMaxWidth(), shape=RoundedCornerShape(20.dp), colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) { Column(Modifier.padding(18.dp)) { Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) { Row(verticalAlignment=Alignment.CenterVertically) { Surface(Modifier.size(42.dp),RoundedCornerShape(12.dp),color=MaterialTheme.colorScheme.primary.copy(alpha=.12f)) { Box(contentAlignment=Alignment.Center) { Icon(Icons.Default.HomeWork,null,tint=MaterialTheme.colorScheme.primary) } }; Spacer(Modifier.width(10.dp)); Column { Text("বাড়ির হিসাব",fontSize=17.sp,fontWeight=FontWeight.Bold); Text("বাড়ির সব টাকা এক জায়গায়",fontSize=11.sp,color=MaterialTheme.colorScheme.onSurfaceVariant) } }; Icon(Icons.Default.ChevronRight,null,tint=MaterialTheme.colorScheme.onSurfaceVariant) }; Spacer(Modifier.height(12.dp)); HomeSummaryRow("বাড়িতে পাঠানো",totalHome,Blue); HomeSummaryRow("বাড়ির খরচ",totalHomeExpense,Color(0xFFF59E0B)); HorizontalDivider(Modifier.padding(vertical=7.dp)); HomeSummaryRow("বাড়িতে অবশিষ্ট",homeBalance,IncomeGreen) } }
             }
         }
 
         if (showHomeMoneyFlow) Surface(Modifier.fillMaxSize(), color=MaterialTheme.colorScheme.background) { HomeMoneyFlowScreen(HomeMoneyFlow.entries(vm), onBack={showHomeMoneyFlow=false}) }
-
         if (showPremiumLoanDialog) PremiumLoanDialog(onDismiss={showPremiumLoanDialog=false}, existingLoan=null, existingNames=vm.loans.map{it.name}.distinct(), onSave={name,sourceType,principal,monthlyInstallment,startDate,note,dueDate -> vm.addLoan(context,name,sourceType,principal,monthlyInstallment,startDate,note,dueDate); showPremiumLoanDialog=false})
         if (showPremiumLendingDialog) LendingDialog(onDismiss={showPremiumLendingDialog=false}, onSave={person,amount,date,note,dueDate -> vm.addLending(context,person,amount,date,note,dueDate); showPremiumLendingDialog=false})
     }
