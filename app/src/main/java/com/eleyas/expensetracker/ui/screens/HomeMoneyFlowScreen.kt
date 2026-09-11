@@ -137,7 +137,7 @@ fun HomeMoneyFlowScreen(
                     val transaction = when (entry.sourceType) {
                         HomeLedgerSourceType.HOME_TRANSFER,
                         HomeLedgerSourceType.HOME_EXPENSE,
-                        HomeLedgerSourceType.HOME_ADJUSTMENT -> entry.sourceId.toLongOrNull()?.let { id -> appViewModel.transactions.firstOrNull { it.id == id } }
+                        HomeLedgerSourceType.HOME_ADJUSTMENT -> entry.sourceId?.toLongOrNull()?.let { id -> appViewModel.transactions.firstOrNull { it.id == id } }
                         else -> null
                     }
                     HomeLedgerRow(
