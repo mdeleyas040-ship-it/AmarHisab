@@ -12,7 +12,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import android.content.Context
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -22,7 +22,8 @@ import java.util.Locale
 fun HomeDatePickerField(
     value: String,
     label: String,
-    onDateSelected: (String) -> Unit
+    onDateSelected: (String) -> Unit,
+    placeholder: String? = null
 ) {
     val context = LocalContext.current
     val primary = MaterialTheme.colorScheme.primary
@@ -36,7 +37,6 @@ fun HomeDatePickerField(
         set(Calendar.MINUTE, 0)
         set(Calendar.SECOND, 0)
         set(Calendar.MILLISECOND, 0)
-
         runCatching {
             formatter.parse(value)?.let { parsed ->
                 time = parsed
@@ -73,21 +73,16 @@ fun HomeDatePickerField(
         value = value,
         onValueChange = {},
         modifier = Modifier.fillMaxWidth(),
-        label = { Text(label) },
+        label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        placeholder = if (placeholder != null) {
+            { Text(placeholder, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        } else null,
         leadingIcon = {
-            Icon(
-                Icons.Default.CalendarMonth,
-                contentDescription = "তারিখ নির্বাচন করুন",
-                tint = primary
-            )
+            Icon(Icons.Default.CalendarMonth, contentDescription = "তারিখ নির্বাচন করুন", tint = primary)
         },
         trailingIcon = {
             IconButton(onClick = { openPicker() }) {
-                Icon(
-                    Icons.Default.CalendarMonth,
-                    contentDescription = "তারিখ নির্বাচন করুন",
-                    tint = primary
-                )
+                Icon(Icons.Default.CalendarMonth, contentDescription = "তারিখ নির্বাচন করুন", tint = primary)
             }
         },
         readOnly = true,
