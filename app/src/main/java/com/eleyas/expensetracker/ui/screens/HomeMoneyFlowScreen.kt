@@ -61,6 +61,19 @@ fun HomeMoneyFlowScreen(
     var showHomeLendingDialog by remember { mutableStateOf(false) }
     var selectedReturnLending by remember { mutableStateOf<LendingAccount?>(null) }
 
+    val transactionSections = listOf(
+        "ধার দেওয়া" to ordered.filter { it.sourceType == HomeLedgerSourceType.LENDING_GIVEN },
+        "বাড়ির খরচ" to ordered.filter {
+            it.sourceType == HomeLedgerSourceType.HOME_EXPENSE ||
+                it.sourceType == HomeLedgerSourceType.LOAN_REPAYMENT_RECEIVED
+        },
+        "পাওনা / ফেরত" to ordered.filter { it.sourceType == HomeLedgerSourceType.LENDING_RETURN_RECEIVED },
+        "বাড়িতে টাকা পাঠানো" to ordered.filter {
+            it.sourceType == HomeLedgerSourceType.HOME_TRANSFER ||
+                it.sourceType == HomeLedgerSourceType.HOME_ADJUSTMENT
+        }
+    ).filter { it.second.isNotEmpty() }
+
     Column(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "ফিরে যান") }
@@ -147,21 +160,43 @@ fun HomeMoneyFlowScreen(
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                items(ordered, key = { it.id }) { entry ->
-                    val transaction = when (entry.sourceType) {
-                        HomeLedgerSourceType.HOME_TRANSFER,
-                        HomeLedgerSourceType.HOME_EXPENSE,
-                        HomeLedgerSourceType.HOME_ADJUSTMENT -> entry.sourceId?.toLongOrNull()?.let { id -> appViewModel.transactions.firstOrNull { it.id == id } }
-                        else -> null
+                transactionSections.forEach { (sectionTitle, sectionEntries) ->
+                    item(key = "section_$sectionTitle") {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 6.dp, bottom = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                sectionTitle,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                "${sectionEntries.size}টি",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
-                    HomeLedgerRow(
-                        entry = entry,
-                        editable = editable && transaction != null,
-                        transaction = transaction,
-                        onEdit = { transaction?.let(onEditTransaction) },
-                        onDelete = { transaction?.let(onDeleteTransaction) },
-                        onShare = { transaction?.let(onShareTransaction) }
-                    )
+                    items(sectionEntries, key = { it.id }) { entry ->
+                        val transaction = when (entry.sourceType) {
+                            HomeLedgerSourceType.HOME_TRANSFER,
+                            HomeLedgerSourceType.HOME_EXPENSE,
+                            HomeLedgerSourceType.HOME_ADJUSTMENT -> entry.sourceId?.toLongOrNull()?.let { id -> appViewModel.transactions.firstOrNull { it.id == id } }
+                            else -> null
+                        }
+                        HomeLedgerRow(
+                            entry = entry,
+                            editable = editable && transaction != null,
+                            transaction = transaction,
+                            onEdit = { transaction?.let(onEditTransaction) },
+                            onDelete = { transaction?.let(onDeleteTransaction) },
+                            onShare = { transaction?.let(onShareTransaction) }
+                        )
+                    }
                 }
             }
         }
