@@ -89,7 +89,10 @@ fun HomeMoneyFlowScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "ফিরে যান")
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "ফিরে যান"
+                )
             }
             Column(Modifier.weight(1f)) {
                 Text("বাড়ির হিসাব", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
@@ -105,7 +108,11 @@ fun HomeMoneyFlowScreen(
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.HomeWork, null, tint = MaterialTheme.colorScheme.primary)
+                    Icon(
+                        imageVector = Icons.Default.HomeWork,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
         }
@@ -136,7 +143,12 @@ fun HomeMoneyFlowScreen(
                         color = Color.White.copy(alpha = 0.14f)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.AccountBalanceWallet, null, tint = Color.White, Modifier.size(25.dp))
+                            Icon(
+                                imageVector = Icons.Default.AccountBalanceWallet,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(25.dp)
+                            )
                         }
                     }
                     Spacer(Modifier.width(12.dp))
@@ -171,7 +183,12 @@ fun HomeMoneyFlowScreen(
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.Handshake, null, tint = MaterialTheme.colorScheme.primary, Modifier.size(23.dp))
+                        Icon(
+                            imageVector = Icons.Default.Handshake,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(23.dp)
+                        )
                     }
                 }
                 Spacer(Modifier.width(12.dp))
@@ -185,7 +202,12 @@ fun HomeMoneyFlowScreen(
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.ArrowForward, "ধার দিন", tint = MaterialTheme.colorScheme.primary, Modifier.size(21.dp))
+                        Icon(
+                            imageVector = Icons.Default.ArrowForward,
+                            contentDescription = "ধার দিন",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(21.dp)
+                        )
                     }
                 }
             }
@@ -295,7 +317,12 @@ fun HomeMoneyFlowScreen(
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.HomeWork, null, tint = MaterialTheme.colorScheme.primary, Modifier.size(32.dp))
+                                Icon(
+                                    imageVector = Icons.Default.HomeWork,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(32.dp)
+                                )
                             }
                         }
                         Spacer(Modifier.height(12.dp))
@@ -448,7 +475,11 @@ private fun HomeLendingDetailCard(
                     modifier = Modifier.fillMaxWidth().height(46.dp),
                     shape = RoundedCornerShape(13.dp)
                 ) {
-                    Icon(Icons.Default.Add, null, Modifier.size(18.dp))
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
                     Spacer(Modifier.width(6.dp))
                     Text(if (remaining > 0.0) "ফেরত যোগ করুন" else "সম্পূর্ণ ফেরত")
                 }
@@ -456,7 +487,7 @@ private fun HomeLendingDetailCard(
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 Icon(
-                    if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                     contentDescription = if (expanded) "বন্ধ করুন" else "বিস্তারিত দেখুন",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -488,8 +519,10 @@ private fun FlowStat(label: String, amount: Double, incoming: Boolean, modifier:
     ) {
         Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                if (incoming) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
-                null, tint = Color.White, Modifier.size(17.dp)
+                imageVector = if (incoming) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(17.dp)
             )
             Spacer(Modifier.width(7.dp))
             Column {
@@ -527,7 +560,12 @@ private fun HomeLedgerRow(
                 color = accent.copy(alpha = 0.11f)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(icon, null, tint = accent, Modifier.size(21.dp))
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = accent,
+                        modifier = Modifier.size(21.dp)
+                    )
                 }
             }
             Spacer(Modifier.width(12.dp))
@@ -545,14 +583,29 @@ private fun HomeLedgerRow(
                 Text("$sign৳${formatMoney(entry.amount)}", color = accent, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
                 if (editable && transaction != null) {
                     Row {
-                        IconButton(onClick = onShare, Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Share, "শেয়ার", Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                        IconButton(onClick = onShare, modifier = Modifier.size(32.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "শেয়ার",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
                         }
-                        IconButton(onClick = onEdit, Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Edit, "এডিট", Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                        IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "এডিট",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
                         }
-                        IconButton(onClick = onDelete, Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Delete, "ডিলিট", Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
+                        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "ডিলিট",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.error
+                            )
                         }
                     }
                 }
