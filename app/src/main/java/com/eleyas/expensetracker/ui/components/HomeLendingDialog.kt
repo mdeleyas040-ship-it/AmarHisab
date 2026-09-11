@@ -8,11 +8,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
@@ -61,7 +64,10 @@ fun HomeLendingDialog(
     var personFocused by remember { mutableStateOf(false) }
     var amount by remember { mutableStateOf("") }
     var date by remember {
-        mutableStateOf(java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date()))
+        mutableStateOf(
+            java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault())
+                .format(java.util.Calendar.getInstance().apply { set(java.util.Calendar.HOUR_OF_DAY, 12) }.time)
+        )
     }
     var note by remember { mutableStateOf("") }
     val peopleSuggestions = remember(person, suggestionSource) {
@@ -79,44 +85,47 @@ fun HomeLendingDialog(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(8.dp)
         ) {
-            Column(Modifier.fillMaxWidth()) {
+            Column(
+                Modifier.fillMaxWidth().heightIn(max = 680.dp).verticalScroll(rememberScrollState())
+            ) {
                 Box(
                     Modifier.fillMaxWidth()
                         .background(primary, RoundedCornerShape(26.dp))
-                        .padding(horizontal = 20.dp, vertical = 18.dp)
+                        .padding(horizontal = 18.dp, vertical = 16.dp)
                 ) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Surface(Modifier.size(58.dp), RoundedCornerShape(20.dp), color = onPrimary.copy(alpha = 0.12f)) {
+                        Surface(Modifier.size(52.dp), RoundedCornerShape(18.dp), color = onPrimary.copy(alpha = 0.12f)) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.Handshake, null, tint = onPrimary, modifier = Modifier.size(31.dp))
+                                Icon(Icons.Default.Handshake, null, tint = onPrimary, modifier = Modifier.size(29.dp))
                             }
                         }
-                        Spacer(Modifier.width(14.dp))
+                        Spacer(Modifier.width(11.dp))
                         Column(Modifier.weight(1f)) {
-                            Text("বাড়ির হিসাব", fontSize = 11.sp, letterSpacing = 1.2.sp, color = onPrimary.copy(alpha = 0.72f), fontWeight = FontWeight.Bold)
-                            Text("বাড়ির টাকা দিয়ে ধার দিন", fontSize = 18.sp, color = onPrimary, fontWeight = FontWeight.ExtraBold, maxLines = 1, softWrap = false)
-                            Text("বাড়ির হিসাব থেকে কাউকে টাকা ধার দিন", fontSize = 11.sp, color = onPrimary.copy(alpha = 0.72f), maxLines = 1, softWrap = false)
+                            Text("বাড়ির হিসাব", fontSize = 10.sp, letterSpacing = 1.1.sp, color = onPrimary.copy(alpha = 0.78f), fontWeight = FontWeight.Bold)
+                            Text("বাড়ির টাকা দিয়ে ধার দিন", fontSize = 17.sp, color = onPrimary, fontWeight = FontWeight.ExtraBold, maxLines = 2)
+                            Text("বাড়ির হিসাব থেকে কাউকে টাকা ধার দিন", fontSize = 10.sp, color = onPrimary.copy(alpha = 0.78f), maxLines = 2)
                         }
-                        Surface(onClick = onDismiss, modifier = Modifier.size(42.dp), shape = RoundedCornerShape(14.dp), color = onPrimary.copy(alpha = 0.10f)) {
+                        Spacer(Modifier.width(6.dp))
+                        Surface(onClick = onDismiss, modifier = Modifier.size(40.dp), shape = RoundedCornerShape(13.dp), color = onPrimary.copy(alpha = 0.10f)) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.Close, "বন্ধ করুন", tint = onPrimary, modifier = Modifier.size(25.dp))
+                                Icon(Icons.Default.Close, "বন্ধ করুন", tint = onPrimary, modifier = Modifier.size(24.dp))
                             }
                         }
                     }
                 }
 
-                Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Surface(Modifier.fillMaxWidth(), RoundedCornerShape(18.dp), color = primary.copy(alpha = 0.10f)) {
-                        Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Surface(Modifier.size(38.dp), RoundedCornerShape(13.dp), color = primary.copy(alpha = 0.12f)) {
+                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                    Surface(Modifier.fillMaxWidth(), RoundedCornerShape(17.dp), color = primary.copy(alpha = 0.10f)) {
+                        Row(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Surface(Modifier.size(36.dp), RoundedCornerShape(12.dp), color = primary.copy(alpha = 0.12f)) {
                                 Box(contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.Info, null, tint = primary, modifier = Modifier.size(21.dp))
+                                    Icon(Icons.Default.Info, null, tint = primary, modifier = Modifier.size(20.dp))
                                 }
                             }
-                            Spacer(Modifier.width(10.dp))
-                            Column {
-                                Text("বাড়ির পাওনা হিসেবে সংরক্ষণ হবে", color = primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                Text("এই টাকা সাধারণ খরচ হিসেবে ধরা হবে না।", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.width(9.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text("বাড়ির পাওনা হিসেবে সংরক্ষণ হবে", color = primary, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 2)
+                                Text("এই টাকা সাধারণ খরচ হিসেবে ধরা হবে না।", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
                             }
                         }
                     }
@@ -125,16 +134,16 @@ fun HomeLendingDialog(
                         value = person, onValueChange = { person = it },
                         modifier = Modifier.fillMaxWidth().onFocusChanged { personFocused = it.isFocused },
                         label = { Text("যাকে বাড়ির টাকা দিয়ে ধার দিচ্ছেন") },
-                        leadingIcon = { Icon(Icons.Default.Person, null, tint = primary) }, singleLine = true, shape = RoundedCornerShape(17.dp)
+                        leadingIcon = { Icon(Icons.Default.Person, null, tint = primary) }, singleLine = true, shape = RoundedCornerShape(16.dp)
                     )
                     if (personFocused && peopleSuggestions.isNotEmpty()) {
-                        Surface(Modifier.fillMaxWidth(), RoundedCornerShape(15.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)) {
-                            Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                        Surface(Modifier.fillMaxWidth(), RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)) {
+                            Column(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
                                 peopleSuggestions.forEach { name ->
                                     Surface(onClick = { person = name; personFocused = false }, Modifier.fillMaxWidth(), color = Color.Transparent) {
-                                        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Row(Modifier.fillMaxWidth().padding(horizontal = 13.dp, vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
                                             Icon(Icons.Default.Person, null, tint = primary, modifier = Modifier.size(18.dp))
-                                            Spacer(Modifier.width(9.dp)); Text(name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                            Spacer(Modifier.width(8.dp)); Text(name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                                         }
                                     }
                                 }
@@ -145,8 +154,8 @@ fun HomeLendingDialog(
                     OutlinedTextField(
                         value = amount, onValueChange = { amount = it }, modifier = Modifier.fillMaxWidth(),
                         label = { Text("ধারের টাকা") },
-                        leadingIcon = { Text("৳", color = primary, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, shape = RoundedCornerShape(17.dp)
+                        leadingIcon = { Text("৳", color = primary, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, shape = RoundedCornerShape(16.dp)
                     )
 
                     HomeDatePickerField(value = date, label = "দেওয়ার তারিখ", onDateSelected = { date = it })
@@ -154,38 +163,35 @@ fun HomeLendingDialog(
                     OutlinedTextField(
                         value = note, onValueChange = { note = it }, modifier = Modifier.fillMaxWidth(),
                         label = { Text("কারণ / নোট") }, leadingIcon = { Icon(Icons.Default.ReceiptLong, null, tint = primary) },
-                        minLines = 2, shape = RoundedCornerShape(17.dp)
+                        minLines = 2, maxLines = 3, shape = RoundedCornerShape(16.dp)
                     )
 
-                    Spacer(Modifier.height(2.dp))
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Spacer(Modifier.height(1.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                         Button(
                             onClick = onDismiss,
-                            modifier = Modifier.weight(0.8f).height(52.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            )
+                            modifier = Modifier.weight(0.78f).height(50.dp),
+                            shape = RoundedCornerShape(15.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface)
                         ) {
-                            Text("বাতিল", fontWeight = FontWeight.Bold)
+                            Text("বাতিল", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                         Button(
                             onClick = {
                                 val value = amount.replace(",", "").trim().toDoubleOrNull() ?: return@Button
                                 if (person.isNotBlank() && value > 0.0 && date.isNotBlank()) onSave(person.trim(), value, date.trim(), note.trim())
                             },
-                            modifier = Modifier.weight(1.2f).height(52.dp),
-                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.weight(1.22f).height(50.dp),
+                            shape = RoundedCornerShape(15.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = primary, contentColor = onPrimary)
                         ) {
-                            Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(6.dp))
-                            Text("বাড়ির টাকা দিয়ে ধার দিন", fontSize = 10.sp, maxLines = 1, softWrap = false, fontWeight = FontWeight.ExtraBold)
+                            Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(17.dp)); Spacer(Modifier.width(5.dp))
+                            Text("বাড়ির টাকা দিয়ে ধার দিন", fontSize = 9.sp, maxLines = 1, softWrap = false, fontWeight = FontWeight.ExtraBold)
                         }
                     }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.HomeWork, null, tint = primary, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(5.dp))
-                        Text("বাড়ির হিসাব থেকে টাকা যাবে এবং ফেরত এলে আবার যোগ হবে", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(Modifier.fillMaxWidth().padding(top = 1.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.HomeWork, null, tint = primary, modifier = Modifier.size(15.dp)); Spacer(Modifier.width(5.dp))
+                        Text("বাড়ির হিসাব থেকে টাকা যাবে এবং ফেরত এলে আবার যোগ হবে", fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
                     }
                 }
             }
