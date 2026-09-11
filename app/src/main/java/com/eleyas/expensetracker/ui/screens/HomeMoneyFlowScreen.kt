@@ -71,27 +71,19 @@ fun HomeMoneyFlowScreen(
     var selectedReturnLending by remember { mutableStateOf<LendingAccount?>(null) }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+        modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "ফিরে যান")
-            }
+            IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "ফিরে যান") }
             Column(modifier = Modifier.weight(1f)) {
                 Text("বাড়ির হিসাব", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
                 Text("বাড়ির টাকার সম্পূর্ণ হিসাব", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Surface(modifier = Modifier.size(42.dp), shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.HomeWork, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                }
+                Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.HomeWork, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
             }
         }
 
@@ -108,9 +100,7 @@ fun HomeMoneyFlowScreen(
             ) {
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Surface(modifier = Modifier.size(46.dp), shape = RoundedCornerShape(14.dp), color = Color.White.copy(alpha = 0.14f)) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.AccountBalanceWallet, contentDescription = null, tint = Color.White, modifier = Modifier.size(25.dp))
-                        }
+                        Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.AccountBalanceWallet, contentDescription = null, tint = Color.White, modifier = Modifier.size(25.dp)) }
                     }
                     Spacer(Modifier.size(12.dp))
                     Column {
@@ -135,9 +125,7 @@ fun HomeMoneyFlowScreen(
         ) {
             Row(modifier = Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Surface(modifier = Modifier.size(42.dp), shape = RoundedCornerShape(13.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.13f)) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.Handshake, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(21.dp))
-                    }
+                    Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Handshake, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(21.dp)) }
                 }
                 Spacer(Modifier.size(11.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -187,18 +175,24 @@ fun HomeMoneyFlowScreen(
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
 
         if (ordered.isEmpty()) {
-            Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Column(
+                Modifier.fillMaxWidth().weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
                 Surface(modifier = Modifier.size(70.dp), shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.HomeWork, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(34.dp))
-                    }
+                    Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.HomeWork, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(34.dp)) }
                 }
                 Spacer(Modifier.height(12.dp))
                 Text("এখনও কোনো বাড়ির লেনদেন নেই", fontWeight = FontWeight.Bold)
-                Text("বাড়িতে টাকা পাঠানো বা বাড়ির খরচ যোগ করলে এখানে দেখা যাবে।", modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("বাড়িতে টাকা পাঠানো বা বাড়ির খরচ যোগ করলে এখানে দেখা যাবে.", modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                contentPadding = PaddingValues(12.dp),
+                verticalArrangement = Arrangement.spacedBy(9.dp)
+            ) {
                 items(ordered, key = { it.id }) { HomeLedgerRow(it) }
             }
         }
