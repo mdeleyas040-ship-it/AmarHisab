@@ -83,7 +83,7 @@ fun HomeScreen(
     val appViewModel: MainViewModel = viewModel()
     var showHomeMoneyFlow by remember { mutableStateOf(false) }
     var serverNotice by remember { mutableStateOf<String?>(null) }
-    var balanceCardPage by rememberSaveable { mutableIntStateOf(0) }
+    var balanceCardPage by remember { mutableIntStateOf(0) }
 
     val smartReminders = remember(transactions) {
         SmartReminderManager.getTransactionReminders(transactions)
@@ -118,35 +118,17 @@ fun HomeScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(SectionSpacing)
         ) {
-
             if (serverNotice != null) {
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Blue.copy(alpha = 0.1f)
-                        )
+                        colors = CardDefaults.cardColors(containerColor = Blue.copy(alpha = 0.1f))
                     ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Default.Campaign,
-                                contentDescription = null,
-                                tint = Blue,
-                                modifier = Modifier.size(24.dp)
-                            )
-
+                        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Campaign, contentDescription = null, tint = Blue, modifier = Modifier.size(24.dp))
                             Spacer(Modifier.width(10.dp))
-
-                            Text(
-                                serverNotice!!,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Blue
-                            )
+                            Text(serverNotice!!, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Blue)
                         }
                     }
                 }
@@ -154,10 +136,7 @@ fun HomeScreen(
 
             if (smartReminders.isNotEmpty()) {
                 item {
-                    SmartReminderCard(
-                        reminders = smartReminders,
-                        onReminderClick = onReminderClick
-                    )
+                    SmartReminderCard(reminders = smartReminders, onReminderClick = onReminderClick)
                 }
             }
 
@@ -202,79 +181,34 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        "আমার অ্যাকাউন্টসমূহ",
-                        fontSize = 19.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
+                    Text("আমার অ্যাকাউন্টসমূহ", fontSize = 19.sp, fontWeight = FontWeight.Bold)
                     TextButton(onClick = onAddWallet) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Default.Add,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(4.dp))
-
-                            Text(
-                                "নতুন",
-                                fontWeight = FontWeight.Bold
-                            )
+                            Text("নতুন", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
 
                 Spacer(Modifier.height(8.dp))
 
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(wallets) { wallet ->
                         Card(
-                            onClick = {
-                                onWalletClick(wallet)
-                            },
-                            modifier = Modifier
-                                .width(150.dp)
-                                .height(100.dp),
+                            onClick = { onWalletClick(wallet) },
+                            modifier = Modifier.width(150.dp).height(100.dp),
                             shape = RoundedCornerShape(20.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(
-                                    wallet.color.toLong() and 0xFFFFFFFFL
-                                )
-                            )
+                            colors = CardDefaults.cardColors(containerColor = Color(wallet.color.toLong() and 0xFFFFFFFFL))
                         ) {
                             Column(
-                                modifier = Modifier
-                                    .padding(14.dp)
-                                    .fillMaxSize(),
+                                modifier = Modifier.padding(14.dp).fillMaxSize(),
                                 verticalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(
-                                    wallet.name,
-                                    color = Color.White,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    maxLines = 1
-                                )
-
+                                Text(wallet.name, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                                 Column {
-                                    Text(
-                                        "৳${formatMoney(getWalletBalance(wallet.id))}",
-                                        color = Color.White,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.ExtraBold
-                                    )
-
-                                    Text(
-                                        wallet.type,
-                                        color = Color.White.copy(alpha = 0.7f),
-                                        fontSize = 10.sp
-                                    )
+                                    Text("৳${formatMoney(getWalletBalance(wallet.id))}", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+                                    Text(wallet.type, color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp)
                                 }
                             }
                         }
@@ -283,74 +217,24 @@ fun HomeScreen(
             }
 
             item {
-                Text(
-                    "দ্রুত অ্যাকশন",
-                    fontSize = 19.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Text("দ্রুত অ্যাকশন", fontSize = 19.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             }
 
             item {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     val actions = listOf(
-                        Triple(
-                            Icons.Default.AddCircle,
-                            "আয় যোগ",
-                            IncomeGreen
-                        ) to onAddIncome,
-
-                        Triple(
-                            Icons.Default.RemoveCircle,
-                            "খরচ যোগ",
-                            ExpenseRed
-                        ) to onAddExpense,
-
-                        Triple(
-                            Icons.Default.Home,
-                            "বাড়িতে পাঠান",
-                            Blue
-                        ) to onAddHome,
-
-                        Triple(
-                            Icons.Default.ReceiptLong,
-                            "বাড়ির খরচ",
-                            Color(0xFFF59E0B)
-                        ) to onAddHomeExpense,
-
-                        Triple(
-                            Icons.Default.Mic,
-                            "ভয়েস এন্ট্রি",
-                            Color(0xFF9C27B0)
-                        ) to onVoiceClick,
-
-                        Triple(
-                            Icons.Default.ShoppingCart,
-                            "বাজারের ফর্দ",
-                            AccentGreen
-                        ) to onShoppingList,
-
-                        Triple(
-                            Icons.Default.NoteAlt,
-                            "কুইক মেমো",
-                            Color(0xFF00897B)
-                        ) to onScratchpad,
-
-                        Triple(
-                            Icons.Default.DirectionsCar,
-                            "গাড়ি ও রক্ষণাবেক্ষণ",
-                            Color(0xFF1565C0)
-                        ) to onVehicle
+                        Triple(Icons.Default.AddCircle, "আয় যোগ", IncomeGreen) to onAddIncome,
+                        Triple(Icons.Default.RemoveCircle, "খরচ যোগ", ExpenseRed) to onAddExpense,
+                        Triple(Icons.Default.Home, "বাড়িতে পাঠান", Blue) to onAddHome,
+                        Triple(Icons.Default.ReceiptLong, "বাড়ির খরচ", Color(0xFFF59E0B)) to onAddHomeExpense,
+                        Triple(Icons.Default.Mic, "ভয়েস এন্ট্রি", Color(0xFF9C27B0)) to onVoiceClick,
+                        Triple(Icons.Default.ShoppingCart, "বাজারের ফর্দ", AccentGreen) to onShoppingList,
+                        Triple(Icons.Default.NoteAlt, "কুইক মেমো", Color(0xFF00897B)) to onScratchpad,
+                        Triple(Icons.Default.DirectionsCar, "গাড়ি ও রক্ষণাবেক্ষণ", Color(0xFF1565C0)) to onVehicle
                     )
 
                     for (i in actions.indices step 2) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             QuickActionCard(
                                 modifier = Modifier.weight(1f),
                                 icon = actions[i].first.first,
@@ -358,7 +242,6 @@ fun HomeScreen(
                                 color = actions[i].first.third,
                                 onClick = actions[i].second
                             )
-
                             if (i + 1 < actions.size) {
                                 QuickActionCard(
                                     modifier = Modifier.weight(1f),
@@ -368,9 +251,7 @@ fun HomeScreen(
                                     onClick = actions[i + 1].second
                                 )
                             } else {
-                                Spacer(
-                                    Modifier.weight(1f)
-                                )
+                                Spacer(Modifier.weight(1f))
                             }
                         }
                     }
@@ -378,11 +259,7 @@ fun HomeScreen(
             }
 
             item {
-                PremiumJourneyCard(
-                    currentUserId = currentUserId,
-                    transactions = transactions,
-                    loanRemaining = loanRemaining
-                )
+                PremiumJourneyCard(currentUserId = currentUserId, transactions = transactions, loanRemaining = loanRemaining)
             }
 
             item {
@@ -400,73 +277,30 @@ fun HomeScreen(
 
             item {
                 Card(
-                    onClick = {
-                        showHomeMoneyFlow = true
-                    },
+                    onClick = { showHomeMoneyFlow = true },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 1.dp
-                    )
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
-                    Column(
-                        Modifier.padding(18.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Default.HomeWork,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-
+                    Column(Modifier.padding(18.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.HomeWork, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                             Spacer(Modifier.width(8.dp))
-
-                            Text(
-                                "বাড়ির হিসাব",
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Text("বাড়ির হিসাব", fontSize = 17.sp, fontWeight = FontWeight.Bold)
                         }
 
                         Spacer(Modifier.height(10.dp))
-
-                        HomeSummaryRow(
-                            "বাড়িতে পাঠানো",
-                            totalHome,
-                            Blue
-                        )
-
-                        HomeSummaryRow(
-                            "বাড়ির খরচ",
-                            totalHomeExpense,
-                            Color(0xFFF59E0B)
-                        )
-
-                        HorizontalDivider(
-                            Modifier.padding(vertical = 7.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant
-                        )
-
-                        HomeSummaryRow(
-                            "বাড়িতে অবশিষ্ট",
-                            homeBalance,
-                            IncomeGreen
-                        )
+                        HomeSummaryRow("বাড়িতে পাঠানো", totalHome, Blue)
+                        HomeSummaryRow("বাড়ির খরচ", totalHomeExpense, Color(0xFFF59E0B))
+                        HorizontalDivider(Modifier.padding(vertical = 7.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                        HomeSummaryRow("বাড়িতে অবশিষ্ট", homeBalance, IncomeGreen)
                     }
                 }
             }
 
             item {
-                PremiumDebtSummary(
-                    loanRemaining = loanRemaining,
-                    moneyToReceive = moneyToReceive
-                )
+                PremiumDebtSummary(loanRemaining = loanRemaining, moneyToReceive = moneyToReceive)
             }
 
             item {
@@ -480,15 +314,10 @@ fun HomeScreen(
         }
 
         if (showHomeMoneyFlow) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
-            ) {
+            Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                 HomeMoneyFlowScreen(
                     entries = HomeMoneyFlow.entries(appViewModel),
-                    onBack = {
-                        showHomeMoneyFlow = false
-                    }
+                    onBack = { showHomeMoneyFlow = false }
                 )
             }
         }
@@ -510,9 +339,7 @@ private fun SwipeableBalanceCards(
             .pointerInput(page) {
                 var dragDistance = 0f
                 detectVerticalDragGestures(
-                    onVerticalDrag = { _, dragAmount ->
-                        dragDistance += dragAmount
-                    },
+                    onVerticalDrag = { _, dragAmount -> dragDistance += dragAmount },
                     onDragEnd = {
                         when {
                             dragDistance < -80f && page == 0 -> onPageChange(1)
@@ -522,20 +349,17 @@ private fun SwipeableBalanceCards(
                 )
             },
         transitionSpec = {
-            if (targetState > initialState) {
+            val animation = if (targetState > initialState) {
                 (slideInVertically { height -> height } + fadeIn()) togetherWith
                     (slideOutVertically { height -> -height } + fadeOut())
             } else {
                 (slideInVertically { height -> -height } + fadeIn()) togetherWith
                     (slideOutVertically { height -> height } + fadeOut())
-            }.using(SizeTransform(clip = false))
+            }
+            animation.using(SizeTransform(clip = false))
         }
     ) { currentPage ->
-        if (currentPage == 0) {
-            first()
-        } else {
-            second()
-        }
+        if (currentPage == 0) first() else second()
     }
 }
 
@@ -551,45 +375,21 @@ fun QuickActionCard(
         onClick = onClick,
         modifier = modifier.height(65.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
-            Surface(
-                modifier = Modifier.size(38.dp),
-                shape = RoundedCornerShape(10.dp),
-                color = color.copy(alpha = 0.15f)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        icon,
-                        contentDescription = null,
-                        tint = color,
-                        modifier = Modifier.size(20.dp)
-                    )
+            Surface(modifier = Modifier.size(38.dp), shape = RoundedCornerShape(10.dp), color = color.copy(alpha = 0.15f)) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
                 }
             }
-
             Spacer(Modifier.width(12.dp))
-
-            Text(
-                text = title,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Text(text = title, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
