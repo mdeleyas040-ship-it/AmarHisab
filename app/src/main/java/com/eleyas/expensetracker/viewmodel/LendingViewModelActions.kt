@@ -1,12 +1,12 @@
-package com.eleyas.expensetracker.viewmodel
+package com.eleyas.expensetracker
 
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.runtime.MutableState
 import com.eleyas.expensetracker.model.LendingAccount
-import com.eleyas.expensetracker.model.LendingReturn
 import com.eleyas.expensetracker.repository.syncAllLoanAndLendingData
 import com.eleyas.expensetracker.util.formatMoney
+import com.eleyas.expensetracker.viewmodel.MainViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.lang.reflect.Field
