@@ -5,11 +5,11 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
@@ -31,7 +32,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eleyas.expensetracker.model.*
 import com.eleyas.expensetracker.ui.components.AchievementBadgesCard
-import com.eleyas.expensetracker.ui.components.HomeSummaryRow
 import com.eleyas.expensetracker.ui.components.MonthlyBalanceForecastCard
 import com.eleyas.expensetracker.ui.components.SmartReminderCard
 import com.eleyas.expensetracker.ui.theme.*
@@ -156,11 +156,10 @@ fun HomeScreen(
                         )
                     },
                     second = {
-                        NetWorthDashboard(
-                            cashBalance = balance,
-                            homeBalance = homeBalance,
-                            moneyToReceive = moneyToReceive,
-                            loanRemaining = loanRemaining
+                        PremiumHomeAccountCard(
+                            totalHome = totalHome,
+                            totalHomeExpense = totalHomeExpense,
+                            homeBalance = homeBalance
                         )
                     }
                 )
@@ -276,31 +275,10 @@ fun HomeScreen(
             }
 
             item {
-                Card(
-                    onClick = { showHomeMoneyFlow = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Column(Modifier.padding(18.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.HomeWork, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("বাড়ির হিসাব", fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                        }
-
-                        Spacer(Modifier.height(10.dp))
-                        HomeSummaryRow("বাড়িতে পাঠানো", totalHome, Blue)
-                        HomeSummaryRow("বাড়ির খরচ", totalHomeExpense, Color(0xFFF59E0B))
-                        HorizontalDivider(Modifier.padding(vertical = 7.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                        HomeSummaryRow("বাড়িতে অবশিষ্ট", homeBalance, IncomeGreen)
-                    }
-                }
-            }
-
-            item {
-                PremiumDebtSummary(loanRemaining = loanRemaining, moneyToReceive = moneyToReceive)
+                PremiumDebtSummary(
+                    loanRemaining = loanRemaining,
+                    moneyToReceive = moneyToReceive
+                )
             }
 
             item {
@@ -338,28 +316,209 @@ private fun SwipeableBalanceCards(
             .fillMaxWidth()
             .pointerInput(page) {
                 var dragDistance = 0f
-                detectVerticalDragGestures(
-                    onVerticalDrag = { _, dragAmount -> dragDistance += dragAmount },
+                detectHorizontalDragGestures(
+                    onHorizontalDrag = { _, dragAmount ->
+                        dragDistance += dragAmount
+                    },
                     onDragEnd = {
                         when {
-                            dragDistance < -80f && page == 0 -> onPageChange(1)
-                            dragDistance > 80f && page == 1 -> onPageChange(0)
+                            dragDistance > 80f && page == 0 -> onPageChange(1)
+                            dragDistance < -80f && page == 1 -> onPageChange(0)
                         }
                     }
                 )
             },
         transitionSpec = {
             val animation = if (targetState > initialState) {
-                (slideInVertically { height -> height } + fadeIn()) togetherWith
-                    (slideOutVertically { height -> -height } + fadeOut())
+                (slideInHorizontally { width -> -width } + fadeIn()) togetherWith
+                    (slideOutHorizontally { width -> width } + fadeOut())
             } else {
-                (slideInVertically { height -> -height } + fadeIn()) togetherWith
-                    (slideOutVertically { height -> height } + fadeOut())
+                (slideInHorizontally { width -> width } + fadeIn()) togetherWith
+                    (slideOutHorizontally { width -> -width } + fadeOut())
             }
             animation.using(SizeTransform(clip = false))
         }
     ) { currentPage ->
         if (currentPage == 0) first() else second()
+    }
+}
+
+@Composable
+private fun PremiumHomeAccountCard(
+    totalHome: Double,
+    totalHomeExpense: Double,
+    homeBalance: Double
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            Color(0xFF102A3F),
+                            Color(0xFF0C2032),
+                            Color(0xFF081722)
+                        )
+                    )
+                )
+                .padding(20.dp)
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.HomeWork,
+                            contentDescription = null,
+                            tint = Color(0xFF55B8FF),
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "বাড়ির হিসাব",
+                            color = Color.White.copy(alpha = 0.9f),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color.White.copy(alpha = 0.08f)
+                    ) {
+                        Text(
+                            "বাড়িতে",
+                            color = Color(0xFF55B8FF),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    "৳${formatMoney(homeBalance)}",
+                    color = Color.White,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+
+                Text(
+                    "বাড়িতে বর্তমানে অবশিষ্ট",
+                    color = Color.White.copy(alpha = 0.55f),
+                    fontSize = 12.sp
+                )
+
+                Spacer(Modifier.height(18.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    HomeAccountMiniStat(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Default.Home,
+                        label = "বাড়িতে পাঠানো",
+                        amount = totalHome,
+                        amountColor = Color(0xFF55B8FF)
+                    )
+                    HomeAccountMiniStat(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Default.ReceiptLong,
+                        label = "বাড়ির খরচ",
+                        amount = totalHomeExpense,
+                        amountColor = Color(0xFFFFB52E)
+                    )
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.White.copy(alpha = 0.08f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.Savings,
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.7f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(7.dp))
+                            Text(
+                                "বাড়িতে অবশিষ্ট",
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 12.sp
+                            )
+                        }
+                        Text(
+                            "৳${formatMoney(homeBalance)}",
+                            color = IncomeGreen,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeAccountMiniStat(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    label: String,
+    amount: Double,
+    amountColor: Color
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White.copy(alpha = 0.08f)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.75f),
+                    modifier = Modifier.size(15.dp)
+                )
+                Spacer(Modifier.width(5.dp))
+                Text(
+                    label,
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 10.sp,
+                    maxLines = 1
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "৳${formatMoney(amount)}",
+                color = amountColor,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 1
+            )
+        }
     }
 }
 
