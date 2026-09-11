@@ -159,7 +159,15 @@ fun HomeLendingDialog(
 
                     Spacer(Modifier.height(2.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Button(onClick = onDismiss, Modifier.weight(0.8f).height(52.dp), RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface)) {
+                        Button(
+                            onClick = onDismiss,
+                            modifier = Modifier.weight(0.8f).height(52.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            )
+                        ) {
                             Text("বাতিল", fontWeight = FontWeight.Bold)
                         }
                         Button(
@@ -167,7 +175,8 @@ fun HomeLendingDialog(
                                 val value = amount.replace(",", "").trim().toDoubleOrNull() ?: return@Button
                                 if (person.isNotBlank() && value > 0.0 && date.isNotBlank()) onSave(person.trim(), value, date.trim(), note.trim())
                             },
-                            Modifier.weight(1.2f).height(52.dp), RoundedCornerShape(16.dp),
+                            modifier = Modifier.weight(1.2f).height(52.dp),
+                            shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = primary, contentColor = onPrimary)
                         ) {
                             Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(6.dp))
