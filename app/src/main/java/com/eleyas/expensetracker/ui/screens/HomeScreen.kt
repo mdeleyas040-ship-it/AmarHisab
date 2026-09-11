@@ -315,55 +315,91 @@ private fun SmoothSwipeableBalanceCards(
     second: @Composable () -> Unit,
     third: @Composable () -> Unit
 ) {
-    val dragOffset = remember { Animatable(0f) }
+    var dragOffset by remember { mutableFloatStateOf(0f) }
     val scope = rememberCoroutineScope()
     val pages = listOf(first, second, third)
 
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
-            .pointerInput(page) {
+            .pointerInput(Unit) {
                 detectHorizontalDragGestures(
                     onHorizontalDrag = { _, dragAmount ->
                         val maxDrag = size.width.toFloat()
-                        scope.launch {
-                            dragOffset.snapTo((dragOffset.value + dragAmount).coerceIn(-maxDrag, maxDrag))
-                        }
+
+                        dragOffset = (dragOffset + dragAmount)
+                            .coerceIn(-maxDrag, maxDrag)
                     },
                     onDragEnd = {
                         scope.launch {
                             val width = size.width.toFloat().coerceAtLeast(1f)
-                            val offset = dragOffset.value
                             val threshold = width * 0.22f
+
                             val nextPage = when {
-                                offset <= -threshold && page < pages.lastIndex -> page + 1
-                                offset >= threshold && page > 0 -> page - 1
-                                else -> page
+                                dragOffset <= -threshold && page < pages.lastIndex ->
+                                    page + 1
+
+                                dragOffset >= threshold && page > 0 ->
+                                    page - 1
+
+                                else ->
+                                    page
                             }
+
                             val targetOffset = when {
                                 nextPage > page -> -width
                                 nextPage < page -> width
                                 else -> 0f
                             }
-                            dragOffset.animateTo(targetOffset, tween(180))
-                            if (nextPage != page) onPageChange(nextPage)
-                            dragOffset.snapTo(0f)
+
+                            val animation = Animatable(dragOffset)
+
+                            animation.animateTo(
+                                targetOffset,
+                                tween(durationMillis = 180)
+                            ) {
+                                dragOffset = value
+                            }
+
+                            if (nextPage != page) {
+                                onPageChange(nextPage)
+                            }
+
+                            dragOffset = 0f
                         }
                     },
                     onDragCancel = {
-                        scope.launch { dragOffset.animateTo(0f, tween(160)) }
+                        scope.launch {
+                            val animation = Animatable(dragOffset)
+
+                            animation.animateTo(
+                                0f,
+                                tween(durationMillis = 160)
+                            ) {
+                                dragOffset = value
+                            }
+
+                            dragOffset = 0f
+                        }
                     }
                 )
             }
     ) {
         val widthPx = constraints.maxWidth.toFloat()
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .graphicsLayer { translationX = -page * widthPx + dragOffset.value }
+                .graphicsLayer {
+                    translationX = -page * widthPx + dragOffset
+                }
         ) {
             pages.forEach { content ->
-                Box(modifier = Modifier.width(maxWidth)) {
+                Box(
+                    modifier = Modifier.width(
+                        this@BoxWithConstraints.maxWidth
+                    )
+                ) {
                     content()
                 }
             }
