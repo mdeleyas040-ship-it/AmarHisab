@@ -1,13 +1,8 @@
 package com.eleyas.expensetracker.ui.screens
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
@@ -21,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -141,7 +137,7 @@ fun HomeScreen(
             }
 
             item {
-                SwipeableBalanceCards(
+                SmoothSwipeableBalanceCards(
                     page = balanceCardPage,
                     onPageChange = { balanceCardPage = it },
                     first = {
@@ -311,47 +307,65 @@ fun HomeScreen(
 }
 
 @Composable
-private fun SwipeableBalanceCards(
+private fun SmoothSwipeableBalanceCards(
     page: Int,
     onPageChange: (Int) -> Unit,
     first: @Composable () -> Unit,
     second: @Composable () -> Unit,
     third: @Composable () -> Unit
 ) {
-    AnimatedContent(
-        targetState = page,
-        label = "balance_card_swipe",
+    val dragOffset = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    val pages = listOf(first, second, third)
+
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
             .pointerInput(page) {
-                var dragDistance = 0f
                 detectHorizontalDragGestures(
                     onHorizontalDrag = { _, dragAmount ->
-                        dragDistance += dragAmount
+                        val maxDrag = size.width.toFloat()
+                        scope.launch {
+                            dragOffset.snapTo((dragOffset.value + dragAmount).coerceIn(-maxDrag, maxDrag))
+                        }
                     },
                     onDragEnd = {
-                        when {
-                            dragDistance > 80f && page < 2 -> onPageChange(page + 1)
-                            dragDistance < -80f && page > 0 -> onPageChange(page - 1)
+                        scope.launch {
+                            val width = size.width.toFloat().coerceAtLeast(1f)
+                            val offset = dragOffset.value
+                            val threshold = width * 0.22f
+                            val nextPage = when {
+                                offset <= -threshold && page < pages.lastIndex -> page + 1
+                                offset >= threshold && page > 0 -> page - 1
+                                else -> page
+                            }
+                            val targetOffset = if (nextPage > page) -width else if (nextPage < page) width else 0f
+                            dragOffset.animateTo(targetOffset, tween(180))
+                            if (nextPage != page) {
+                                onPageChange(nextPage)
+                                dragOffset.snapTo(0f)
+                            } else {
+                                dragOffset.snapTo(0f)
+                            }
                         }
+                    },
+                    onDragCancel = {
+                        scope.launch { dragOffset.animateTo(0f, tween(160)) }
                     }
                 )
-            },
-        transitionSpec = {
-            val animation = if (targetState > initialState) {
-                (slideInHorizontally { width -> -width } + fadeIn()) togetherWith
-                    (slideOutHorizontally { width -> width } + fadeOut())
-            } else {
-                (slideInHorizontally { width -> width } + fadeIn()) togetherWith
-                    (slideOutHorizontally { width -> -width } + fadeOut())
             }
-            animation.using(SizeTransform(clip = false))
-        }
-    ) { currentPage ->
-        when (currentPage) {
-            0 -> first()
-            1 -> second()
-            else -> third()
+    ) {
+        val widthPx = constraints.maxWidth.toFloat()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer { translationX = -page * widthPx + dragOffset.value }
+        ) {
+            pages.forEach { content ->
+                Box(modifier = Modifier.width(maxWidth)) {
+                    content()
+                }
+            }
         }
     }
 }
@@ -389,104 +403,31 @@ private fun PremiumHomeAccountCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.HomeWork,
-                            contentDescription = null,
-                            tint = Color(0xFF55B8FF),
-                            modifier = Modifier.size(22.dp)
-                        )
+                        Icon(Icons.Default.HomeWork, contentDescription = null, tint = Color(0xFF55B8FF), modifier = Modifier.size(22.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text(
-                            "বাড়ির হিসাব",
-                            color = Color.White.copy(alpha = 0.9f),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text("বাড়ির হিসাব", color = Color.White.copy(alpha = 0.9f), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
-
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color.White.copy(alpha = 0.08f)
-                    ) {
-                        Text(
-                            "বাড়িতে",
-                            color = Color(0xFF55B8FF),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                        )
+                    Surface(shape = RoundedCornerShape(12.dp), color = Color.White.copy(alpha = 0.08f)) {
+                        Text("বাড়িতে", color = Color(0xFF55B8FF), fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp))
                     }
                 }
-
                 Spacer(Modifier.height(8.dp))
-
-                Text(
-                    "৳${formatMoney(homeBalance)}",
-                    color = Color.White,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-
-                Text(
-                    "বাড়িতে বর্তমানে অবশিষ্ট",
-                    color = Color.White.copy(alpha = 0.55f),
-                    fontSize = 12.sp
-                )
-
+                Text("৳${formatMoney(homeBalance)}", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold)
+                Text("বাড়িতে বর্তমানে অবশিষ্ট", color = Color.White.copy(alpha = 0.55f), fontSize = 12.sp)
                 Spacer(Modifier.height(18.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    HomeAccountMiniStat(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Default.Home,
-                        label = "বাড়িতে পাঠানো",
-                        amount = totalHome,
-                        amountColor = Color(0xFF55B8FF)
-                    )
-                    HomeAccountMiniStat(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Default.ReceiptLong,
-                        label = "বাড়ির খরচ",
-                        amount = totalHomeExpense,
-                        amountColor = Color(0xFFFFB52E)
-                    )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    HomeAccountMiniStat(Modifier.weight(1f), Icons.Default.Home, "বাড়িতে পাঠানো", totalHome, Color(0xFF55B8FF))
+                    HomeAccountMiniStat(Modifier.weight(1f), Icons.Default.ReceiptLong, "বাড়ির খরচ", totalHomeExpense, Color(0xFFFFB52E))
                 }
-
                 Spacer(Modifier.height(12.dp))
-
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    color = Color.White.copy(alpha = 0.08f)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
+                Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = Color.White.copy(alpha = 0.08f)) {
+                    Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.Savings,
-                                contentDescription = null,
-                                tint = Color.White.copy(alpha = 0.7f),
-                                modifier = Modifier.size(18.dp)
-                            )
+                            Icon(Icons.Default.Savings, contentDescription = null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(7.dp))
-                            Text(
-                                "বাড়িতে অবশিষ্ট",
-                                color = Color.White.copy(alpha = 0.7f),
-                                fontSize = 12.sp
-                            )
+                            Text("বাড়িতে অবশিষ্ট", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
                         }
-                        Text(
-                            "৳${formatMoney(homeBalance)}",
-                            color = IncomeGreen,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.ExtraBold
-                        )
+                        Text("৳${formatMoney(homeBalance)}", color = IncomeGreen, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
                     }
                 }
             }
@@ -502,35 +443,15 @@ private fun HomeAccountMiniStat(
     amount: Double,
     amountColor: Color
 ) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        color = Color.White.copy(alpha = 0.08f)
-    ) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(16.dp), color = Color.White.copy(alpha = 0.08f)) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    icon,
-                    contentDescription = null,
-                    tint = Color.White.copy(alpha = 0.75f),
-                    modifier = Modifier.size(15.dp)
-                )
+                Icon(icon, contentDescription = null, tint = Color.White.copy(alpha = 0.75f), modifier = Modifier.size(15.dp))
                 Spacer(Modifier.width(5.dp))
-                Text(
-                    label,
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 10.sp,
-                    maxLines = 1
-                )
+                Text(label, color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp, maxLines = 1)
             }
             Spacer(Modifier.height(6.dp))
-            Text(
-                "৳${formatMoney(amount)}",
-                color = amountColor,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = 1
-            )
+            Text("৳${formatMoney(amount)}", color = amountColor, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
         }
     }
 }
@@ -550,11 +471,7 @@ fun QuickActionCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start
-        ) {
+        Row(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Start) {
             Surface(modifier = Modifier.size(38.dp), shape = RoundedCornerShape(10.dp), color = color.copy(alpha = 0.15f)) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
