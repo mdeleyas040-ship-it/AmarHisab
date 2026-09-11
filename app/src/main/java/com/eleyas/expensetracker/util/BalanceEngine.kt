@@ -23,8 +23,17 @@ object BalanceEngine {
         loans: List<LoanAccount>,
         loanPayments: List<LoanPayment>,
         lendings: List<LendingAccount>,
-        lendingReturns: List<LendingReturn>
+        lendingReturns: List<LendingReturn>,
+        usdToBdt: Double,
+        usdToMvr: Double
     ): Double {
+        fun convertToBdt(amount: Double, currency: String): Double = when (currency) {
+            "BDT" -> amount
+            "USD" -> amount * usdToBdt
+            "MVR" -> if (usdToMvr > 0.0) amount * (usdToBdt / usdToMvr) else 0.0
+            else -> amount
+        }
+
         val income = transactions
             .filter { it.type == "income" }
             .sumOf { convertToBdt(it.amount, it.currency) }
