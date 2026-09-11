@@ -92,13 +92,13 @@ class MainViewModel : ViewModel() {
     // যে Loan payment Home-এর টাকা থেকে করা হয়েছে, শুধু সেগুলো Home balance কমাবে।
     val totalHomeLoanPaid by derivedStateOf {
         loanPayments
-            .filter { isHomeLoanPayment(it) }
+            .filter { FundSource.isHomeLoanPayment(it) }
             .sumOf { it.amount }
     }
 
     val totalPersonalLoanPaid by derivedStateOf {
         loanPayments
-            .filterNot { isHomeLoanPayment(it) }
+            .filterNot { FundSource.isHomeLoanPayment(it) }
             .sumOf { it.amount }
     }
 
@@ -110,26 +110,31 @@ class MainViewModel : ViewModel() {
     val totalMoneyReturned by derivedStateOf { lendingReturns.sumOf { it.amount } }
     val totalMoneyToReceive by derivedStateOf { (totalMoneyLent - totalMoneyReturned).coerceAtLeast(0.0) }
 
-    // Home balance = Home transfer + Home adjustment - Home expense - Home-funded Loan payment.
-    val homeBalance by derivedStateOf {
-        (
-                totalHome +
-                        totalHomeAdjustment -
-                        totalHomeExpense -
-                        totalHomeLoanPaid
-                ).coerceAtLeast(0.0)
+    val homeLedgerEntries by derivedStateOf {
+        HomeLedgerEngine.build(
+            transactions = transactions,
+            loans = loans,
+            loanPayments = loanPayments,
+            lendings = lendings,
+            lendingReturns = lendingReturns,
+            amountConverter = { convertToBdt(it.amount, it.currency) }
+        )
     }
 
-    // Home-funded Loan payment Personal balance-এ আরেকবার subtract হবে না।
+    val homeBalance by derivedStateOf {
+        HomeLedgerEngine.summarize(homeLedgerEntries).balance
+    }
+
     val balance by derivedStateOf {
-        wallets.sumOf { it.initialBalance } +
-                totalIncome +
-                totalLoanReceived +
-                totalMoneyReturned -
-                totalExpense -
-                totalHome -
-                totalPersonalLoanPaid -
-                totalMoneyLent
+        BalanceEngine.personalBalance(
+            wallets = wallets,
+            transactions = transactions,
+            loans = loans,
+            loanPayments = loanPayments,
+            lendings = lendings,
+            lendingReturns = lendingReturns,
+            amountConverter = { convertToBdt(it.amount, it.currency) }
+        )
     }
 
     var rateLoading by mutableStateOf(false)
@@ -1281,25 +1286,6 @@ class MainViewModel : ViewModel() {
     }
 
     /**
-     * Note-based compatibility helper.
-     * পুরোনো LoanPayment data-তে আলাদা source field নেই, তাই existing note দেখে
-     * Home-funded payment চিহ্নিত করা হচ্ছে।
-     */
-    private fun isHomeLoanPayment(payment: LoanPayment): Boolean {
-        return when (payment.fundSource.lowercase(Locale.getDefault())) {
-            "home" -> true
-            "personal" -> false
-            else -> {
-                val note = payment.note.lowercase(Locale.getDefault())
-                note.contains("বাড়িতে পাঠানো") ||
-                        note.contains("বাড়িতে পাঠানো") ||
-                        note.contains("home loan payment") ||
-                        note.contains("home-funded loan")
-            }
-        }
-    }
-
-    /**
      * Home → Loan payment-এর জন্য available Home balance যাচাই।
      * Extra ছাড়া shortage থাকলে payment save হবে না।
      */
@@ -1669,8 +1655,32 @@ class MainViewModel : ViewModel() {
         return true
     }
 
-    fun addLending(context: Context, person: String, amount: Double, date: String, note: String, dueDate: String? = null) {
-        val lending = LendingAccount(System.currentTimeMillis(), person, amount, date, note, dueDate = dueDate)
+    fun addLending(
+        context: Context,
+        person: String,
+        amount: Double,
+        date: String,
+        note: String,
+        dueDate: String? = null,
+        fundSource: String = "personal"
+    ) {
+        val resolvedSource =
+            if (fundSource.equals("home", ignoreCase = true) ||
+                note.contains("[HOME]", ignoreCase = true)
+            ) {
+                "home"
+            } else {
+                "personal"
+            }
+        val lending = LendingAccount(
+            System.currentTimeMillis(),
+            person,
+            amount,
+            date,
+            note,
+            dueDate = dueDate,
+            fundSource = resolvedSource
+        )
         lendings = lendings + lending
         persistLoanData(context)
         makeText(context, "✅ ধারের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
@@ -1710,7 +1720,8 @@ class MainViewModel : ViewModel() {
                 lending.id,
                 amount,
                 date,
-                note
+                note,
+                fundSource = if (FundSource.isHomeLending(lending)) "home" else "personal"
             )
 
         lendingReturns =
@@ -1955,11 +1966,11 @@ class MainViewModel : ViewModel() {
     }
 
     fun convertToBdt(amount: Double, currency: String): Double {
-        return when (currency) {
-            "BDT" -> amount
-            "USD" -> amount * usdToBdt
-            "MVR" -> if (usdToMvr > 0) amount * (usdToBdt / usdToMvr) else 0.0
-            else -> 0.0
+        return when (currency.trim().uppercase(Locale.getDefault())) {
+            "", "BDT", "৳", "TK", "TAKA" -> amount
+            "USD", "$" -> amount * usdToBdt
+            "MVR", "RF", "RUFIYAA" -> if (usdToMvr > 0) amount * (usdToBdt / usdToMvr) else 0.0
+            else -> amount
         }
     }
 

@@ -51,6 +51,7 @@ import com.eleyas.expensetracker.model.LendingAccount
 import com.eleyas.expensetracker.ui.components.HomeLendingDialog
 import com.eleyas.expensetracker.ui.components.HomeLendingReturnDialog
 import com.eleyas.expensetracker.ui.components.WarningPopupManager
+import com.eleyas.expensetracker.util.FundSource
 import com.eleyas.expensetracker.util.HomeLedgerEngine
 import com.eleyas.expensetracker.util.HomeMoneyFlow
 import com.eleyas.expensetracker.util.formatMoney
@@ -66,7 +67,7 @@ fun HomeMoneyFlowScreen(
     val appViewModel: MainViewModel = viewModel()
     val ordered = entries.sortedByDescending { it.date }
     val summary = HomeLedgerEngine.summarize(entries)
-    val homeLendings = appViewModel.lendings.filter { it.note.contains("[HOME]") }
+    val homeLendings = appViewModel.lendings.filter { FundSource.isHomeLending(it) }
     var showHomeLendingDialog by remember { mutableStateOf(false) }
     var selectedReturnLending by remember { mutableStateOf<LendingAccount?>(null) }
 
@@ -423,7 +424,7 @@ fun HomeMoneyFlowScreen(
                 showHomeLendingDialog = false
             },
             onSave = { person, amount, date, note ->
-                val availableHome = HomeMoneyFlow.balance(appViewModel)
+                val availableHome = appViewModel.homeBalance
 
                 if (amount > availableHome) {
                     WarningPopupManager.show(
@@ -441,7 +442,8 @@ fun HomeMoneyFlowScreen(
                         person,
                         amount,
                         date,
-                        homeNote
+                        homeNote,
+                        fundSource = "home"
                     )
 
                     showHomeLendingDialog = false

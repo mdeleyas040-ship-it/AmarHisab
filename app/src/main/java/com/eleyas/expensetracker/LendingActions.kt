@@ -19,7 +19,27 @@ fun MainViewModel.updateLending(
         transactions,
         loans,
         loanPayments,
-        lendings.map { if (it.id == lending.id) lending.copy(person = person.trim(), amount = amount, date = date, note = note.trim(), dueDate = dueDate) else it },
+        lendings.map {
+            if (it.id == lending.id) {
+                lending.copy(
+                    person = person.trim(),
+                    amount = amount,
+                    date = date,
+                    note = note.trim(),
+                    dueDate = dueDate,
+                    fundSource = if (
+                        note.contains("[HOME]", ignoreCase = true) ||
+                        lending.fundSource.equals("home", ignoreCase = true)
+                    ) {
+                        "home"
+                    } else {
+                        lending.fundSource
+                    }
+                )
+            } else {
+                it
+            }
+        },
         lendingReturns,
         wallets
     )

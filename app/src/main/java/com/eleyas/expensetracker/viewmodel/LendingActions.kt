@@ -19,7 +19,15 @@ fun MainViewModel.updateLending(
         amount = amount,
         date = date,
         note = note.trim(),
-        dueDate = dueDate
+        dueDate = dueDate,
+        fundSource = if (
+            note.contains("[HOME]", ignoreCase = true) ||
+            lending.fundSource.equals("home", ignoreCase = true)
+        ) {
+            "home"
+        } else {
+            lending.fundSource
+        }
     )
     updateCloudData(
         transactions,

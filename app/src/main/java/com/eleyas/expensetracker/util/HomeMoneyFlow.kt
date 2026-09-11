@@ -13,24 +13,19 @@ import com.eleyas.expensetracker.viewmodel.MainViewModel
 object HomeMoneyFlow {
 
     fun entries(viewModel: MainViewModel): List<HomeLedgerEntry> =
-        HomeLedgerEngine.build(
-            transactions = viewModel.transactions,
-            loans = viewModel.loans,
-            loanPayments = viewModel.loanPayments,
-            lendings = viewModel.lendings,
-            lendingReturns = viewModel.lendingReturns
-        )
+        viewModel.homeLedgerEntries
 
     fun summary(viewModel: MainViewModel): HomeLedgerSummary =
         HomeLedgerEngine.summarize(entries(viewModel))
 
     fun balance(viewModel: MainViewModel): Double =
-        summary(viewModel).balance
+        viewModel.homeBalance
 
     /** Bengali labels for the Home money-flow source shown in the UI. */
     fun sourceLabel(entry: HomeLedgerEntry): String = when (entry.sourceType) {
         com.eleyas.expensetracker.model.HomeLedgerSourceType.HOME_TRANSFER -> "বাড়িতে পাঠানো"
         com.eleyas.expensetracker.model.HomeLedgerSourceType.HOME_EXPENSE -> "বাড়ির খরচ"
+        com.eleyas.expensetracker.model.HomeLedgerSourceType.HOME_ADJUSTMENT -> "বাড়ির সমন্বয়"
         com.eleyas.expensetracker.model.HomeLedgerSourceType.LOAN_GIVEN -> "ঋণ দেওয়া"
         com.eleyas.expensetracker.model.HomeLedgerSourceType.LENDING_GIVEN -> "ধার দেওয়া"
         com.eleyas.expensetracker.model.HomeLedgerSourceType.LOAN_REPAYMENT_RECEIVED -> "ঋণ পরিশোধ"
