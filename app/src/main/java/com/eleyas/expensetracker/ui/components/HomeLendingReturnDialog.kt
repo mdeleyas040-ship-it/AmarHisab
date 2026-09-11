@@ -38,32 +38,19 @@ fun HomeLendingReturnDialog(
     val remaining = (lending.amount - alreadyReturned).coerceAtLeast(0.0)
     var amount by remember { mutableStateOf("") }
     var date by remember {
-        mutableStateOf(
-            java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault())
-                .format(java.util.Date())
-        )
+        mutableStateOf(java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date()))
     }
     var note by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Default.ArrowDownward, contentDescription = null) },
-        title = {
-            Text("বাড়ির ধার ফেরত নিন", fontWeight = FontWeight.ExtraBold)
-        },
+        title = { Text("বাড়ির ধার ফেরত নিন", fontWeight = FontWeight.ExtraBold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
-                    )
-                ) {
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))) {
                     Row(Modifier.fillMaxWidth().padding(12.dp)) {
-                        Icon(
-                            Icons.Default.Handshake,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        Icon(Icons.Default.Handshake, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Column(Modifier.padding(start = 8.dp)) {
                             Text("কার কাছে: ${lending.person}", fontWeight = FontWeight.Bold)
                             Text("মোট ধার: ৳${formatMoney(lending.amount)}")
@@ -72,44 +59,17 @@ fun HomeLendingReturnDialog(
                         }
                     }
                 }
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { amount = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("ফেরত পাওয়া টাকা") },
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = date,
-                    onValueChange = { date = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("তারিখ") },
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = note,
-                    onValueChange = { note = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("নোট (ঐচ্ছিক)") },
-                    singleLine = false
-                )
+                OutlinedTextField(value = amount, onValueChange = { amount = it }, modifier = Modifier.fillMaxWidth(), label = { Text("ফেরত পাওয়া টাকা") }, singleLine = true)
+                HomeDatePickerField(value = date, label = "ফেরত তারিখ", onDateSelected = { date = it })
+                OutlinedTextField(value = note, onValueChange = { note = it }, modifier = Modifier.fillMaxWidth(), label = { Text("নোট (ঐচ্ছিক)") }, singleLine = false)
             }
         },
         confirmButton = {
-            Button(
-                onClick = {
-                    val value = amount.toDoubleOrNull() ?: return@Button
-                    if (value > 0.0 && value <= remaining && date.isNotBlank()) {
-                        onSave(value, date.trim(), note.trim())
-                    }
-                },
-                enabled = remaining > 0.0
-            ) {
-                Text("ফেরত নিন")
-            }
+            Button(onClick = {
+                val value = amount.toDoubleOrNull() ?: return@Button
+                if (value > 0.0 && value <= remaining && date.isNotBlank()) onSave(value, date.trim(), note.trim())
+            }, enabled = remaining > 0.0) { Text("ফেরত নিন") }
         },
-        dismissButton = {
-            OutlinedButton(onClick = onDismiss) { Text("বাতিল") }
-        }
+        dismissButton = { OutlinedButton(onClick = onDismiss) { Text("বাতিল") } }
     )
 }
