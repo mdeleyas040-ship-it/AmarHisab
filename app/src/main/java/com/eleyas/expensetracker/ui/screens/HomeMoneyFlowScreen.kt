@@ -61,17 +61,17 @@ fun HomeMoneyFlowScreen(
     var showHomeLendingDialog by remember { mutableStateOf(false) }
     var selectedReturnLending by remember { mutableStateOf<LendingAccount?>(null) }
 
+    // Group every existing ledger entry into exactly one transaction section.
+    // No data is changed; this is UI-only organization.
     val transactionSections = listOf(
         "ধার দেওয়া" to ordered.filter { it.sourceType == HomeLedgerSourceType.LENDING_GIVEN },
-        "বাড়ির খরচ" to ordered.filter {
-            it.sourceType == HomeLedgerSourceType.HOME_EXPENSE ||
-                it.sourceType == HomeLedgerSourceType.LOAN_REPAYMENT_RECEIVED
-        },
+        "বাড়ির খরচ" to ordered.filter { it.sourceType == HomeLedgerSourceType.HOME_EXPENSE },
         "পাওনা / ফেরত" to ordered.filter { it.sourceType == HomeLedgerSourceType.LENDING_RETURN_RECEIVED },
-        "বাড়িতে টাকা পাঠানো" to ordered.filter {
-            it.sourceType == HomeLedgerSourceType.HOME_TRANSFER ||
-                it.sourceType == HomeLedgerSourceType.HOME_ADJUSTMENT
-        }
+        "বাড়িতে টাকা পাঠানো" to ordered.filter { it.sourceType == HomeLedgerSourceType.HOME_TRANSFER },
+        "বাড়ির সমন্বয়" to ordered.filter { it.sourceType == HomeLedgerSourceType.HOME_ADJUSTMENT },
+        "ঋণ পরিশোধ" to ordered.filter { it.sourceType == HomeLedgerSourceType.LOAN_REPAYMENT_RECEIVED },
+        "অন্যান্য টাকা এসেছে" to ordered.filter { it.sourceType == HomeLedgerSourceType.OTHER_IN },
+        "অন্যান্য টাকা গেছে" to ordered.filter { it.sourceType == HomeLedgerSourceType.OTHER_OUT }
     ).filter { it.second.isNotEmpty() }
 
     Column(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
