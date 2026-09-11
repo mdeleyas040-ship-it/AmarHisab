@@ -45,6 +45,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eleyas.expensetracker.util.FundSource
+import com.eleyas.expensetracker.viewmodel.MainViewModel
 
 private val HomeLendingTeal = Color(0xFF16A085)
 
@@ -55,6 +58,12 @@ fun HomeLendingDialog(
     recentPeople: List<String> = emptyList(),
     onSave: (person: String, amount: Double, date: String, note: String) -> Unit
 ) {
+    val appViewModel: MainViewModel = viewModel()
+    val homeLendingPeople = appViewModel.lendings
+        .filter { FundSource.isHomeLending(it) }
+        .map { it.person }
+    val suggestionSource = if (recentPeople.isNotEmpty()) recentPeople else homeLendingPeople
+
     var person by remember { mutableStateOf("") }
     var personFocused by remember { mutableStateOf(false) }
     var amount by remember { mutableStateOf("") }
@@ -66,8 +75,8 @@ fun HomeLendingDialog(
     }
     var note by remember { mutableStateOf("") }
 
-    val peopleSuggestions = remember(person, recentPeople) {
-        recentPeople
+    val peopleSuggestions = remember(person, suggestionSource) {
+        suggestionSource
             .map { it.trim() }
             .filter { it.isNotBlank() }
             .distinctBy { it.lowercase(java.util.Locale.getDefault()) }
