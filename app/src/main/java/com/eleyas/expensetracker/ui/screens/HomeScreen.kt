@@ -325,37 +325,63 @@ private fun SmoothSwipeableBalanceCards(
             .pointerInput(Unit) {
                 detectHorizontalDragGestures(
                     onHorizontalDrag = { _, dragAmount ->
-                        val maxDrag = size.width.toFloat()
-                        dragOffset = (dragOffset + dragAmount).coerceIn(-maxDrag, maxDrag)
+                        val width = size.width.toFloat().coerceAtLeast(1f)
+
+                        dragOffset = (dragOffset + dragAmount)
+                            .coerceIn(-width, width)
                     },
                     onDragEnd = {
+                        val width = size.width.toFloat().coerceAtLeast(1f)
+                        val threshold = width * 0.22f
+                        val currentOffset = dragOffset
+
+                        val nextPage = when {
+                            currentOffset <= -threshold && page < pages.lastIndex ->
+                                page + 1
+
+                            currentOffset >= threshold && page > 0 ->
+                                page - 1
+
+                            else ->
+                                page
+                        }
+
+                        val targetOffset = when {
+                            nextPage > page -> -width
+                            nextPage < page -> width
+                            else -> 0f
+                        }
+
                         scope.launch {
-                            val width = size.width.toFloat().coerceAtLeast(1f)
-                            val threshold = width * 0.22f
-                            val nextPage = when {
-                                dragOffset <= -threshold && page < pages.lastIndex -> page + 1
-                                dragOffset >= threshold && page > 0 -> page - 1
-                                else -> page
-                            }
-                            val targetOffset = when {
-                                nextPage > page -> -width
-                                nextPage < page -> width
-                                else -> 0f
-                            }
-                            val animation = Animatable(dragOffset)
-                            animation.animateTo(targetOffset, tween(durationMillis = 180)) {
+                            val animation = Animatable(currentOffset)
+
+                            animation.animateTo(
+                                targetValue = targetOffset,
+                                animationSpec = tween(durationMillis = 180)
+                            ) {
                                 dragOffset = value
                             }
-                            if (nextPage != page) onPageChange(nextPage)
+
+                            if (nextPage != page) {
+                                onPageChange(nextPage)
+                            }
+
                             dragOffset = 0f
                         }
                     },
                     onDragCancel = {
+                        val currentOffset = dragOffset
+
                         scope.launch {
-                            val animation = Animatable(dragOffset)
-                            animation.animateTo(0f, tween(durationMillis = 160)) {
+                            val animation = Animatable(currentOffset)
+
+                            animation.animateTo(
+                                targetValue = 0f,
+                                animationSpec = tween(durationMillis = 160)
+                            ) {
                                 dragOffset = value
                             }
+
                             dragOffset = 0f
                         }
                     }
@@ -363,16 +389,15 @@ private fun SmoothSwipeableBalanceCards(
             }
     ) {
         val widthPx = constraints.maxWidth.toFloat()
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .graphicsLayer {
-                    translationX = -page * widthPx + dragOffset
-                }
-        ) {
-            pages.forEach { content ->
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+            pages.forEachIndexed { index, content ->
                 Box(
-                    modifier = Modifier.width(this@BoxWithConstraints.maxWidth)
+                    modifier = Modifier
+                        .width(maxWidth)
+                        .graphicsLayer {
+                            translationX = ((index - page) * widthPx) + dragOffset
+                        }
                 ) {
                     content()
                 }
