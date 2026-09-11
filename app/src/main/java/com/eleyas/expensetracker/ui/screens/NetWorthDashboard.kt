@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -73,7 +72,6 @@ fun NetWorthDashboard(
                 .padding(20.dp)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -94,7 +92,6 @@ fun NetWorthDashboard(
                             fontWeight = FontWeight.Medium
                         )
                     }
-
                     Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = Color.White.copy(alpha = 0.08f)
@@ -131,7 +128,6 @@ fun NetWorthDashboard(
                         amount = totalAssets,
                         amountColor = Color(0xFF35D98A)
                     )
-
                     NetWorthMiniStat(
                         modifier = Modifier.weight(1f),
                         icon = Icons.Default.CreditCard,
@@ -166,6 +162,9 @@ fun NetWorthDashboard(
                         amount = moneyToReceive
                     )
                 }
+
+                // Match the vertical space of the other swipe cards.
+                Spacer(Modifier.height(12.dp))
             }
         }
     }
