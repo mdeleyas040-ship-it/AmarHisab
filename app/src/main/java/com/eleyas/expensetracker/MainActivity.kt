@@ -1461,12 +1461,7 @@ fun AmarHisabApp(
                     {
                         deletingTransaction = it
                     },
-                    onShare = { transaction, customNote ->
-                        shareTextReceipt(
-                            context,
-                            buildTransactionReceipt(transaction, customNote)
-                        )
-                    },
+
                     splitBills = splitBills,
                     onAddSplitBill = {
                         showSplitBillDialog = true
