@@ -48,8 +48,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eleyas.expensetracker.util.FundSource
 import com.eleyas.expensetracker.viewmodel.MainViewModel
 
-private val HomeLendingTeal = Color(0xFF16A085)
-
 @Composable
 fun HomeLendingDialog(
     onDismiss: () -> Unit,
@@ -71,6 +69,8 @@ fun HomeLendingDialog(
             .distinctBy { it.lowercase(java.util.Locale.getDefault()) }
             .filter { person.isBlank() || it.contains(person.trim(), ignoreCase = true) }.take(5)
     }
+    val primary = MaterialTheme.colorScheme.primary
+    val onPrimary = MaterialTheme.colorScheme.onPrimary
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -81,33 +81,41 @@ fun HomeLendingDialog(
         ) {
             Column(Modifier.fillMaxWidth()) {
                 Box(
-                    Modifier.fillMaxWidth().background(HomeLendingTeal, RoundedCornerShape(26.dp)).padding(horizontal = 20.dp, vertical = 18.dp)
+                    Modifier.fillMaxWidth()
+                        .background(primary, RoundedCornerShape(26.dp))
+                        .padding(horizontal = 20.dp, vertical = 18.dp)
                 ) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Surface(Modifier.size(58.dp), RoundedCornerShape(20.dp), color = Color.White.copy(alpha = 0.12f)) {
-                            Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Handshake, null, tint = Color.White, modifier = Modifier.size(31.dp)) }
+                        Surface(Modifier.size(58.dp), RoundedCornerShape(20.dp), color = onPrimary.copy(alpha = 0.12f)) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Handshake, null, tint = onPrimary, modifier = Modifier.size(31.dp))
+                            }
                         }
                         Spacer(Modifier.width(14.dp))
                         Column(Modifier.weight(1f)) {
-                            Text("বাড়ির হিসাব", fontSize = 11.sp, letterSpacing = 1.2.sp, color = Color.White.copy(alpha = 0.72f), fontWeight = FontWeight.Bold)
-                            Text("বাড়ির টাকা দিয়ে ধার দিন", fontSize = 18.sp, color = Color.White, fontWeight = FontWeight.ExtraBold, maxLines = 1, softWrap = false)
-                            Text("বাড়ির হিসাব থেকে কাউকে টাকা ধার দিন", fontSize = 11.sp, color = Color.White.copy(alpha = 0.72f), maxLines = 1, softWrap = false)
+                            Text("বাড়ির হিসাব", fontSize = 11.sp, letterSpacing = 1.2.sp, color = onPrimary.copy(alpha = 0.72f), fontWeight = FontWeight.Bold)
+                            Text("বাড়ির টাকা দিয়ে ধার দিন", fontSize = 18.sp, color = onPrimary, fontWeight = FontWeight.ExtraBold, maxLines = 1, softWrap = false)
+                            Text("বাড়ির হিসাব থেকে কাউকে টাকা ধার দিন", fontSize = 11.sp, color = onPrimary.copy(alpha = 0.72f), maxLines = 1, softWrap = false)
                         }
-                        Surface(onClick = onDismiss, modifier = Modifier.size(42.dp), shape = RoundedCornerShape(14.dp), color = Color.White.copy(alpha = 0.10f)) {
-                            Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Close, "বন্ধ করুন", tint = Color.White, modifier = Modifier.size(25.dp)) }
+                        Surface(onClick = onDismiss, modifier = Modifier.size(42.dp), shape = RoundedCornerShape(14.dp), color = onPrimary.copy(alpha = 0.10f)) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Close, "বন্ধ করুন", tint = onPrimary, modifier = Modifier.size(25.dp))
+                            }
                         }
                     }
                 }
 
                 Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Surface(Modifier.fillMaxWidth(), RoundedCornerShape(18.dp), color = HomeLendingTeal.copy(alpha = 0.10f)) {
+                    Surface(Modifier.fillMaxWidth(), RoundedCornerShape(18.dp), color = primary.copy(alpha = 0.10f)) {
                         Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Surface(Modifier.size(38.dp), RoundedCornerShape(13.dp), color = HomeLendingTeal.copy(alpha = 0.12f)) {
-                                Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Info, null, tint = HomeLendingTeal, modifier = Modifier.size(21.dp)) }
+                            Surface(Modifier.size(38.dp), RoundedCornerShape(13.dp), color = primary.copy(alpha = 0.12f)) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.Info, null, tint = primary, modifier = Modifier.size(21.dp))
+                                }
                             }
                             Spacer(Modifier.width(10.dp))
                             Column {
-                                Text("বাড়ির পাওনা হিসেবে সংরক্ষণ হবে", color = HomeLendingTeal, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text("বাড়ির পাওনা হিসেবে সংরক্ষণ হবে", color = primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 Text("এই টাকা সাধারণ খরচ হিসেবে ধরা হবে না।", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
@@ -117,7 +125,7 @@ fun HomeLendingDialog(
                         value = person, onValueChange = { person = it },
                         modifier = Modifier.fillMaxWidth().onFocusChanged { personFocused = it.isFocused },
                         label = { Text("যাকে বাড়ির টাকা দিয়ে ধার দিচ্ছেন") },
-                        leadingIcon = { Icon(Icons.Default.Person, null, tint = HomeLendingTeal) }, singleLine = true, shape = RoundedCornerShape(17.dp)
+                        leadingIcon = { Icon(Icons.Default.Person, null, tint = primary) }, singleLine = true, shape = RoundedCornerShape(17.dp)
                     )
                     if (personFocused && peopleSuggestions.isNotEmpty()) {
                         Surface(Modifier.fillMaxWidth(), RoundedCornerShape(15.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)) {
@@ -125,7 +133,7 @@ fun HomeLendingDialog(
                                 peopleSuggestions.forEach { name ->
                                     Surface(onClick = { person = name; personFocused = false }, Modifier.fillMaxWidth(), color = Color.Transparent) {
                                         Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(Icons.Default.Person, null, tint = HomeLendingTeal, modifier = Modifier.size(18.dp))
+                                            Icon(Icons.Default.Person, null, tint = primary, modifier = Modifier.size(18.dp))
                                             Spacer(Modifier.width(9.dp)); Text(name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                                         }
                                     }
@@ -137,7 +145,7 @@ fun HomeLendingDialog(
                     OutlinedTextField(
                         value = amount, onValueChange = { amount = it }, modifier = Modifier.fillMaxWidth(),
                         label = { Text("ধারের টাকা") },
-                        leadingIcon = { Text("৳", color = HomeLendingTeal, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold) },
+                        leadingIcon = { Text("৳", color = primary, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, shape = RoundedCornerShape(17.dp)
                     )
 
@@ -145,7 +153,7 @@ fun HomeLendingDialog(
 
                     OutlinedTextField(
                         value = note, onValueChange = { note = it }, modifier = Modifier.fillMaxWidth(),
-                        label = { Text("কারণ / নোট") }, leadingIcon = { Icon(Icons.Default.ReceiptLong, null, tint = HomeLendingTeal) },
+                        label = { Text("কারণ / নোট") }, leadingIcon = { Icon(Icons.Default.ReceiptLong, null, tint = primary) },
                         minLines = 2, shape = RoundedCornerShape(17.dp)
                     )
 
@@ -160,14 +168,14 @@ fun HomeLendingDialog(
                                 if (person.isNotBlank() && value > 0.0 && date.isNotBlank()) onSave(person.trim(), value, date.trim(), note.trim())
                             },
                             Modifier.weight(1.2f).height(52.dp), RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = HomeLendingTeal, contentColor = Color.White)
+                            colors = ButtonDefaults.buttonColors(containerColor = primary, contentColor = onPrimary)
                         ) {
                             Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(6.dp))
                             Text("বাড়ির টাকা দিয়ে ধার দিন", fontSize = 10.sp, maxLines = 1, softWrap = false, fontWeight = FontWeight.ExtraBold)
                         }
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.HomeWork, null, tint = HomeLendingTeal, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(5.dp))
+                        Icon(Icons.Default.HomeWork, null, tint = primary, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(5.dp))
                         Text("বাড়ির হিসাব থেকে টাকা যাবে এবং ফেরত এলে আবার যোগ হবে", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
