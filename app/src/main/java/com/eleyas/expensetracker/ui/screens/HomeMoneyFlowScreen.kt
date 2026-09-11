@@ -47,47 +47,23 @@ fun HomeMoneyFlowScreen(
     var showHomeLendingDialog by remember { mutableStateOf(false) }
     var selectedReturnLending by remember { mutableStateOf<LendingAccount?>(null) }
 
-    Column(
-        modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "ফিরে যান")
-            }
+    Column(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "ফিরে যান") }
             Column(modifier = Modifier.weight(1f)) {
                 Text("বাড়ির হিসাব", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
-                Text(
-                    if (editable) "বাড়ির হিসাব পরিচালনা করুন" else "বাড়ির টাকার সম্পূর্ণ হিসাব",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text(if (editable) "বাড়ির হিসাব পরিচালনা করুন" else "বাড়ির টাকার সম্পূর্ণ হিসাব", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Surface(modifier = Modifier.size(42.dp), shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.HomeWork, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                }
+                Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.HomeWork, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
             }
         }
 
-        Card(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(
-                    Brush.verticalGradient(listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.95f), MaterialTheme.colorScheme.primary.copy(alpha = 0.72f)))
-                ).padding(18.dp)
-            ) {
+        Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(Brush.verticalGradient(listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.95f), MaterialTheme.colorScheme.primary.copy(alpha = 0.72f)))).padding(18.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Surface(modifier = Modifier.size(46.dp), shape = RoundedCornerShape(14.dp), color = Color.White.copy(alpha = 0.14f)) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.AccountBalanceWallet, contentDescription = null, tint = Color.White, modifier = Modifier.size(25.dp))
-                        }
+                        Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.AccountBalanceWallet, contentDescription = null, tint = Color.White, modifier = Modifier.size(25.dp)) }
                     }
                     Spacer(Modifier.size(12.dp))
                     Column {
@@ -103,18 +79,10 @@ fun HomeMoneyFlowScreen(
             }
         }
 
-        Card(
-            onClick = { showHomeLendingDialog = true },
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
-            shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
+        Card(onClick = { showHomeLendingDialog = true }, modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
             Row(modifier = Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Surface(modifier = Modifier.size(42.dp), shape = RoundedCornerShape(13.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.13f)) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.Handshake, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(21.dp))
-                    }
+                    Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Handshake, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(21.dp)) }
                 }
                 Spacer(Modifier.size(11.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -134,12 +102,7 @@ fun HomeMoneyFlowScreen(
                 items(homeLendings, key = { it.id }) { lending ->
                     val returned = appViewModel.lendingReturns.filter { it.lendingId == lending.id }.sumOf { it.amount }
                     val remaining = (lending.amount - returned).coerceAtLeast(0.0)
-                    Card(
-                        onClick = { if (remaining > 0.0) selectedReturnLending = lending },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(15.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))
-                    ) {
+                    Card(onClick = { if (remaining > 0.0) selectedReturnLending = lending }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(15.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))) {
                         Row(Modifier.fillMaxWidth().padding(11.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Handshake, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                             Column(Modifier.weight(1f).padding(horizontal = 9.dp)) {
@@ -162,9 +125,7 @@ fun HomeMoneyFlowScreen(
         if (ordered.isEmpty()) {
             Column(Modifier.fillMaxWidth().weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 Surface(modifier = Modifier.size(70.dp), shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.HomeWork, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(34.dp))
-                    }
+                    Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.HomeWork, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(34.dp)) }
                 }
                 Spacer(Modifier.height(12.dp))
                 Text("এখনও কোনো বাড়ির লেনদেন নেই", fontWeight = FontWeight.Bold)
@@ -173,7 +134,12 @@ fun HomeMoneyFlowScreen(
         } else {
             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 items(ordered, key = { it.id }) { entry ->
-                    val transaction = entry.sourceId.toLongOrNull()?.let { id -> appViewModel.transactions.firstOrNull { it.id == id } }
+                    val transaction = when (entry.sourceType) {
+                        HomeLedgerSourceType.HOME_TRANSFER,
+                        HomeLedgerSourceType.HOME_EXPENSE,
+                        HomeLedgerSourceType.HOME_ADJUSTMENT -> entry.sourceId.toLongOrNull()?.let { id -> appViewModel.transactions.firstOrNull { it.id == id } }
+                        else -> null
+                    }
                     HomeLedgerRow(
                         entry = entry,
                         editable = editable && transaction != null,
@@ -254,9 +220,7 @@ private fun HomeLedgerRow(
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
         Row(modifier = Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Surface(modifier = Modifier.size(42.dp), shape = RoundedCornerShape(13.dp), color = accent.copy(alpha = 0.11f)) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(21.dp))
-                }
+                Box(contentAlignment = Alignment.Center) { Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(21.dp)) }
             }
             Spacer(Modifier.size(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -273,15 +237,9 @@ private fun HomeLedgerRow(
                 Text("$sign৳${formatMoney(entry.amount)}", color = accent, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
                 if (editable && transaction != null) {
                     Row {
-                        IconButton(onClick = onShare, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Share, contentDescription = "শেয়ার", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
-                        }
-                        IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Edit, contentDescription = "এডিট", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
-                        }
-                        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Delete, contentDescription = "ডিলিট", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
-                        }
+                        IconButton(onClick = onShare, modifier = Modifier.size(32.dp)) { Icon(Icons.Default.Share, contentDescription = "শেয়ার", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary) }
+                        IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) { Icon(Icons.Default.Edit, contentDescription = "এডিট", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary) }
+                        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) { Icon(Icons.Default.Delete, contentDescription = "ডিলিট", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error) }
                     }
                 }
             }
