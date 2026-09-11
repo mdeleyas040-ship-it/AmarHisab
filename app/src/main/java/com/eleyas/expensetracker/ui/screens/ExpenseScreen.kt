@@ -1,6 +1,5 @@
 package com.eleyas.expensetracker.ui.screens
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,7 +27,6 @@ import com.eleyas.expensetracker.util.*
 import com.eleyas.expensetracker.viewmodel.MainViewModel
 import androidx.compose.runtime.saveable.rememberSaveable
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ExpenseScreen(
     modifier: Modifier,
@@ -116,7 +114,6 @@ fun ExpenseScreen(
             var index = 4
             if (splitBills.isNotEmpty()) index += 2 + splitBills.size
             for ((_, list) in groupedTransactions) {
-                index += 1
                 val targetIndex = list.indexOfFirst { it.id == targetTransactionId }
                 if (targetIndex >= 0) {
                     listState.animateScrollToItem(index + targetIndex)
@@ -141,7 +138,7 @@ fun ExpenseScreen(
         state = listState,
         modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         item {
             Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -225,12 +222,7 @@ fun ExpenseScreen(
             }
         }
 
-        groupedTransactions.forEach { (date, list) ->
-            stickyHeader {
-                Surface(modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.background) {
-                    Text(date, modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
-                }
-            }
+        groupedTransactions.forEach { (_, list) ->
             items(list, key = { it.id }) { trans ->
                 val wallet = wallets.firstOrNull { it.id == trans.walletId }
                 TransactionCard(transaction = trans, usdToBdt = usdToBdt, usdToMvr = usdToMvr, walletName = wallet?.name ?: "", comparisonTransactions = transactions, onEdit = onEdit, onDelete = onDelete, onShare = { receiptNote = TextFieldValue(""); receiptTransaction = it })
