@@ -69,9 +69,7 @@ fun HomeLendingDialog(
                 .fillMaxWidth()
                 .padding(horizontal = 4.dp),
             shape = RoundedCornerShape(26.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(8.dp)
         ) {
             Column(Modifier.fillMaxWidth()) {
@@ -81,44 +79,21 @@ fun HomeLendingDialog(
                         .background(HomeLendingTeal, RoundedCornerShape(26.dp))
                         .padding(horizontal = 20.dp, vertical = 18.dp)
                 ) {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Surface(
                             modifier = Modifier.size(58.dp),
                             shape = RoundedCornerShape(20.dp),
                             color = Color.White.copy(alpha = 0.12f)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Default.Handshake,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(31.dp)
-                                )
+                                Icon(Icons.Default.Handshake, null, tint = Color.White, modifier = Modifier.size(31.dp))
                             }
                         }
                         Spacer(Modifier.width(14.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(
-                                "LEND MONEY",
-                                fontSize = 11.sp,
-                                letterSpacing = 1.2.sp,
-                                color = Color.White.copy(alpha = 0.72f),
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                "ধার দিন",
-                                fontSize = 25.sp,
-                                color = Color.White,
-                                fontWeight = FontWeight.ExtraBold
-                            )
-                            Text(
-                                "কাউকে টাকা দেওয়ার তথ্য",
-                                fontSize = 11.sp,
-                                color = Color.White.copy(alpha = 0.72f)
-                            )
+                            Text("HOME HISAB", fontSize = 11.sp, letterSpacing = 1.2.sp, color = Color.White.copy(alpha = 0.72f), fontWeight = FontWeight.Bold)
+                            Text("বাড়ির টাকা দিয়ে ধার দিন", fontSize = 23.sp, color = Color.White, fontWeight = FontWeight.ExtraBold)
+                            Text("বাড়ির হিসাব থেকে কাউকে টাকা ধার দিন", fontSize = 11.sp, color = Color.White.copy(alpha = 0.72f))
                         }
                         Surface(
                             onClick = onDismiss,
@@ -127,21 +102,14 @@ fun HomeLendingDialog(
                             color = Color.White.copy(alpha = 0.10f)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "বন্ধ করুন",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(25.dp)
-                                )
+                                Icon(Icons.Default.Close, "বন্ধ করুন", tint = Color.White, modifier = Modifier.size(25.dp))
                             }
                         }
                     }
                 }
 
                 Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 18.dp, vertical = 16.dp),
+                    Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Surface(
@@ -149,174 +117,74 @@ fun HomeLendingDialog(
                         shape = RoundedCornerShape(18.dp),
                         color = HomeLendingTeal.copy(alpha = 0.10f)
                     ) {
-                        Row(
-                            Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Surface(
-                                modifier = Modifier.size(38.dp),
-                                shape = RoundedCornerShape(13.dp),
-                                color = HomeLendingTeal.copy(alpha = 0.12f)
-                            ) {
+                        Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Surface(Modifier.size(38.dp), RoundedCornerShape(13.dp), color = HomeLendingTeal.copy(alpha = 0.12f)) {
                                 Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Default.Info,
-                                        contentDescription = null,
-                                        tint = HomeLendingTeal,
-                                        modifier = Modifier.size(21.dp)
-                                    )
+                                    Icon(Icons.Default.Info, null, tint = HomeLendingTeal, modifier = Modifier.size(21.dp))
                                 }
                             }
                             Spacer(Modifier.width(10.dp))
                             Column {
-                                Text(
-                                    "পাওনা হিসেবে সংরক্ষণ হবে",
-                                    color = HomeLendingTeal,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    "এই টাকা খরচ হিসেবে ধরা হবে না।",
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Text("বাড়ির পাওনা হিসেবে সংরক্ষণ হবে", color = HomeLendingTeal, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text("এই টাকা সাধারণ খরচ হিসেবে ধরা হবে না।", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
 
                     OutlinedTextField(
-                        value = person,
-                        onValueChange = { person = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("যাকে ধার দিচ্ছেন") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = null,
-                                tint = HomeLendingTeal
-                            )
-                        },
-                        singleLine = true,
-                        shape = RoundedCornerShape(17.dp)
+                        value = person, onValueChange = { person = it }, modifier = Modifier.fillMaxWidth(),
+                        label = { Text("যাকে বাড়ির টাকা দিয়ে ধার দিচ্ছেন") },
+                        leadingIcon = { Icon(Icons.Default.Person, null, tint = HomeLendingTeal) },
+                        singleLine = true, shape = RoundedCornerShape(17.dp)
                     )
-
                     OutlinedTextField(
-                        value = amount,
-                        onValueChange = { amount = it },
-                        modifier = Modifier.fillMaxWidth(),
+                        value = amount, onValueChange = { amount = it }, modifier = Modifier.fillMaxWidth(),
                         label = { Text("ধারের টাকা") },
-                        leadingIcon = {
-                            Text(
-                                "৳",
-                                color = HomeLendingTeal,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.ExtraBold
-                            )
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        shape = RoundedCornerShape(17.dp)
+                        leadingIcon = { Text("৳", color = HomeLendingTeal, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, shape = RoundedCornerShape(17.dp)
                     )
-
                     OutlinedTextField(
-                        value = date,
-                        onValueChange = { date = it },
-                        modifier = Modifier.fillMaxWidth(),
+                        value = date, onValueChange = { date = it }, modifier = Modifier.fillMaxWidth(),
                         label = { Text("দেওয়ার তারিখ") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.CalendarMonth,
-                                contentDescription = null,
-                                tint = HomeLendingTeal
-                            )
-                        },
-                        singleLine = true,
-                        shape = RoundedCornerShape(17.dp)
+                        leadingIcon = { Icon(Icons.Default.CalendarMonth, null, tint = HomeLendingTeal) },
+                        singleLine = true, shape = RoundedCornerShape(17.dp)
                     )
-
                     OutlinedTextField(
-                        value = note,
-                        onValueChange = { note = it },
-                        modifier = Modifier.fillMaxWidth(),
+                        value = note, onValueChange = { note = it }, modifier = Modifier.fillMaxWidth(),
                         label = { Text("কারণ / নোট") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.ReceiptLong,
-                                contentDescription = null,
-                                tint = HomeLendingTeal
-                            )
-                        },
-                        minLines = 2,
-                        shape = RoundedCornerShape(17.dp)
+                        leadingIcon = { Icon(Icons.Default.ReceiptLong, null, tint = HomeLendingTeal) },
+                        minLines = 2, shape = RoundedCornerShape(17.dp)
                     )
 
                     Spacer(Modifier.height(2.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Button(
                             onClick = onDismiss,
-                            modifier = Modifier
-                                .weight(0.8f)
-                                .height(52.dp),
+                            modifier = Modifier.weight(0.8f).height(52.dp),
                             shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            )
-                        ) {
-                            Text("বাতিল", fontWeight = FontWeight.Bold)
-                        }
-
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface)
+                        ) { Text("বাতিল", fontWeight = FontWeight.Bold) }
                         Button(
                             onClick = {
-                                val value = amount
-                                    .replace(",", "")
-                                    .trim()
-                                    .toDoubleOrNull()
-                                    ?: return@Button
+                                val value = amount.replace(",", "").trim().toDoubleOrNull() ?: return@Button
                                 if (person.isNotBlank() && value > 0.0 && date.isNotBlank()) {
                                     onSave(person.trim(), value, date.trim(), note.trim())
                                 }
                             },
-                            modifier = Modifier
-                                .weight(1.2f)
-                                .height(52.dp),
+                            modifier = Modifier.weight(1.2f).height(52.dp),
                             shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = HomeLendingTeal,
-                                contentColor = Color.White
-                            )
+                            colors = ButtonDefaults.buttonColors(containerColor = HomeLendingTeal, contentColor = Color.White)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                modifier = Modifier.size(19.dp)
-                            )
+                            Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(19.dp))
                             Spacer(Modifier.width(7.dp))
-                            Text("ধার সংরক্ষণ", fontWeight = FontWeight.ExtraBold)
+                            Text("বাড়ির টাকা দিয়ে ধার দিন", fontWeight = FontWeight.ExtraBold)
                         }
                     }
 
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.HomeWork,
-                            contentDescription = null,
-                            tint = HomeLendingTeal,
-                            modifier = Modifier.size(16.dp)
-                        )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.HomeWork, null, tint = HomeLendingTeal, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(5.dp))
-                        Text(
-                            "বাড়ির হিসাব থেকে টাকা যাবে এবং ফেরত এলে আবার যোগ হবে",
-                            fontSize = 9.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Text("বাড়ির হিসাব থেকে টাকা যাবে এবং ফেরত এলে আবার যোগ হবে", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
