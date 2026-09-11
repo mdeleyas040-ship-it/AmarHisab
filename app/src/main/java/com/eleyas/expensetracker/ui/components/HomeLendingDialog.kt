@@ -1,6 +1,5 @@
 package com.eleyas.expensetracker.ui.components
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,16 +41,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.eleyas.expensetracker.ui.components.WarningPopupManager
 import com.eleyas.expensetracker.util.FundSource
 import com.eleyas.expensetracker.util.formatMoney
 import com.eleyas.expensetracker.viewmodel.MainViewModel
+import com.eleyas.expensetracker.ui.components.WarningPopupManager
 
 @Composable
 fun HomeLendingDialog(
@@ -59,6 +59,7 @@ fun HomeLendingDialog(
     recentPeople: List<String> = emptyList(),
     onSave: (person: String, amount: Double, date: String, note: String) -> Unit
 ) {
+    val context = LocalContext.current
     val appViewModel: MainViewModel = viewModel()
     val homeLendingPeople = appViewModel.lendings.filter { FundSource.isHomeLending(it) }.map { it.person }
     val suggestionSource = if (recentPeople.isNotEmpty()) recentPeople else homeLendingPeople
@@ -191,10 +192,8 @@ fun HomeLendingDialog(
                                     return@Button
                                 }
                                 val homeNote = listOf("[HOME]", note.trim()).filter { it.isNotBlank() }.joinToString(" ")
-                                // Existing lending reminder logic uses LendingAccount.dueDate.
-                                // For Home lending, the selected 'দেওয়ার তারিখ' is the reminder/due date.
                                 appViewModel.addLending(
-                                    context = androidx.compose.ui.platform.LocalContext.current,
+                                    context = context,
                                     person = person.trim(),
                                     amount = value,
                                     date = date.trim(),
