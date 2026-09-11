@@ -27,14 +27,9 @@ fun syncLoansToFirestore(
     if (loans.isEmpty()) return
 
     val batch = firestore.batch()
-
-    val collection = firestore
-        .collection("users")
-        .document(userId)
-        .collection("loans")
+    val collection = firestore.collection("users").document(userId).collection("loans")
 
     loans.forEach { loan ->
-
         val loanData = mapOf(
             "id" to loan.id,
             "name" to loan.name,
@@ -45,10 +40,7 @@ fun syncLoansToFirestore(
             "note" to loan.note,
             "lastEditedDate" to loan.lastEditedDate,
             "editHistory" to loan.editHistory,
-
-            // Previously missing from Cloud.
             "dueDate" to (loan.dueDate ?: ""),
-
             "borrowings" to loan.borrowings.map { borrowing ->
                 mapOf(
                     "id" to borrowing.id,
@@ -59,16 +51,11 @@ fun syncLoansToFirestore(
                 )
             }
         )
-
-        val document = collection
-            .document(loan.id.toString())
-
-        batch.set(document, loanData)
+        batch.set(collection.document(loan.id.toString()), loanData)
     }
 
     batch.commit()
 }
-
 
 /* =========================================================
    LOAN PAYMENTS
@@ -82,14 +69,9 @@ fun syncLoanPaymentsToFirestore(
     if (payments.isEmpty()) return
 
     val batch = firestore.batch()
-
-    val collection = firestore
-        .collection("users")
-        .document(userId)
-        .collection("loanPayments")
+    val collection = firestore.collection("users").document(userId).collection("loanPayments")
 
     payments.forEach { payment ->
-
         val paymentData = mapOf(
             "id" to payment.id,
             "loanId" to payment.loanId,
@@ -97,20 +79,13 @@ fun syncLoanPaymentsToFirestore(
             "date" to payment.date,
             "note" to payment.note,
             "fundSource" to payment.fundSource,
-            "sourceTransactionId" to (
-                    payment.sourceTransactionId ?: 0L
-                    )
+            "sourceTransactionId" to (payment.sourceTransactionId ?: 0L)
         )
-
-        val document = collection
-            .document(payment.id.toString())
-
-        batch.set(document, paymentData)
+        batch.set(collection.document(payment.id.toString()), paymentData)
     }
 
     batch.commit()
 }
-
 
 /* =========================================================
    LENDINGS
@@ -124,37 +99,26 @@ fun syncLendingsToFirestore(
     if (lendings.isEmpty()) return
 
     val batch = firestore.batch()
-
-    val collection = firestore
-        .collection("users")
-        .document(userId)
-        .collection("lendings")
+    val collection = firestore.collection("users").document(userId).collection("lendings")
 
     lendings.forEach { lending ->
-
         val lendingData = mapOf(
             "id" to lending.id,
             "person" to lending.person,
             "amount" to lending.amount,
             "date" to lending.date,
             "note" to lending.note,
-
-            // Previously missing from Cloud.
             "dueDate" to (lending.dueDate ?: ""),
-
-            // Critical for Personal/Home accounting.
-            "fundSource" to lending.fundSource
+            "fundSource" to lending.fundSource,
+            // Accounting identity: the wallet and currency from which the lending was made.
+            "walletId" to lending.walletId,
+            "currency" to lending.currency
         )
-
-        val document = collection
-            .document(lending.id.toString())
-
-        batch.set(document, lendingData)
+        batch.set(collection.document(lending.id.toString()), lendingData)
     }
 
     batch.commit()
 }
-
 
 /* =========================================================
    LENDING RETURNS
@@ -168,44 +132,30 @@ fun syncLendingReturnsToFirestore(
     if (returns.isEmpty()) return
 
     val batch = firestore.batch()
-
-    val collection = firestore
-        .collection("users")
-        .document(userId)
-        .collection("lendingReturns")
+    val collection = firestore.collection("users").document(userId).collection("lendingReturns")
 
     returns.forEach { item ->
-
         val returnData = mapOf(
             "id" to item.id,
             "lendingId" to item.lendingId,
             "amount" to item.amount,
             "date" to item.date,
             "note" to item.note,
-
-            // Critical for Personal/Home accounting.
-            "fundSource" to item.fundSource
+            "fundSource" to item.fundSource,
+            // Accounting identity: the wallet/currency receiving the returned money.
+            "walletId" to item.walletId,
+            "currency" to item.currency
         )
-
-        val document = collection
-            .document(item.id.toString())
-
-        batch.set(document, returnData)
+        batch.set(collection.document(item.id.toString()), returnData)
     }
 
     batch.commit()
 }
 
-
 /* =========================================================
    LOAN INTEREST TERMS
    ========================================================= */
 
-/**
- * Loan interest terms আলাদা collection-এ sync করা হচ্ছে।
- *
- * এতে অন্য device / restore-এর সময় interest হারাবে না।
- */
 fun syncLoanInterestTermsToFirestore(
     firestore: FirebaseFirestore,
     userId: String,
@@ -214,48 +164,25 @@ fun syncLoanInterestTermsToFirestore(
     if (terms.isEmpty()) return
 
     val batch = firestore.batch()
-
-    val collection = firestore
-        .collection("users")
-        .document(userId)
-        .collection("loanInterestTerms")
+    val collection = firestore.collection("users").document(userId).collection("loanInterestTerms")
 
     terms.forEach { term ->
-
         val termData = mapOf(
             "loanId" to term.loanId,
             "interestRate" to term.interestRate,
             "totalInterest" to term.totalInterest,
             "interestType" to term.interestType
         )
-
-        val document = collection
-            .document(term.loanId.toString())
-
-        batch.set(
-            document,
-            termData
-        )
+        batch.set(collection.document(term.loanId.toString()), termData)
     }
 
     batch.commit()
 }
 
-
 /* =========================================================
    ALL LOAN / LENDING DATA
    ========================================================= */
 
-/**
- * একবারে সব Loan / Lending related data Cloud-এ পাঠানোর জন্য।
- *
- * Includes:
- * - Loans
- * - Loan payments
- * - Loan interest terms
- * - Lendings
- * - Lending returns
- */
 fun syncAllLoanAndLendingData(
     firestore: FirebaseFirestore,
     userId: String,
@@ -265,34 +192,9 @@ fun syncAllLoanAndLendingData(
     lendingReturns: List<LendingReturn>,
     loanInterestTerms: List<LoanInterestTerms> = emptyList()
 ) {
-
-    syncLoansToFirestore(
-        firestore = firestore,
-        userId = userId,
-        loans = loans
-    )
-
-    syncLoanPaymentsToFirestore(
-        firestore = firestore,
-        userId = userId,
-        payments = loanPayments
-    )
-
-    syncLoanInterestTermsToFirestore(
-        firestore = firestore,
-        userId = userId,
-        terms = loanInterestTerms
-    )
-
-    syncLendingsToFirestore(
-        firestore = firestore,
-        userId = userId,
-        lendings = lendings
-    )
-
-    syncLendingReturnsToFirestore(
-        firestore = firestore,
-        userId = userId,
-        returns = lendingReturns
-    )
+    syncLoansToFirestore(firestore, userId, loans)
+    syncLoanPaymentsToFirestore(firestore, userId, loanPayments)
+    syncLoanInterestTermsToFirestore(firestore, userId, loanInterestTerms)
+    syncLendingsToFirestore(firestore, userId, lendings)
+    syncLendingReturnsToFirestore(firestore, userId, lendingReturns)
 }
