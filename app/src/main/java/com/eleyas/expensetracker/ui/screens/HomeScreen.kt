@@ -385,6 +385,9 @@ fun HomeScreen(
 
             item {
                 Card(
+                    onClick = {
+                        showHomeMoneyFlow = true
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(

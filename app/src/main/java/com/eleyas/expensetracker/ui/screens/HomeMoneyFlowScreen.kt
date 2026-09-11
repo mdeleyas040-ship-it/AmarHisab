@@ -373,7 +373,7 @@ fun HomeMoneyFlowScreen(
 
         if (ordered.isEmpty()) {
             Column(
-                Modifier.fillMaxSize(),
+                Modifier.fillMaxWidth().weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -407,7 +407,7 @@ fun HomeMoneyFlowScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxWidth().weight(1f),
                 contentPadding = PaddingValues(12.dp),
                 verticalArrangement = Arrangement.spacedBy(9.dp)
             ) {
