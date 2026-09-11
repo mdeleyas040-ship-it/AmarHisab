@@ -233,7 +233,7 @@ fun ExpenseScreen(
             }
             items(list, key = { it.id }) { trans ->
                 val wallet = wallets.firstOrNull { it.id == trans.walletId }
-                TransactionCard(transaction = trans, usdToBdt = usdToBdt, usdToMvr = usdToMvr, walletName = wallet?.name ?: "", onEdit = onEdit, onDelete = onDelete, onShare = { receiptNote = TextFieldValue(""); receiptTransaction = it })
+                TransactionCard(transaction = trans, usdToBdt = usdToBdt, usdToMvr = usdToMvr, walletName = wallet?.name ?: "", comparisonTransactions = transactions, onEdit = onEdit, onDelete = onDelete, onShare = { receiptNote = TextFieldValue(""); receiptTransaction = it })
             }
         }
     }
