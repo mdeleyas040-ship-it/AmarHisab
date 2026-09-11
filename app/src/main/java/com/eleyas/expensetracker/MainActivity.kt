@@ -1438,7 +1438,7 @@ fun AmarHisabApp(
                     Modifier.fillMaxSize(),
                     transactions.filter {
                         it.type == "expense" ||
-                                it.type == "home"
+                                it.type == "home_expense"
                     },
                     wallets,
                     usdToBdt,
@@ -1450,7 +1450,7 @@ fun AmarHisabApp(
                         showAddDialog = true
                     },
                     {
-                        addType = "home"
+                        addType = "home_expense"
                         editingTransaction = null
                         showAddDialog = true
                     },
@@ -1961,8 +1961,7 @@ fun AmarHisabApp(
                     onBack = {
                         showShoppingList = false
                     },
-                    onAdd = {
-                            n, a, cu, c, nt ->
+                    onAdd = { n, a, cu, c, nt ->
                         viewModel.addShoppingItem(
                             context,
                             n,
@@ -1972,29 +1971,25 @@ fun AmarHisabApp(
                             nt
                         )
                     },
-                    onToggle = {
-                            id ->
+                    onToggle = { id ->
                         viewModel.toggleShoppingItem(
                             context,
                             id
                         )
                     },
-                    onRemove = {
-                            item ->
+                    onRemove = { item ->
                         viewModel.removeShoppingItem(
                             context,
                             item
                         )
                     },
-                    onEdit = {
-                            item ->
+                    onEdit = { item ->
                         viewModel.updateShoppingItem(
                             context,
                             item
                         )
                     },
-                    onConvert = {
-                            cb ->
+                    onConvert = { cb ->
                         viewModel.convertCheckedToExpenses(
                             context,
                             cb
@@ -2081,8 +2076,7 @@ fun AmarHisabApp(
                         notifications =
                             notifications,
 
-                        onNotificationClick = {
-                                notification ->
+                        onNotificationClick = { notification ->
 
                             if (
                                 notification.type.equals(
@@ -2150,9 +2144,7 @@ fun AmarHisabApp(
                 onDeleteTransaction = {
                     deletingTransaction = it
                 },
-                onShareResults = {
-                        query,
-                        isPdf ->
+                onShareResults = { query, isPdf ->
 
                     if (isPdf) {
 
@@ -2224,8 +2216,7 @@ fun AmarHisabApp(
                 onDismiss = {
                     showVoiceDialog = false
                 },
-                onResult = {
-                        result ->
+                onResult = { result ->
 
                     addType = result.type
 
@@ -2258,8 +2249,7 @@ fun AmarHisabApp(
             SMSSuggestionDialog(
                 suggestions = smsSuggestions,
 
-                onAddTransaction = {
-                        suggestion ->
+                onAddTransaction = { suggestion ->
 
                     editingTransaction =
                         Transaction(
@@ -2300,8 +2290,7 @@ fun AmarHisabApp(
                         )
                 },
 
-                onDismiss = {
-                        suggestion ->
+                onDismiss = { suggestion ->
 
                     com.eleyas.expensetracker.util
                         .SMSReceiver
@@ -2488,8 +2477,7 @@ fun AmarHisabApp(
                 existingWallet =
                     selectedWalletForEdit,
 
-                onSave = {
-                        n, t, b, c, cl ->
+                onSave = { n, t, b, c, cl ->
 
                     if (
                         selectedWalletForEdit != null
@@ -2578,8 +2566,7 @@ fun AmarHisabApp(
                 viewModel.homeBalance,
                 customCategories,
 
-                {
-                        newCategory ->
+                { newCategory ->
 
                     val normalized =
                         newCategory
@@ -2615,8 +2602,7 @@ fun AmarHisabApp(
                     editingTransaction = null
                 },
 
-                {
-                        a, c, cat, r, d, w, i, audio, transactionId ->
+                { a, c, cat, r, d, w, i, audio, transactionId ->
 
                     if (
                         editingTransaction != null &&
@@ -2660,8 +2646,7 @@ fun AmarHisabApp(
                     editingTransaction = null
                 },
 
-                {
-                        id, a, d, extraHomeAmount, transactionId ->
+                { id, a, d, extraHomeAmount, transactionId ->
 
                     loans
                         .firstOrNull {
@@ -2702,8 +2687,7 @@ fun AmarHisabApp(
                     showBudgetDialog = false
                 },
 
-                {
-                        newCategory ->
+                { newCategory ->
 
                     val normalized =
                         newCategory
@@ -2745,8 +2729,7 @@ fun AmarHisabApp(
                     editingBorrowing = null
                 },
 
-                {
-                        a, d, n ->
+                { a, d, n ->
 
                     viewModel.updateBorrowing(
                         context,
@@ -2761,6 +2744,7 @@ fun AmarHisabApp(
                 }
             )
         }
+
         if (deletingTransaction != null) {
 
             val targetTransaction = deletingTransaction!!
@@ -2860,8 +2844,7 @@ fun AmarHisabApp(
                     }
                     .distinct(),
 
-                {
-                        n, s, p, m, d, nt, dd ->
+                { n, s, p, m, d, nt, dd ->
 
                     if (
                         editingLoan != null
@@ -2923,10 +2906,7 @@ fun AmarHisabApp(
                             false
                     },
 
-                    onSavePayment = {
-                            amount,
-                            date,
-                            note ->
+                    onSavePayment = { amount, date, note ->
 
                         viewModel.addLoanPayment(
                             context,
@@ -2955,8 +2935,7 @@ fun AmarHisabApp(
                             false
                     },
 
-                    {
-                            a, d, n ->
+                    { a, d, n ->
 
                         viewModel.addLoanPayment(
                             context,
@@ -3075,8 +3054,7 @@ fun AmarHisabApp(
                     editingLending = null
                 },
 
-                onSave = {
-                        p, a, d, n, dd ->
+                onSave = { p, a, d, n, dd ->
 
                     viewModel.updateLending(
                         context,
@@ -3133,10 +3111,7 @@ fun AmarHisabApp(
                         false
                 },
 
-                onSave = {
-                        amount,
-                        date,
-                        note ->
+                onSave = { amount, date, note ->
 
                     if (amount > remainingDue) {
                         WarningPopupManager.show(
@@ -3169,8 +3144,7 @@ fun AmarHisabApp(
                     showSplitBillDialog = false
                 },
 
-                onSave = {
-                        newSplit ->
+                onSave = { newSplit ->
 
                     splitBills =
                         splitBills +
@@ -3205,8 +3179,7 @@ fun AmarHisabApp(
                     selectedSplitBill = null
                 },
 
-                onDelete = {
-                        splitToDelete ->
+                onDelete = { splitToDelete ->
 
                     deletingSplitBill = splitToDelete
                     selectedSplitBill = null
@@ -3271,15 +3244,12 @@ fun AmarHisabApp(
                     showFamilyDialog = false
                 },
 
-                onCreate = {
-                        name ->
+                onCreate = { name ->
 
                     viewModel.createHousehold(
                         context,
                         name
-                    ) {
-                            success,
-                            message ->
+                    ) { success, message ->
 
                         Toast.makeText(
                             context,
@@ -3294,15 +3264,12 @@ fun AmarHisabApp(
                     }
                 },
 
-                onJoin = {
-                        code ->
+                onJoin = { code ->
 
                     viewModel.joinHousehold(
                         context,
                         code
-                    ) {
-                            success,
-                            message ->
+                    ) { success, message ->
 
                         Toast.makeText(
                             context,
@@ -3321,9 +3288,7 @@ fun AmarHisabApp(
 
                     viewModel.leaveHousehold(
                         context
-                    ) {
-                            success,
-                            message ->
+                    ) { success, message ->
 
                         Toast.makeText(
                             context,
