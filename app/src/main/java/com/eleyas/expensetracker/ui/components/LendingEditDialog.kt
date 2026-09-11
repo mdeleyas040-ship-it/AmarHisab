@@ -14,7 +14,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.eleyas.expensetracker.model.LendingAccount
-import com.eleyas.expensetracker.util.Green
+import com.eleyas.expensetracker.ui.theme.Green
 import com.eleyas.expensetracker.util.formatMoney
 import java.text.SimpleDateFormat
 import java.util.Calendar
