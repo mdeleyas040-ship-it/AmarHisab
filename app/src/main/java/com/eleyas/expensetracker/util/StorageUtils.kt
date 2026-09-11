@@ -583,6 +583,8 @@ fun saveLendings(
                 put("amount", lending.amount)
                 put("date", lending.date)
                 put("note", lending.note)
+                put("walletId", lending.walletId)
+                put("currency", lending.currency.ifBlank { "BDT" })
                 put(
                     "dueDate",
                     lending.dueDate ?: ""

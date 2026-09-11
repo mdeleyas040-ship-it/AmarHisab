@@ -112,7 +112,9 @@ data class LendingAccount(
     val date: String,
     val note: String,
     val dueDate: String? = null,
-    val fundSource: String = "personal"
+    val fundSource: String = "personal",
+    val walletId: String = "default_cash",
+    val currency: String = "BDT"
 )
 
 data class LendingReturn(
@@ -121,7 +123,9 @@ data class LendingReturn(
     val amount: Double,
     val date: String,
     val note: String,
-    val fundSource: String = "personal"
+    val fundSource: String = "personal",
+    val walletId: String = "default_cash",
+    val currency: String = "BDT"
 )
 
 data class LoanInterestTerms(
