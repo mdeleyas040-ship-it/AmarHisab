@@ -294,6 +294,7 @@ fun ExpenseScreen(
                     usdToBdt,
                     usdToMvr,
                     walletName = wallet?.name ?: "",
+                    comparisonTransactions = transactions,
                     onEdit = onEdit,
                     onDelete = onDelete
                 )
