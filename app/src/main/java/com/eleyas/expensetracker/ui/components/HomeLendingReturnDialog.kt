@@ -59,17 +59,42 @@ fun HomeLendingReturnDialog(
                         }
                     }
                 }
-                OutlinedTextField(value = amount, onValueChange = { amount = it }, modifier = Modifier.fillMaxWidth(), label = { Text("ফেরত পাওয়া টাকা") }, singleLine = true)
-                HomeDatePickerField(value = date, label = "ফেরত তারিখ", onDateSelected = { date = it })
-                OutlinedTextField(value = note, onValueChange = { note = it }, modifier = Modifier.fillMaxWidth(), label = { Text("নোট (ঐচ্ছিক)") }, singleLine = false)
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { amount = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("ফেরত পাওয়া টাকা") },
+                    singleLine = true
+                )
+                HomeDatePickerField(
+                    value = date,
+                    label = "ফেরত তারিখ",
+                    onDateSelected = { date = it }
+                )
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("নোট (ঐচ্ছিক)") },
+                    singleLine = false
+                )
             }
         },
         confirmButton = {
-            Button(onClick = {
-                val value = amount.toDoubleOrNull() ?: return@Button
-                if (value > 0.0 && value <= remaining && date.isNotBlank()) onSave(value, date.trim(), note.trim())
-            }, enabled = remaining > 0.0) { Text("ফেরত নিন") }
+            Button(
+                onClick = {
+                    val value = amount.replace(",", "").trim().toDoubleOrNull() ?: return@Button
+                    if (value > 0.0 && value <= remaining && date.isNotBlank()) {
+                        onSave(value, date.trim(), note.trim())
+                    }
+                },
+                enabled = remaining > 0.0
+            ) {
+                Text("বাড়ির ধার সংরক্ষণ করুন", fontWeight = FontWeight.ExtraBold)
+            }
         },
-        dismissButton = { OutlinedButton(onClick = onDismiss) { Text("বাতিল") } }
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss) { Text("বাতিল") }
+        }
     )
 }
