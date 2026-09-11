@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -23,7 +24,8 @@ fun HomeDatePickerField(
     value: String,
     label: String,
     onDateSelected: (String) -> Unit,
-    placeholder: String? = null
+    placeholder: String? = null,
+    compact: Boolean = false
 ) {
     val context = LocalContext.current
     val primary = MaterialTheme.colorScheme.primary
@@ -73,12 +75,19 @@ fun HomeDatePickerField(
         value = value,
         onValueChange = {},
         modifier = Modifier.fillMaxWidth(),
-        label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        label = {
+            Text(
+                label,
+                fontSize = if (compact) 10.sp else 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
         placeholder = if (placeholder != null) {
-            { Text(placeholder, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            { Text(placeholder, fontSize = if (compact) 13.sp else 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         } else null,
-        leadingIcon = {
-            Icon(Icons.Default.CalendarMonth, contentDescription = "তারিখ নির্বাচন করুন", tint = primary)
+        leadingIcon = if (compact) null else {
+            { Icon(Icons.Default.CalendarMonth, contentDescription = "তারিখ নির্বাচন করুন", tint = primary) }
         },
         trailingIcon = {
             IconButton(onClick = { openPicker() }) {
