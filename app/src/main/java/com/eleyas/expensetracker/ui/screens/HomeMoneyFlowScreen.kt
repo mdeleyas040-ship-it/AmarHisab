@@ -61,17 +61,23 @@ fun HomeMoneyFlowScreen(
     var showHomeLendingDialog by remember { mutableStateOf(false) }
     var selectedReturnLending by remember { mutableStateOf<LendingAccount?>(null) }
 
-    // Group every existing ledger entry into exactly one transaction section.
-    // No data is changed; this is UI-only organization.
+    // UI-only grouping: keep every existing ledger entry in its intended section.
+    // No transaction data, IDs, Firestore structure, or calculation is changed.
     val transactionSections = listOf(
-        "ধার দেওয়া" to ordered.filter { it.sourceType == HomeLedgerSourceType.LENDING_GIVEN },
-        "বাড়ির খরচ" to ordered.filter { it.sourceType == HomeLedgerSourceType.HOME_EXPENSE },
-        "পাওনা / ফেরত" to ordered.filter { it.sourceType == HomeLedgerSourceType.LENDING_RETURN_RECEIVED },
-        "বাড়িতে টাকা পাঠানো" to ordered.filter { it.sourceType == HomeLedgerSourceType.HOME_TRANSFER },
-        "বাড়ির সমন্বয়" to ordered.filter { it.sourceType == HomeLedgerSourceType.HOME_ADJUSTMENT },
-        "ঋণ পরিশোধ" to ordered.filter { it.sourceType == HomeLedgerSourceType.LOAN_REPAYMENT_RECEIVED },
-        "অন্যান্য টাকা এসেছে" to ordered.filter { it.sourceType == HomeLedgerSourceType.OTHER_IN },
-        "অন্যান্য টাকা গেছে" to ordered.filter { it.sourceType == HomeLedgerSourceType.OTHER_OUT }
+        "💸 ধার দেওয়া" to ordered.filter {
+            it.sourceType == HomeLedgerSourceType.LENDING_GIVEN
+        },
+        "🏠 বাড়ির খরচ" to ordered.filter {
+            it.sourceType == HomeLedgerSourceType.HOME_EXPENSE ||
+                it.sourceType == HomeLedgerSourceType.LOAN_REPAYMENT_RECEIVED
+        },
+        "💰 পাওনা / ফেরত" to ordered.filter {
+            it.sourceType == HomeLedgerSourceType.LENDING_RETURN_RECEIVED
+        },
+        "📥 বাড়িতে টাকা পাঠানো" to ordered.filter {
+            it.sourceType == HomeLedgerSourceType.HOME_TRANSFER ||
+                it.sourceType == HomeLedgerSourceType.HOME_ADJUSTMENT
+        }
     ).filter { it.second.isNotEmpty() }
 
     Column(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -143,12 +149,6 @@ fun HomeMoneyFlowScreen(
             }
         }
 
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("লেনদেনের ইতিহাস", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            Text("${ordered.size}টি এন্ট্রি", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
-
         if (ordered.isEmpty()) {
             Column(Modifier.fillMaxWidth().weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 Surface(modifier = Modifier.size(70.dp), shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)) {
@@ -159,13 +159,13 @@ fun HomeMoneyFlowScreen(
                 Text("বাড়িতে টাকা পাঠানো বা বাড়ির খরচ যোগ করলে এখানে দেখা যাবে.", modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 transactionSections.forEach { (sectionTitle, sectionEntries) ->
                     item(key = "section_$sectionTitle") {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 6.dp, bottom = 2.dp),
+                                .padding(top = 8.dp, bottom = 1.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
