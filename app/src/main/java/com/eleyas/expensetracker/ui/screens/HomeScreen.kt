@@ -1,10 +1,9 @@
 package com.eleyas.expensetracker.ui.screens
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -16,8 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,7 +31,6 @@ import com.eleyas.expensetracker.ui.theme.*
 import com.eleyas.expensetracker.util.*
 import com.eleyas.expensetracker.viewmodel.MainViewModel
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
@@ -315,93 +311,50 @@ private fun SmoothSwipeableBalanceCards(
     second: @Composable () -> Unit,
     third: @Composable () -> Unit
 ) {
-    var dragOffset by remember { mutableFloatStateOf(0f) }
-    val scope = rememberCoroutineScope()
-    val pages = listOf(first, second, third)
+    val pages = remember(first, second, third) {
+        listOf(first, second, third)
+    }
 
-    BoxWithConstraints(
+    val pagerState = rememberPagerState(
+        initialPage = page.coerceIn(0, pages.lastIndex),
+        pageCount = { pages.size }
+    )
+
+    // Report the new page only after the swipe has settled, so the parent
+    // state never fights the pager while the user's finger is dragging.
+    LaunchedEffect(pagerState.settledPage) {
+        val settledPage = pagerState.settledPage
+        if (settledPage != page) {
+            onPageChange(settledPage)
+        }
+    }
+
+    // Keep the pager synchronized with the existing HomeScreen page state
+    // without interrupting an active user swipe.
+    LaunchedEffect(page) {
+        val targetPage = page.coerceIn(0, pages.lastIndex)
+        if (
+            pagerState.currentPage != targetPage &&
+            !pagerState.isScrollInProgress
+        ) {
+            pagerState.animateScrollToPage(targetPage)
+        }
+    }
+
+    HorizontalPager(
+        state = pagerState,
         modifier = Modifier
             .fillMaxWidth()
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures(
-                    onHorizontalDrag = { _, dragAmount ->
-                        val width = size.width.toFloat().coerceAtLeast(1f)
-
-                        dragOffset = (dragOffset + dragAmount)
-                            .coerceIn(-width, width)
-                    },
-                    onDragEnd = {
-                        val width = size.width.toFloat().coerceAtLeast(1f)
-                        val threshold = width * 0.22f
-                        val currentOffset = dragOffset
-
-                        val nextPage = when {
-                            currentOffset <= -threshold && page < pages.lastIndex ->
-                                page + 1
-
-                            currentOffset >= threshold && page > 0 ->
-                                page - 1
-
-                            else ->
-                                page
-                        }
-
-                        val targetOffset = when {
-                            nextPage > page -> -width
-                            nextPage < page -> width
-                            else -> 0f
-                        }
-
-                        scope.launch {
-                            val animation = Animatable(currentOffset)
-
-                            animation.animateTo(
-                                targetValue = targetOffset,
-                                animationSpec = tween(durationMillis = 180)
-                            ) {
-                                dragOffset = value
-                            }
-
-                            if (nextPage != page) {
-                                onPageChange(nextPage)
-                            }
-
-                            dragOffset = 0f
-                        }
-                    },
-                    onDragCancel = {
-                        val currentOffset = dragOffset
-
-                        scope.launch {
-                            val animation = Animatable(currentOffset)
-
-                            animation.animateTo(
-                                targetValue = 0f,
-                                animationSpec = tween(durationMillis = 160)
-                            ) {
-                                dragOffset = value
-                            }
-
-                            dragOffset = 0f
-                        }
-                    }
-                )
-            }
-    ) {
-        val widthPx = constraints.maxWidth.toFloat()
-
-        Box(modifier = Modifier.fillMaxWidth()) {
-            pages.forEachIndexed { index, content ->
-                Box(
-                    modifier = Modifier
-                        .width(this@BoxWithConstraints.maxWidth)
-                        .graphicsLayer {
-                            translationX = ((index - page) * widthPx) + dragOffset
-                        }
-                ) {
-                    content()
-                }
-            }
+            .height(280.dp),
+        beyondViewportPageCount = 1,
+        pageSpacing = 0.dp
+    ) { index ->
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(280.dp)
+        ) {
+            pages[index]()
         }
     }
 }
