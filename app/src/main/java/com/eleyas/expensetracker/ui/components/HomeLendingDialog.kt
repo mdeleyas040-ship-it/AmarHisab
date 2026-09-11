@@ -1,12 +1,12 @@
 package com.eleyas.expensetracker.ui.components
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -48,7 +48,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eleyas.expensetracker.ui.components.WarningPopupManager
 import com.eleyas.expensetracker.util.FundSource
+import com.eleyas.expensetracker.util.formatMoney
 import com.eleyas.expensetracker.viewmodel.MainViewModel
 
 @Composable
@@ -179,7 +181,28 @@ fun HomeLendingDialog(
                         Button(
                             onClick = {
                                 val value = amount.replace(",", "").trim().toDoubleOrNull() ?: return@Button
-                                if (person.isNotBlank() && value > 0.0 && date.isNotBlank()) onSave(person.trim(), value, date.trim(), note.trim())
+                                if (person.isBlank() || value <= 0.0 || date.isBlank()) return@Button
+                                val availableHome = appViewModel.homeBalance
+                                if (value > availableHome) {
+                                    WarningPopupManager.show(
+                                        title = "পর্যাপ্ত টাকা নেই",
+                                        message = "বাড়ির হিসাবে পর্যাপ্ত টাকা নেই.\n\nঅবশিষ্ট: ৳${formatMoney(availableHome)}"
+                                    )
+                                    return@Button
+                                }
+                                val homeNote = listOf("[HOME]", note.trim()).filter { it.isNotBlank() }.joinToString(" ")
+                                // Existing lending reminder logic uses LendingAccount.dueDate.
+                                // For Home lending, the selected 'দেওয়ার তারিখ' is the reminder/due date.
+                                appViewModel.addLending(
+                                    context = androidx.compose.ui.platform.LocalContext.current,
+                                    person = person.trim(),
+                                    amount = value,
+                                    date = date.trim(),
+                                    note = homeNote,
+                                    dueDate = date.trim(),
+                                    fundSource = "home"
+                                )
+                                onDismiss()
                             },
                             modifier = Modifier.weight(1.22f).height(50.dp),
                             shape = RoundedCornerShape(15.dp),
