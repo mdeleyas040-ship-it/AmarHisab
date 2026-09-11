@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.eleyas.expensetracker.model.Transaction
+import com.eleyas.expensetracker.util.AnomalyDetector
 import com.eleyas.expensetracker.util.displayTransactionDate
 import com.eleyas.expensetracker.util.formatMoney
 
@@ -29,6 +30,7 @@ fun TransactionCard(
     usdToBdt: Double,
     usdToMvr: Double,
     walletName: String = "",
+    comparisonTransactions: List<Transaction> = emptyList(),
     onEdit: (Transaction) -> Unit = {},
     onDelete: (Transaction) -> Unit = {},
     onShare: (Transaction) -> Unit = {}
@@ -37,6 +39,7 @@ fun TransactionCard(
     val incomeGreen = Color(0xFF168A45)
     val expenseRed = Color(0xFFD32F2F)
     val blue = Color(0xFF1976D2)
+    val warning = Color(0xFFE65100)
     val cardRadius = 18.dp
     var audioPlayer by remember(transaction.audioMemoPath) { mutableStateOf<MediaPlayer?>(null) }
     var isPlayingAudio by remember(transaction.audioMemoPath) { mutableStateOf(false) }
@@ -71,6 +74,11 @@ fun TransactionCard(
                 0.0
             }
         else -> 0.0
+    }
+
+    val isAnomalous = remember(transaction, comparisonTransactions, usdToBdt, usdToMvr) {
+        comparisonTransactions.isNotEmpty() &&
+            AnomalyDetector.isAnomalous(transaction, comparisonTransactions, usdToBdt, usdToMvr)
     }
 
     Card(
@@ -111,14 +119,42 @@ fun TransactionCard(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Text(
-                    transaction.reason.ifBlank {
-                        transaction.category
-                    },
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        transaction.reason.ifBlank {
+                            transaction.category
+                        },
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    if (isAnomalous) {
+                        Spacer(Modifier.width(7.dp))
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = warning.copy(alpha = 0.12f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.Warning,
+                                    contentDescription = "অস্বাভাবিক লেনদেন",
+                                    tint = warning,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(Modifier.width(3.dp))
+                                Text(
+                                    "অস্বাভাবিক",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = warning
+                                )
+                            }
+                        }
+                    }
+                }
 
                 Spacer(Modifier.height(3.dp))
 
