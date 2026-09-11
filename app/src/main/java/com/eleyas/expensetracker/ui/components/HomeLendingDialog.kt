@@ -113,8 +113,15 @@ fun HomeLendingDialog(
                         Spacer(Modifier.width(14.dp))
                         Column(Modifier.weight(1f)) {
                             Text("বাড়ির হিসাব", fontSize = 11.sp, letterSpacing = 1.2.sp, color = Color.White.copy(alpha = 0.72f), fontWeight = FontWeight.Bold)
-                            Text("বাড়ির টাকা দিয়ে ধার দিন", fontSize = 23.sp, color = Color.White, fontWeight = FontWeight.ExtraBold)
-                            Text("বাড়ির হিসাব থেকে কাউকে টাকা ধার দিন", fontSize = 11.sp, color = Color.White.copy(alpha = 0.72f))
+                            Text(
+                                "বাড়ির টাকা দিয়ে ধার দিন",
+                                fontSize = 18.sp,
+                                color = Color.White,
+                                fontWeight = FontWeight.ExtraBold,
+                                maxLines = 1,
+                                softWrap = false
+                            )
+                            Text("বাড়ির হিসাব থেকে কাউকে টাকা ধার দিন", fontSize = 11.sp, color = Color.White.copy(alpha = 0.72f), maxLines = 1, softWrap = false)
                         }
                         Surface(
                             onClick = onDismiss,
@@ -232,7 +239,14 @@ fun HomeLendingDialog(
                         ) {
                             Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(6.dp))
-                            Text("বাড়ির টাকা দিয়ে ধার দিন", fontSize = 12.sp, lineHeight = 15.sp, maxLines = 2, fontWeight = FontWeight.ExtraBold)
+                            Text(
+                                "বাড়ির টাকা দিয়ে ধার দিন",
+                                fontSize = 10.sp,
+                                lineHeight = 12.sp,
+                                maxLines = 1,
+                                softWrap = false,
+                                fontWeight = FontWeight.ExtraBold
+                            )
                         }
                     }
 
