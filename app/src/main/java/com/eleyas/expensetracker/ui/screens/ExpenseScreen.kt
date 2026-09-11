@@ -12,6 +12,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.font.FontWeight
@@ -101,12 +103,10 @@ fun ExpenseScreen(
     LaunchedEffect(targetTransactionId, groupedTransactions) {
         if (targetTransactionId != null) {
             var index = 2
-
             if (splitBills.isNotEmpty()) {
                 index += 2
                 index += splitBills.size
             }
-
             for ((_, list) in groupedTransactions) {
                 index += 1
                 val targetIndex = list.indexOfFirst { it.id == targetTransactionId }
@@ -136,94 +136,131 @@ fun ExpenseScreen(
 
     LazyColumn(
         state = listState,
-        modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = ExpenseRed),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Surface(
+                    modifier = Modifier.size(44.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    color = ExpenseRed.copy(alpha = 0.12f)
                 ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            "মোট খরচ",
-                            color = Color.White.copy(alpha = 0.88f),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Spacer(Modifier.height(3.dp))
-                        Text(
-                            "৳${formatMoney(totalExpense)}",
-                            color = Color.White,
-                            fontSize = 30.sp,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                        Spacer(Modifier.height(5.dp))
-                        Text(
-                            "${expenseTransactions.size}টি খরচ • বাড়ির খরচ ৳${formatMoney(totalHome)}",
-                            color = Color.White.copy(alpha = 0.82f),
-                            fontSize = 12.sp
-                        )
-                    }
-                    Surface(
-                        shape = RoundedCornerShape(18.dp),
-                        color = Color.White.copy(alpha = 0.14f)
-                    ) {
+                    Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            Icons.Default.Payments,
+                            Icons.Default.ReceiptLong,
                             contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.padding(14.dp).size(34.dp)
+                            tint = ExpenseRed,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
+                }
+
+                Spacer(Modifier.width(11.dp))
+
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        "খরচ",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        "সব খরচের সম্পূর্ণ হিসাব",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
 
         item {
-            Row(
+            Card(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-                Button(
-                    onClick = onAddExpense,
-                    modifier = Modifier.weight(1f).height(50.dp),
-                    shape = RoundedCornerShape(15.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = ExpenseRed)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    ExpenseRed.copy(alpha = 0.96f),
+                                    ExpenseRed.copy(alpha = 0.74f)
+                                )
+                            )
+                        )
+                        .padding(18.dp)
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(17.dp))
-                    Spacer(Modifier.width(5.dp))
-                    Text("খরচ", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            modifier = Modifier.size(46.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            color = Color.White.copy(alpha = 0.14f)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.Payments,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(25.dp)
+                                )
+                            }
+                        }
 
-                Button(
-                    onClick = onAddHome,
-                    modifier = Modifier.weight(1f).height(50.dp),
-                    shape = RoundedCornerShape(15.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Blue)
-                ) {
-                    Icon(Icons.Default.Home, contentDescription = null, modifier = Modifier.size(17.dp))
-                    Spacer(Modifier.width(5.dp))
-                    Text("বাড়ির খরচ", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                }
+                        Spacer(Modifier.size(12.dp))
 
-                Button(
-                    onClick = onAddSplitBill,
-                    modifier = Modifier.weight(1f).height(50.dp),
-                    shape = RoundedCornerShape(15.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7))
-                ) {
-                    Icon(Icons.Default.Group, contentDescription = null, modifier = Modifier.size(17.dp))
-                    Spacer(Modifier.width(5.dp))
-                    Text("স্প্লিট বিল", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "মোট খরচ",
+                                color = Color.White.copy(alpha = 0.78f),
+                                fontSize = 12.sp
+                            )
+                            Text(
+                                "৳ ${formatMoney(totalExpense)}",
+                                color = Color.White,
+                                fontSize = 27.sp,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Spacer(Modifier.height(3.dp))
+                            Text(
+                                "${expenseTransactions.size}টি খরচ",
+                                color = Color.White.copy(alpha = 0.82f),
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(9.dp)
+                    ) {
+                        ExpenseStat(
+                            "সাধারণ খরচ",
+                            (totalExpense - totalHome).coerceAtLeast(0.0),
+                            Modifier.weight(1f)
+                        )
+                        ExpenseStat(
+                            "বাড়ির খরচ",
+                            totalHome,
+                            Modifier.weight(1f)
+                        )
+                    }
                 }
             }
         }
@@ -317,6 +354,27 @@ fun ExpenseScreen(
             }
         }
 
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 3.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "খরচের ইতিহাস",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    "${filteredTransactions.size}টি এন্ট্রি",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
         groupedTransactions.forEach { (date, list) ->
             stickyHeader {
                 Surface(
@@ -325,7 +383,7 @@ fun ExpenseScreen(
                 ) {
                     Text(
                         text = date,
-                        modifier = Modifier.padding(vertical = 8.dp),
+                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.primary
@@ -333,7 +391,7 @@ fun ExpenseScreen(
                 }
             }
 
-            items(list) { trans ->
+            items(list, key = { it.id }) { trans ->
                 val wallet = wallets.firstOrNull { it.id == trans.walletId }
                 TransactionCard(
                     trans,
@@ -348,6 +406,34 @@ fun ExpenseScreen(
                     }
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun ExpenseStat(
+    label: String,
+    amount: Double,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(15.dp),
+        color = Color.White.copy(alpha = 0.12f)
+    ) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
+            Text(
+                label,
+                color = Color.White.copy(alpha = 0.78f),
+                fontSize = 10.sp
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                "৳${formatMoney(amount)}",
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.ExtraBold
+            )
         }
     }
 }
