@@ -286,7 +286,12 @@ fun HomeMoneyFlowScreen(
                         Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(selectedSection?.first.orEmpty(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold, Modifier.weight(1f))
+                        Text(
+                            selectedSection?.first.orEmpty(),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            modifier = Modifier.weight(1f)
+                        )
                         Text("${selectedEntries.size}টি লেনদেন", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
