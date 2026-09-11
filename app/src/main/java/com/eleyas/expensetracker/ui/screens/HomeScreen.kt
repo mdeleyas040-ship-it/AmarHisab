@@ -34,6 +34,7 @@ import com.eleyas.expensetracker.ui.theme.*
 import com.eleyas.expensetracker.util.*
 import com.eleyas.expensetracker.viewmodel.MainViewModel
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
@@ -339,14 +340,14 @@ private fun SmoothSwipeableBalanceCards(
                                 offset >= threshold && page > 0 -> page - 1
                                 else -> page
                             }
-                            val targetOffset = if (nextPage > page) -width else if (nextPage < page) width else 0f
-                            dragOffset.animateTo(targetOffset, tween(180))
-                            if (nextPage != page) {
-                                onPageChange(nextPage)
-                                dragOffset.snapTo(0f)
-                            } else {
-                                dragOffset.snapTo(0f)
+                            val targetOffset = when {
+                                nextPage > page -> -width
+                                nextPage < page -> width
+                                else -> 0f
                             }
+                            dragOffset.animateTo(targetOffset, tween(180))
+                            if (nextPage != page) onPageChange(nextPage)
+                            dragOffset.snapTo(0f)
                         }
                     },
                     onDragCancel = {
@@ -397,11 +398,7 @@ private fun PremiumHomeAccountCard(
                 .padding(20.dp)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.HomeWork, contentDescription = null, tint = Color(0xFF55B8FF), modifier = Modifier.size(22.dp))
                         Spacer(Modifier.width(8.dp))
@@ -464,13 +461,7 @@ fun QuickActionCard(
     color: Color,
     onClick: () -> Unit
 ) {
-    Card(
-        onClick = onClick,
-        modifier = modifier.height(65.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
+    Card(onClick = onClick, modifier = modifier.height(65.dp), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Row(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Start) {
             Surface(modifier = Modifier.size(38.dp), shape = RoundedCornerShape(10.dp), color = color.copy(alpha = 0.15f)) {
                 Box(contentAlignment = Alignment.Center) {
