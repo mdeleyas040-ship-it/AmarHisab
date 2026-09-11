@@ -394,7 +394,7 @@ private fun SmoothSwipeableBalanceCards(
             pages.forEachIndexed { index, content ->
                 Box(
                     modifier = Modifier
-                        .width(maxWidth)
+                        .width(this@BoxWithConstraints.maxWidth)
                         .graphicsLayer {
                             translationX = ((index - page) * widthPx) + dragOffset
                         }
