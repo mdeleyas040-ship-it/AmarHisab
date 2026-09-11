@@ -1,7 +1,15 @@
 package com.eleyas.expensetracker.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -12,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,6 +83,7 @@ fun HomeScreen(
     val appViewModel: MainViewModel = viewModel()
     var showHomeMoneyFlow by remember { mutableStateOf(false) }
     var serverNotice by remember { mutableStateOf<String?>(null) }
+    var balanceCardPage by rememberSaveable { mutableIntStateOf(0) }
 
     val smartReminders = remember(transactions) {
         SmartReminderManager.getTransactionReminders(transactions)
@@ -152,23 +162,28 @@ fun HomeScreen(
             }
 
             item {
-                PremiumHomeHeader(
-                    balance = balance,
-                    totalIncome = totalIncome,
-                    totalExpense = totalExpense,
-                    totalHome = totalHome,
-                    currentUserId = currentUserId,
-                    birthday = birthday,
-                    onBirthdayChange = onBirthdayChange
-                )
-            }
-
-            item {
-                NetWorthDashboard(
-                    cashBalance = balance,
-                    homeBalance = homeBalance,
-                    moneyToReceive = moneyToReceive,
-                    loanRemaining = loanRemaining
+                SwipeableBalanceCards(
+                    page = balanceCardPage,
+                    onPageChange = { balanceCardPage = it },
+                    first = {
+                        PremiumHomeHeader(
+                            balance = balance,
+                            totalIncome = totalIncome,
+                            totalExpense = totalExpense,
+                            totalHome = totalHome,
+                            currentUserId = currentUserId,
+                            birthday = birthday,
+                            onBirthdayChange = onBirthdayChange
+                        )
+                    },
+                    second = {
+                        NetWorthDashboard(
+                            cashBalance = balance,
+                            homeBalance = homeBalance,
+                            moneyToReceive = moneyToReceive,
+                            loanRemaining = loanRemaining
+                        )
+                    }
                 )
             }
 
@@ -476,6 +491,50 @@ fun HomeScreen(
                     }
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun SwipeableBalanceCards(
+    page: Int,
+    onPageChange: (Int) -> Unit,
+    first: @Composable () -> Unit,
+    second: @Composable () -> Unit
+) {
+    AnimatedContent(
+        targetState = page,
+        label = "balance_card_swipe",
+        modifier = Modifier
+            .fillMaxWidth()
+            .pointerInput(page) {
+                var dragDistance = 0f
+                detectVerticalDragGestures(
+                    onVerticalDrag = { _, dragAmount ->
+                        dragDistance += dragAmount
+                    },
+                    onDragEnd = {
+                        when {
+                            dragDistance < -80f && page == 0 -> onPageChange(1)
+                            dragDistance > 80f && page == 1 -> onPageChange(0)
+                        }
+                    }
+                )
+            },
+        transitionSpec = {
+            if (targetState > initialState) {
+                (slideInVertically { height -> height } + fadeIn()) togetherWith
+                    (slideOutVertically { height -> -height } + fadeOut())
+            } else {
+                (slideInVertically { height -> -height } + fadeIn()) togetherWith
+                    (slideOutVertically { height -> height } + fadeOut())
+            }.using(SizeTransform(clip = false))
+        }
+    ) { currentPage ->
+        if (currentPage == 0) {
+            first()
+        } else {
+            second()
         }
     }
 }
