@@ -227,6 +227,7 @@ fun IncomeScreen(
                     usdToBdt,
                     usdToMvr,
                     walletName = wallet?.name ?: "",
+                    comparisonTransactions = transactions,
                     onEdit = onEdit,
                     onDelete = onDelete
                 )
