@@ -28,6 +28,8 @@ import com.eleyas.expensetracker.util.HomeLedgerEngine
 import com.eleyas.expensetracker.util.HomeMoneyFlow
 import com.eleyas.expensetracker.util.formatMoney
 import com.eleyas.expensetracker.viewmodel.MainViewModel
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun HomeMoneyFlowScreen(
@@ -41,7 +43,19 @@ fun HomeMoneyFlowScreen(
 ) {
     val context = LocalContext.current
     val appViewModel: MainViewModel = viewModel()
-    val ordered = entries.sortedByDescending { it.date }
+    val dateFormatter = remember {
+        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply {
+            isLenient = false
+        }
+    }
+
+    val ordered = entries.sortedWith(
+        compareByDescending<HomeLedgerEntry> {
+            runCatching {
+                dateFormatter.parse(it.date)?.time ?: Long.MIN_VALUE
+            }.getOrDefault(Long.MIN_VALUE)
+        }
+    )
     val summary = HomeLedgerEngine.summarize(entries)
     val homeLendings = appViewModel.lendings.filter { FundSource.isHomeLending(it) }
     var showHomeLendingDialog by remember { mutableStateOf(false) }
