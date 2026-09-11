@@ -153,14 +153,15 @@ fun HomeLendingDialog(
 
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Box(Modifier.weight(1f)) {
-                            HomeDatePickerField(value = date, label = "দেওয়ার তারিখ", onDateSelected = { date = it })
+                            HomeDatePickerField(value = date, label = "দেওয়ার তারিখ", onDateSelected = { date = it }, compact = true)
                         }
                         Box(Modifier.weight(1f)) {
                             HomeDatePickerField(
                                 value = returnDate,
                                 label = "ফেরত পাওয়ার তারিখ",
                                 placeholder = "সিলেক্ট করুন",
-                                onDateSelected = { returnDate = it }
+                                onDateSelected = { returnDate = it },
+                                compact = true
                             )
                         }
                     }
