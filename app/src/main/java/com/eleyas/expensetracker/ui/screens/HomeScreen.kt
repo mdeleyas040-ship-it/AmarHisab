@@ -96,10 +96,14 @@ fun HomeScreen(
                         Column(Modifier.fillMaxWidth().padding(CardPadding)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
                                 Column { Text("মোট ব্যালেন্স", color = AccentGreen.copy(alpha=.8f), fontSize = 12.sp, fontWeight = FontWeight.Medium); Spacer(Modifier.height(4.dp)); Text("৳ ${formatMoney(displayedBalance)}", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold); Text("বাংলাদেশি টাকা (BDT)", color = Color.White.copy(alpha=.45f), fontSize = 10.sp) }
-                                Surface(Modifier.size(50.dp), RoundedCornerShape(14.dp), color = AccentGreen.copy(alpha=.1f)) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.AccountBalanceWallet, null, tint = AccentGreen, modifier = Modifier.size(28.dp)) } }
+                                Surface(
+                                    modifier = Modifier.size(50.dp),
+                                    shape = RoundedCornerShape(14.dp),
+                                    color = AccentGreen.copy(alpha = .1f)
+                                ) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.AccountBalanceWallet, null, tint = AccentGreen, modifier = Modifier.size(28.dp)) } }
                             }
                             Spacer(Modifier.height(24.dp)); Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) { StatMiniBox(Modifier.weight(1f), "আয়", totalIncome, IncomeGreen); StatMiniBox(Modifier.weight(1f), "খরচ", totalExpense, ExpenseRed); StatMiniBox(Modifier.weight(1f), "বাড়িতে", totalHome, Blue) }
-                            Spacer(Modifier.height(16.dp)); BirthdayCountdownCard(currentUserId, birthday, { onBirthdayChange(it) }, isCompact = true)
+                            Spacer(Modifier.height(16.dp)); BirthdayCountdownCard(userId = currentUserId, currentBirthday = birthday, onBirthdaySet = { onBirthdayChange(it) }, isCompact = true)
                         }
                     }
                 }
@@ -122,11 +126,11 @@ fun HomeScreen(
             }
 
             item {
-                Card(onClick={showHomeMoneyFlow=true}, modifier=Modifier.fillMaxWidth(), shape=RoundedCornerShape(20.dp), colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) { Column(Modifier.padding(18.dp)) { Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) { Row(verticalAlignment=Alignment.CenterVertically) { Surface(Modifier.size(42.dp),RoundedCornerShape(12.dp),color=MaterialTheme.colorScheme.primary.copy(alpha=.12f)) { Box(contentAlignment=Alignment.Center) { Icon(Icons.Default.HomeWork,null,tint=MaterialTheme.colorScheme.primary) } }; Spacer(Modifier.width(10.dp)); Column { Text("বাড়ির হিসাব",fontSize=17.sp,fontWeight=FontWeight.Bold); Text("বাড়ির সব টাকা এক জায়গায়",fontSize=11.sp,color=MaterialTheme.colorScheme.onSurfaceVariant) } }; Icon(Icons.Default.ChevronRight,null,tint=MaterialTheme.colorScheme.onSurfaceVariant) }; Spacer(Modifier.height(12.dp)); HomeSummaryRow("বাড়িতে পাঠানো",totalHome,Blue); HomeSummaryRow("বাড়ির খরচ",totalHomeExpense,Color(0xFFF59E0B)); HorizontalDivider(Modifier.padding(vertical=7.dp)); HomeSummaryRow("বাড়িতে অবশিষ্ট",homeBalance,IncomeGreen) } }
+                Card(onClick={showHomeMoneyFlow=true}, modifier=Modifier.fillMaxWidth(), shape=RoundedCornerShape(20.dp), colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) { Column(Modifier.padding(18.dp)) { Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) { Row(verticalAlignment=Alignment.CenterVertically) { Surface(modifier=Modifier.size(42.dp), shape=RoundedCornerShape(12.dp), color=MaterialTheme.colorScheme.primary.copy(alpha=.12f)) { Box(contentAlignment=Alignment.Center) { Icon(Icons.Default.HomeWork,null,tint=MaterialTheme.colorScheme.primary) } }; Spacer(Modifier.width(10.dp)); Column { Text("বাড়ির হিসাব",fontSize=17.sp,fontWeight=FontWeight.Bold); Text("বাড়ির সব টাকা এক জায়গায়",fontSize=11.sp,color=MaterialTheme.colorScheme.onSurfaceVariant) } }; Icon(Icons.Default.ChevronRight,null,tint=MaterialTheme.colorScheme.onSurfaceVariant) }; Spacer(Modifier.height(12.dp)); HomeSummaryRow("বাড়িতে পাঠানো",totalHome,Blue); HomeSummaryRow("বাড়ির খরচ",totalHomeExpense,Color(0xFFF59E0B)); HorizontalDivider(Modifier.padding(vertical=7.dp)); HomeSummaryRow("বাড়িতে অবশিষ্ট",homeBalance,IncomeGreen) } }
             }
         }
 
-        if (showHomeMoneyFlow) Surface(Modifier.fillMaxSize(), color=MaterialTheme.colorScheme.background) { HomeMoneyFlowScreen(HomeMoneyFlow.entries(vm), onBack={showHomeMoneyFlow=false}) }
+        if (showHomeMoneyFlow) Surface(modifier=Modifier.fillMaxSize(), color=MaterialTheme.colorScheme.background) { HomeMoneyFlowScreen(HomeMoneyFlow.entries(vm), onBack={showHomeMoneyFlow=false}) }
         if (showPremiumLoanDialog) PremiumLoanDialog(onDismiss={showPremiumLoanDialog=false}, existingLoan=null, existingNames=vm.loans.map{it.name}.distinct(), onSave={name,sourceType,principal,monthlyInstallment,startDate,note,dueDate -> vm.addLoan(context,name,sourceType,principal,monthlyInstallment,startDate,note,dueDate); showPremiumLoanDialog=false})
         if (showPremiumLendingDialog) LendingDialog(onDismiss={showPremiumLendingDialog=false}, onSave={person,amount,date,note,dueDate -> vm.addLending(context,person,amount,date,note,dueDate); showPremiumLendingDialog=false})
     }
@@ -135,6 +139,6 @@ fun HomeScreen(
 @Composable
 fun QuickActionCard(modifier: Modifier = Modifier, icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, color: Color, onClick: () -> Unit) {
     Card(onClick=onClick, modifier=modifier.height(65.dp), shape=RoundedCornerShape(16.dp), colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface), elevation=CardDefaults.cardElevation(2.dp)) {
-        Row(Modifier.fillMaxSize().padding(horizontal=16.dp), verticalAlignment=Alignment.CenterVertically) { Surface(Modifier.size(38.dp),RoundedCornerShape(10.dp),color=color.copy(alpha=.15f)) { Box(contentAlignment=Alignment.Center) { Icon(icon,null,tint=color,modifier=Modifier.size(20.dp)) } }; Spacer(Modifier.width(12.dp)); Text(title,fontSize=14.sp,fontWeight=FontWeight.Bold) }
+        Row(Modifier.fillMaxSize().padding(horizontal=16.dp), verticalAlignment=Alignment.CenterVertically) { Surface(modifier=Modifier.size(38.dp), shape=RoundedCornerShape(10.dp), color=color.copy(alpha=.15f)) { Box(contentAlignment=Alignment.Center) { Icon(icon,null,tint=color,modifier=Modifier.size(20.dp)) } }; Spacer(Modifier.width(12.dp)); Text(title,fontSize=14.sp,fontWeight=FontWeight.Bold) }
     }
 }
