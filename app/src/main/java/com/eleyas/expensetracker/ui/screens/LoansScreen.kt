@@ -34,6 +34,8 @@ fun LoansScreen(
     onDeleteBorrowing: (LoanAccount, LoanBorrowing) -> Unit,
     onAddLending: () -> Unit,
     onAddLendingReturn: (LendingAccount) -> Unit,
+    onEditLending: (LendingAccount) -> Unit = {},
+    onDeleteLending: (LendingAccount) -> Unit = {},
     loanInterestTerms: List<LoanInterestTerms>,
     onShowCalculator: () -> Unit = {},
     onShareLoan: (LoanAccount, Boolean) -> Unit = { _, _ -> },
@@ -91,6 +93,7 @@ fun LoansScreen(
     val totalReceivable = (totalLent - totalReturned).coerceAtLeast(0.0)
 
     LazyColumn(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Keep exactly one aggregate summary. Per-record amounts below are intentionally detail-level values.
         item {
             PremiumLoansDashboard(
                 totalBorrowed = totalBorrowed,
@@ -162,7 +165,12 @@ fun LoansScreen(
             val remaining = (lending.amount - returned).coerceAtLeast(0.0)
             Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) { Column(Modifier.padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Column(Modifier.weight(1f)) { Text(lending.person.ifBlank { "ব্যক্তি" }, fontWeight = FontWeight.Bold, fontSize = 17.sp); Text("দেওয়ার তারিখ: ${displayLoanDate(lending.date)}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant); if (lending.dueDate != null && remaining > 0.0) Text("ফেরত পাওয়ার তারিখ: ${displayLoanDate(lending.dueDate)}", fontSize = 11.sp, color = ExpenseRed, fontWeight = FontWeight.Bold) }; Column(horizontalAlignment = Alignment.End) { Row(verticalAlignment = Alignment.CenterVertically) { IconButton(onClick = { shareOptionsLending = lending }, Modifier.size(32.dp)) { Icon(Icons.Default.Share, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary) }; Text("৳${formatMoney(remaining)}", color = if (remaining > 0) Blue else IncomeGreen, fontWeight = FontWeight.ExtraBold) } } }
-                Spacer(Modifier.height(8.dp)); LoanInfoRow("দেওয়া", lending.amount); LoanInfoRow("ফেরত", returned); LoanInfoRow("পাওনা", remaining); if (lending.note.isNotBlank()) Text("নোট: ${lending.note}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant); Spacer(Modifier.height(8.dp)); Button(onClick = { onAddLendingReturn(lending) }, enabled = remaining > 0.0, Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Blue)) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(if (remaining > 0.0) Icons.Default.Add else Icons.Default.CheckCircle, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(if (remaining > 0.0) "ধার ফেরত যোগ করুন" else "পুরো টাকা ফেরত") } }
+                Spacer(Modifier.height(8.dp)); LoanInfoRow("দেওয়া", lending.amount); LoanInfoRow("ফেরত", returned); LoanInfoRow("পাওনা", remaining); if (lending.note.isNotBlank()) Text("নোট: ${lending.note}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant); Spacer(Modifier.height(8.dp));
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { onEditLending(lending) }, Modifier.weight(1f).height(46.dp), shape = RoundedCornerShape(12.dp)) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.Edit, null, Modifier.size(17.dp)); Spacer(Modifier.width(4.dp)); Text("Edit") } }
+                    OutlinedButton(onClick = { onDeleteLending(lending) }, Modifier.weight(1f).height(46.dp), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.outlinedButtonColors(contentColor = ExpenseRed)) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.Delete, null, Modifier.size(17.dp)); Spacer(Modifier.width(4.dp)); Text("Delete") } }
+                }
+                Spacer(Modifier.height(8.dp)); Button(onClick = { onAddLendingReturn(lending) }, enabled = remaining > 0.0, Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Blue)) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(if (remaining > 0.0) Icons.Default.Add else Icons.Default.CheckCircle, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(if (remaining > 0.0) "ধার ফেরত যোগ করুন" else "পুরো টাকা ফেরত") } }
             } }
         }
     }
