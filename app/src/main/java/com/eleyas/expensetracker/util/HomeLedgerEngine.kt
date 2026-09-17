@@ -11,34 +11,18 @@ import com.eleyas.expensetracker.model.LoanPayment
 import com.eleyas.expensetracker.model.Transaction
 
 /**
- * Builds a Home ledger without rewriting existing records.
- *
- * Historical loan/lending records are only included when they carry an
- * explicit Home marker. This prevents double counting and accidental
- * migration of personal money into the shared Home fund.
+ * Home fund ledger. Personal records are ignored unless they carry an
+ * explicit Home marker, so family money is not mixed with personal cash.
  */
 object HomeLedgerEngine {
-
-    private fun isHomeLoanPayment(payment: LoanPayment): Boolean {
-        if (payment.fundSource.equals("home", ignoreCase = true)) return true
-        val note = payment.note.lowercase()
-        return note.contains("বাড়িতে পাঠানো") || note.contains("বাড়িতে পাঠানো")
-    }
-
-    private fun isHomeLending(lending: LendingAccount): Boolean =
-        lending.fundSource.equals("home", ignoreCase = true) ||
-            lending.note.contains("[HOME]", ignoreCase = true)
-
-    private fun isHomeReturn(ret: LendingReturn, lending: LendingAccount?): Boolean =
-        ret.fundSource.equals("home", ignoreCase = true) ||
-            (lending != null && isHomeLending(lending))
 
     fun build(
         transactions: List<Transaction>,
         loans: List<LoanAccount>,
         loanPayments: List<LoanPayment>,
         lendings: List<LendingAccount>,
-        lendingReturns: List<LendingReturn>
+        lendingReturns: List<LendingReturn>,
+        amountConverter: (Transaction) -> Double = { it.amount }
     ): List<HomeLedgerEntry> {
         val entries = mutableListOf<HomeLedgerEntry>()
 
@@ -49,7 +33,7 @@ object HomeLedgerEngine {
                     date = transaction.date,
                     title = transaction.reason.ifBlank { "বাড়িতে পাঠানো" },
                     category = transaction.category.ifBlank { "বাড়িতে পাঠানো" },
-                    amount = transaction.amount,
+                    amount = amountConverter(transaction),
                     direction = HomeLedgerDirection.IN,
                     sourceType = HomeLedgerSourceType.HOME_TRANSFER,
                     sourceId = transaction.id.toString(),
@@ -61,9 +45,21 @@ object HomeLedgerEngine {
                     date = transaction.date,
                     title = transaction.reason.ifBlank { transaction.category },
                     category = transaction.category.ifBlank { "বাড়ির খরচ" },
-                    amount = transaction.amount,
+                    amount = amountConverter(transaction),
                     direction = HomeLedgerDirection.OUT,
                     sourceType = HomeLedgerSourceType.HOME_EXPENSE,
+                    sourceId = transaction.id.toString(),
+                    note = transaction.reason
+                )
+
+                "home_adjustment" -> entries += HomeLedgerEntry(
+                    id = "tx_home_adjustment_${transaction.id}",
+                    date = transaction.date,
+                    title = transaction.reason.ifBlank { "বাড়ির সমন্বয়" },
+                    category = transaction.category.ifBlank { "Home Adjustment" },
+                    amount = amountConverter(transaction),
+                    direction = HomeLedgerDirection.IN,
+                    sourceType = HomeLedgerSourceType.HOME_ADJUSTMENT,
                     sourceId = transaction.id.toString(),
                     note = transaction.reason
                 )
@@ -71,7 +67,7 @@ object HomeLedgerEngine {
         }
 
         val loanNames = loans.associateBy { it.id }
-        loanPayments.filter(::isHomeLoanPayment).forEach { payment ->
+        loanPayments.filter(FundSource::isHomeLoanPayment).forEach { payment ->
             val loan = loanNames[payment.loanId]
             entries += HomeLedgerEntry(
                 id = "loan_payment_home_${payment.id}",
@@ -87,7 +83,7 @@ object HomeLedgerEngine {
         }
 
         val lendingById = lendings.associateBy { it.id }
-        lendings.filter(::isHomeLending).forEach { lending ->
+        lendings.filter(FundSource::isHomeLending).forEach { lending ->
             entries += HomeLedgerEntry(
                 id = "lending_home_${lending.id}",
                 date = lending.date,
@@ -103,7 +99,7 @@ object HomeLedgerEngine {
 
         lendingReturns.forEach { ret ->
             val lending = lendingById[ret.lendingId]
-            if (!isHomeReturn(ret, lending)) return@forEach
+            if (!FundSource.isHomeLendingReturn(ret, lending)) return@forEach
             entries += HomeLedgerEntry(
                 id = "lending_return_home_${ret.id}",
                 date = ret.date,

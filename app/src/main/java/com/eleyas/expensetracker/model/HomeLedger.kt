@@ -28,6 +28,7 @@ enum class HomeLedgerDirection {
 enum class HomeLedgerSourceType {
     HOME_TRANSFER,
     HOME_EXPENSE,
+    HOME_ADJUSTMENT,
     LOAN_GIVEN,
     LENDING_GIVEN,
     LOAN_REPAYMENT_RECEIVED,

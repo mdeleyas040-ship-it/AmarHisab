@@ -8,12 +8,8 @@ import com.eleyas.expensetracker.model.Transaction
 import com.eleyas.expensetracker.model.Wallet
 
 /**
- * Source-aware balance calculations.
- *
- * Home-funded lending is identified by the existing [HOME] marker so that
- * old records remain untouched. Personal lending continues to affect the
- * personal balance; Home lending is excluded here because it is already
- * represented by the Home ledger.
+ * Personal cash only. Home-funded movements are excluded so the same
+ * taka is never subtracted from both Personal and Home.
  */
 object BalanceEngine {
 
@@ -23,27 +19,31 @@ object BalanceEngine {
         loans: List<LoanAccount>,
         loanPayments: List<LoanPayment>,
         lendings: List<LendingAccount>,
-        lendingReturns: List<LendingReturn>
+        lendingReturns: List<LendingReturn>,
+        amountConverter: (Transaction) -> Double = { it.amount }
     ): Double {
         val income = transactions
-            .filter { it.type == "income" }
-            .sumOf { convertToBdt(it.amount, it.currency) }
+            .filter { it.type.equals("income", ignoreCase = true) }
+            .sumOf { amountConverter(it) }
 
         val expense = transactions
-            .filter { it.type == "expense" }
-            .sumOf { convertToBdt(it.amount, it.currency) }
+            .filter { it.type.equals("expense", ignoreCase = true) }
+            .sumOf { amountConverter(it) }
 
         val homeTransfer = transactions
-            .filter { it.type == "home" }
-            .sumOf { convertToBdt(it.amount, it.currency) }
+            .filter { it.type.equals("home", ignoreCase = true) }
+            .sumOf { amountConverter(it) }
 
         val loanReceived = loans.sumOf { it.principal }
-        val loanPaid = loanPayments.sumOf { it.amount }
 
-        // Only personal lending belongs in the personal balance.
-        val personalLendings = lendings.filterNot { it.note.contains("[HOME]") }
+        val personalLoanPaid = loanPayments
+            .filterNot { FundSource.isHomeLoanPayment(it) }
+            .sumOf { it.amount }
+
+        val lendingById = lendings.associateBy { it.id }
+        val personalLendings = lendings.filterNot { FundSource.isHomeLending(it) }
         val personalReturns = lendingReturns.filter { ret ->
-            personalLendings.any { it.id == ret.lendingId }
+            !FundSource.isHomeLendingReturn(ret, lendingById[ret.lendingId])
         }
 
         val moneyLent = personalLendings.sumOf { it.amount }
@@ -55,7 +55,7 @@ object BalanceEngine {
             moneyReturned -
             expense -
             homeTransfer -
-            loanPaid -
+            personalLoanPaid -
             moneyLent
     }
 }

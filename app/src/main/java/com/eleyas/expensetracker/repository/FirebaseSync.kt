@@ -6,9 +6,18 @@ import com.google.firebase.firestore.FirebaseFirestore
 /**
  * Amar Hisab - Firebase Cloud Sync
  *
- * Existing local data structure পরিবর্তন না করে
- * আলাদা file থেকে Firebase sync করার জন্য।
+ * Local data structure unchanged রেখে
+ * Loan / Lending data Firebase Cloud-এ sync করার জন্য।
+ *
+ * Backward compatible:
+ * - পুরোনো documents-এ নতুন field না থাকলেও listener-side
+ *   default value ব্যবহার করা যাবে।
+ * - নতুন data-তে complete accounting information যাবে।
  */
+
+/* =========================================================
+   LOANS
+   ========================================================= */
 
 fun syncLoansToFirestore(
     firestore: FirebaseFirestore,
@@ -37,6 +46,9 @@ fun syncLoansToFirestore(
             "lastEditedDate" to loan.lastEditedDate,
             "editHistory" to loan.editHistory,
 
+            // Previously missing from Cloud.
+            "dueDate" to (loan.dueDate ?: ""),
+
             "borrowings" to loan.borrowings.map { borrowing ->
                 mapOf(
                     "id" to borrowing.id,
@@ -57,6 +69,10 @@ fun syncLoansToFirestore(
     batch.commit()
 }
 
+
+/* =========================================================
+   LOAN PAYMENTS
+   ========================================================= */
 
 fun syncLoanPaymentsToFirestore(
     firestore: FirebaseFirestore,
@@ -79,7 +95,11 @@ fun syncLoanPaymentsToFirestore(
             "loanId" to payment.loanId,
             "amount" to payment.amount,
             "date" to payment.date,
-            "note" to payment.note
+            "note" to payment.note,
+            "fundSource" to payment.fundSource,
+            "sourceTransactionId" to (
+                    payment.sourceTransactionId ?: 0L
+                    )
         )
 
         val document = collection
@@ -91,6 +111,10 @@ fun syncLoanPaymentsToFirestore(
     batch.commit()
 }
 
+
+/* =========================================================
+   LENDINGS
+   ========================================================= */
 
 fun syncLendingsToFirestore(
     firestore: FirebaseFirestore,
@@ -113,7 +137,13 @@ fun syncLendingsToFirestore(
             "person" to lending.person,
             "amount" to lending.amount,
             "date" to lending.date,
-            "note" to lending.note
+            "note" to lending.note,
+
+            // Previously missing from Cloud.
+            "dueDate" to (lending.dueDate ?: ""),
+
+            // Critical for Personal/Home accounting.
+            "fundSource" to lending.fundSource
         )
 
         val document = collection
@@ -125,6 +155,10 @@ fun syncLendingsToFirestore(
     batch.commit()
 }
 
+
+/* =========================================================
+   LENDING RETURNS
+   ========================================================= */
 
 fun syncLendingReturnsToFirestore(
     firestore: FirebaseFirestore,
@@ -147,7 +181,10 @@ fun syncLendingReturnsToFirestore(
             "lendingId" to item.lendingId,
             "amount" to item.amount,
             "date" to item.date,
-            "note" to item.note
+            "note" to item.note,
+
+            // Critical for Personal/Home accounting.
+            "fundSource" to item.fundSource
         )
 
         val document = collection
@@ -160,8 +197,64 @@ fun syncLendingReturnsToFirestore(
 }
 
 
+/* =========================================================
+   LOAN INTEREST TERMS
+   ========================================================= */
+
 /**
- * একবারে সব Loan/Lending data Cloud-এ পাঠানোর জন্য।
+ * Loan interest terms আলাদা collection-এ sync করা হচ্ছে।
+ *
+ * এতে অন্য device / restore-এর সময় interest হারাবে না।
+ */
+fun syncLoanInterestTermsToFirestore(
+    firestore: FirebaseFirestore,
+    userId: String,
+    terms: List<LoanInterestTerms>
+) {
+    if (terms.isEmpty()) return
+
+    val batch = firestore.batch()
+
+    val collection = firestore
+        .collection("users")
+        .document(userId)
+        .collection("loanInterestTerms")
+
+    terms.forEach { term ->
+
+        val termData = mapOf(
+            "loanId" to term.loanId,
+            "interestRate" to term.interestRate,
+            "totalInterest" to term.totalInterest,
+            "interestType" to term.interestType
+        )
+
+        val document = collection
+            .document(term.loanId.toString())
+
+        batch.set(
+            document,
+            termData
+        )
+    }
+
+    batch.commit()
+}
+
+
+/* =========================================================
+   ALL LOAN / LENDING DATA
+   ========================================================= */
+
+/**
+ * একবারে সব Loan / Lending related data Cloud-এ পাঠানোর জন্য।
+ *
+ * Includes:
+ * - Loans
+ * - Loan payments
+ * - Loan interest terms
+ * - Lendings
+ * - Lending returns
  */
 fun syncAllLoanAndLendingData(
     firestore: FirebaseFirestore,
@@ -169,8 +262,10 @@ fun syncAllLoanAndLendingData(
     loans: List<LoanAccount>,
     loanPayments: List<LoanPayment>,
     lendings: List<LendingAccount>,
-    lendingReturns: List<LendingReturn>
+    lendingReturns: List<LendingReturn>,
+    loanInterestTerms: List<LoanInterestTerms> = emptyList()
 ) {
+
     syncLoansToFirestore(
         firestore = firestore,
         userId = userId,
@@ -181,6 +276,12 @@ fun syncAllLoanAndLendingData(
         firestore = firestore,
         userId = userId,
         payments = loanPayments
+    )
+
+    syncLoanInterestTermsToFirestore(
+        firestore = firestore,
+        userId = userId,
+        terms = loanInterestTerms
     )
 
     syncLendingsToFirestore(

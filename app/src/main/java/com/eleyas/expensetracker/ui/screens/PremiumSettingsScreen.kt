@@ -3,10 +3,6 @@ package com.eleyas.expensetracker.ui.screens
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
-/**
- * Stable compatibility entry point.
- * The actual premium Bengali Settings UI lives in PremiumSettingsPolish.
- */
 @Composable
 fun PremiumSettingsScreen(
     modifier: Modifier,

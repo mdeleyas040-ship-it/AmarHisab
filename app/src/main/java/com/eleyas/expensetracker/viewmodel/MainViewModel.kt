@@ -1,9 +1,11 @@
+
 package com.eleyas.expensetracker.viewmodel
 
 import android.content.Context
 import android.content.SharedPreferences
 import android.net.Uri
 import android.widget.Toast
+import android.widget.Toast.makeText
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
@@ -17,6 +19,7 @@ import com.eleyas.expensetracker.*
 import com.eleyas.expensetracker.model.*
 import com.eleyas.expensetracker.repository.HouseholdRepository
 import com.eleyas.expensetracker.repository.syncAllLoanAndLendingData
+import com.eleyas.expensetracker.ui.components.WarningPopupManager
 import com.eleyas.expensetracker.util.*
 import com.eleyas.expensetracker.util.HouseholdStorage
 import com.google.firebase.auth.FirebaseAuth
@@ -57,7 +60,13 @@ class MainViewModel : ViewModel() {
         private set
     var wallets by mutableStateOf<List<Wallet>>(emptyList())
         private set
+    var savingsGoals by mutableStateOf<List<SavingsGoal>>(emptyList())
+        private set
+    var financialMilestones by mutableStateOf<List<FinancialMilestone>>(emptyList())
+        private set
     var shoppingItems by mutableStateOf<List<ShoppingItem>>(emptyList())
+        private set
+    var wishlistItems by mutableStateOf<List<WishlistItem>>(emptyList())
         private set
     var usdToBdt by mutableDoubleStateOf(0.0)
         private set
@@ -72,6 +81,27 @@ class MainViewModel : ViewModel() {
     val totalExpense by derivedStateOf { transactions.filter { it.type == "expense" }.sumOf { convertToBdt(it.amount, it.currency) } }
     val totalHome by derivedStateOf { transactions.filter { it.type == "home" }.sumOf { convertToBdt(it.amount, it.currency) } }
     val totalHomeExpense by derivedStateOf { transactions.filter { it.type == "home_expense" }.sumOf { convertToBdt(it.amount, it.currency) } }
+
+    // Home-only adjustment. এটি Personal balance-এ যাবে না।
+    val totalHomeAdjustment by derivedStateOf {
+        transactions
+            .filter { it.type == "home_adjustment" }
+            .sumOf { convertToBdt(it.amount, it.currency) }
+    }
+
+    // যে Loan payment Home-এর টাকা থেকে করা হয়েছে, শুধু সেগুলো Home balance কমাবে।
+    val totalHomeLoanPaid by derivedStateOf {
+        loanPayments
+            .filter { FundSource.isHomeLoanPayment(it) }
+            .sumOf { it.amount }
+    }
+
+    val totalPersonalLoanPaid by derivedStateOf {
+        loanPayments
+            .filterNot { FundSource.isHomeLoanPayment(it) }
+            .sumOf { it.amount }
+    }
+
     val totalLoanReceived by derivedStateOf { loans.sumOf { it.principal } }
     val totalLoanInterest by derivedStateOf { loans.sumOf { loan -> loanInterestTerms.firstOrNull { it.loanId == loan.id }?.totalInterest ?: 0.0 } }
     val totalLoanPaid by derivedStateOf { loanPayments.sumOf { it.amount } }
@@ -79,8 +109,33 @@ class MainViewModel : ViewModel() {
     val totalMoneyLent by derivedStateOf { lendings.sumOf { it.amount } }
     val totalMoneyReturned by derivedStateOf { lendingReturns.sumOf { it.amount } }
     val totalMoneyToReceive by derivedStateOf { (totalMoneyLent - totalMoneyReturned).coerceAtLeast(0.0) }
-    val homeBalance by derivedStateOf { totalHome - totalHomeExpense }
-    val balance by derivedStateOf { wallets.sumOf { it.initialBalance } + totalIncome + totalLoanReceived + totalMoneyReturned - totalExpense - totalHome - totalLoanPaid - totalMoneyLent }
+
+    val homeLedgerEntries by derivedStateOf {
+        HomeLedgerEngine.build(
+            transactions = transactions,
+            loans = loans,
+            loanPayments = loanPayments,
+            lendings = lendings,
+            lendingReturns = lendingReturns,
+            amountConverter = { convertToBdt(it.amount, it.currency) }
+        )
+    }
+
+    val homeBalance by derivedStateOf {
+        HomeLedgerEngine.summarize(homeLedgerEntries).balance
+    }
+
+    val balance by derivedStateOf {
+        BalanceEngine.personalBalance(
+            wallets = wallets,
+            transactions = transactions,
+            loans = loans,
+            loanPayments = loanPayments,
+            lendings = lendings,
+            lendingReturns = lendingReturns,
+            amountConverter = { convertToBdt(it.amount, it.currency) }
+        )
+    }
 
     var rateLoading by mutableStateOf(false)
         private set
@@ -93,7 +148,7 @@ class MainViewModel : ViewModel() {
 
     private var currentUserId: String = "guest"
     private lateinit var prefs: SharedPreferences
-    
+
     private val registrations = mutableListOf<ListenerRegistration>()
 
     private var householdRegistration: ListenerRegistration? = null
@@ -101,15 +156,15 @@ class MainViewModel : ViewModel() {
 
     fun init(context: Context, userId: String, sharedPrefs: SharedPreferences) {
         if (currentUserId == userId && ::prefs.isInitialized) return
-        
+
         currentUserId = userId
         prefs = sharedPrefs
-        
+
         // Clear old registrations
         registrations.forEach { it.remove() }
         registrations.clear()
         detachHouseholdListeners()
-        
+
         // Load local data
         personalTransactions = loadTransactions(prefs)
         loans = loadLoans(prefs)
@@ -119,14 +174,17 @@ class MainViewModel : ViewModel() {
         lendings = loadLendings(prefs)
         lendingReturns = loadLendingReturns(prefs)
         wallets = loadWallets(prefs)
+        savingsGoals = loadSavingsGoals(prefs)
+        financialMilestones = loadFinancialMilestones(prefs)
         shoppingItems = ShoppingListStorage.load(context, userId)
+        wishlistItems = WishlistStorage.load(context, userId)
         notifications = NotificationStorage.load(context, userId)
         birthday = getBirthday(prefs)
         usdToBdt = prefs.getFloat("usd_to_bdt", 0f).toDouble()
         usdToMvr = prefs.getFloat("usd_to_mvr", 0f).toDouble()
-        
+
         refreshRate()
-        
+
         if (userId != "guest") {
             setupFirestoreListeners(userId)
 
@@ -134,21 +192,26 @@ class MainViewModel : ViewModel() {
             household = HouseholdStorage.loadHouseholdCache(context, userId)
             HouseholdStorage.loadHouseholdId(context, userId)?.let { attachHouseholdListeners(context, it) }
         }
-        
+
         checkDueReminders(context)
     }
 
     private fun checkDueReminders(context: Context) {
         val today = Calendar.getInstance()
         val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        
+
         // Check Loans
         loans.filter { it.dueDate != null }.forEach { loan ->
             try {
                 val due = Calendar.getInstance().apply { time = format.parse(loan.dueDate!!)!! }
                 val paid = loanPayments.filter { it.loanId == loan.id }.sumOf { it.amount }
-                val remaining = loan.principal - paid
-                
+                val interest =
+                    loanInterestTerms
+                        .firstOrNull { it.loanId == loan.id }
+                        ?.totalInterest
+                        ?: 0.0
+                val remaining = loan.principal + interest - paid
+
                 if (remaining > 0) {
                     val diffDays = (due.timeInMillis - today.timeInMillis) / (24 * 60 * 60 * 1000)
                     if (diffDays in 0..2) {
@@ -159,14 +222,14 @@ class MainViewModel : ViewModel() {
                 }
             } catch (_: Exception) {}
         }
-        
+
         // Check Lendings
         lendings.filter { it.dueDate != null }.forEach { lending ->
             try {
                 val due = Calendar.getInstance().apply { time = format.parse(lending.dueDate!!)!! }
                 val returned = lendingReturns.filter { it.lendingId == lending.id }.sumOf { it.amount }
                 val remaining = lending.amount - returned
-                
+
                 if (remaining > 0) {
                     val diffDays = (due.timeInMillis - today.timeInMillis) / (24 * 60 * 60 * 1000)
                     if (diffDays in 0..2) {
@@ -188,126 +251,533 @@ class MainViewModel : ViewModel() {
 
     private fun setupFirestoreListeners(userId: String) {
         cloudLoading = true
-        
-        val transReg = firestore.collection("users").document(userId).collection("transactions")
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    cloudError = "Cloud data load হয়নি: ${error.message}"
+
+        // =====================================================
+        // TRANSACTIONS
+        // =====================================================
+
+        val transReg =
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("transactions")
+                .addSnapshotListener { snapshot, error ->
+
+                    if (error != null) {
+                        cloudError =
+                            "Cloud data load হয়নি: ${error.message}"
+                        cloudLoading = false
+                        return@addSnapshotListener
+                    }
+
+                    val cloudTransactions =
+                        snapshot
+                            ?.documents
+                            ?.mapNotNull {
+                                firestoreDocumentToTransaction(it)
+                            }
+                            ?: emptyList()
+
+                    val deletedIds =
+                        prefs.getStringSet(
+                            "deleted_transaction_ids",
+                            emptySet()
+                        )
+                            ?.mapNotNull {
+                                it.toLongOrNull()
+                            }
+                            ?.toSet()
+                            ?: emptySet()
+
+                    val activeCloudTransactions =
+                        cloudTransactions.filter {
+                            it.id !in deletedIds
+                        }
+
+                    personalTransactions =
+                        activeCloudTransactions
+
+                    saveTransactions(
+                        prefs,
+                        activeCloudTransactions
+                    )
+
                     cloudLoading = false
-                    return@addSnapshotListener
+                    cloudError = ""
                 }
-                val cloudTransactions = snapshot?.documents?.mapNotNull { firestoreDocumentToTransaction(it) } ?: emptyList()
-                val deletedIds = prefs.getStringSet("deleted_transaction_ids", emptySet())?.mapNotNull { it.toLongOrNull() }?.toSet() ?: emptySet()
-                val activeCloudTransactions = cloudTransactions.filter { it.id !in deletedIds }
-                personalTransactions = activeCloudTransactions
-                saveTransactions(prefs, activeCloudTransactions)
-                cloudLoading = false
-                cloudError = ""
-            }
+
         registrations.add(transReg)
 
-        val loansReg = firestore.collection("users").document(userId).collection("loans")
-            .addSnapshotListener { snapshot, error ->
-                if (error == null && snapshot != null) {
-                    val cloudLoans = snapshot.documents.mapNotNull { doc ->
-                        try {
-                            val borrowingArray = doc.get("borrowings") as? List<Map<String, Any>>
-                            val borrowings = borrowingArray?.map { b ->
-                                LoanBorrowing(
-                                    id = (b["id"] as? Number)?.toLong() ?: 0L,
-                                    loanId = (b["loanId"] as? Number)?.toLong() ?: 0L,
-                                    amount = (b["amount"] as? Number)?.toDouble() ?: 0.0,
-                                    date = b["date"] as? String ?: "",
-                                    note = b["note"] as? String ?: ""
-                                )
-                            } ?: emptyList()
 
-                            LoanAccount(
-                                id = doc.getLong("id") ?: 0L,
-                                name = doc.getString("name") ?: "",
-                                sourceType = doc.getString("sourceType") ?: "bank",
-                                principal = doc.getDouble("principal") ?: 0.0,
-                                monthlyInstallment = doc.getDouble("monthlyInstallment") ?: 0.0,
-                                startDate = doc.getString("startDate") ?: "",
-                                note = doc.getString("note") ?: "",
-                                lastEditedDate = doc.getString("lastEditedDate") ?: "",
-                                editHistory = doc.get("editHistory") as? List<String> ?: emptyList(),
-                                borrowings = borrowings
-                            )
-                        } catch (e: Exception) { null }
+        // =====================================================
+        // LOANS
+        // =====================================================
+
+        val loansReg =
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("loans")
+                .addSnapshotListener { snapshot, error ->
+
+                    if (error != null) {
+                        cloudError =
+                            "Loan Cloud data load হয়নি: ${error.message}"
+                        return@addSnapshotListener
                     }
-                    if (cloudLoans.isNotEmpty()) {
-                        loans = cloudLoans
-                        saveLoans(prefs, cloudLoans)
-                    }
+
+                    if (snapshot == null) return@addSnapshotListener
+
+                    val cloudLoans =
+                        snapshot.documents.mapNotNull { doc ->
+
+                            try {
+
+                                val borrowingArray =
+                                    doc.get(
+                                        "borrowings"
+                                    ) as? List<Map<String, Any>>
+
+                                val borrowings =
+                                    borrowingArray
+                                        ?.map { b ->
+
+                                            LoanBorrowing(
+                                                id =
+                                                    (
+                                                            b["id"]
+                                                                    as? Number
+                                                            )
+                                                        ?.toLong()
+                                                        ?: 0L,
+
+                                                loanId =
+                                                    (
+                                                            b["loanId"]
+                                                                    as? Number
+                                                            )
+                                                        ?.toLong()
+                                                        ?: 0L,
+
+                                                amount =
+                                                    (
+                                                            b["amount"]
+                                                                    as? Number
+                                                            )
+                                                        ?.toDouble()
+                                                        ?: 0.0,
+
+                                                date =
+                                                    b["date"]
+                                                            as? String
+                                                        ?: "",
+
+                                                note =
+                                                    b["note"]
+                                                            as? String
+                                                        ?: ""
+                                            )
+                                        }
+                                        ?: emptyList()
+
+                                LoanAccount(
+                                    id =
+                                        doc.getLong("id")
+                                            ?: 0L,
+
+                                    name =
+                                        doc.getString("name")
+                                            ?: "",
+
+                                    sourceType =
+                                        doc.getString(
+                                            "sourceType"
+                                        )
+                                            ?: "bank",
+
+                                    principal =
+                                        doc.getDouble(
+                                            "principal"
+                                        )
+                                            ?: 0.0,
+
+                                    monthlyInstallment =
+                                        doc.getDouble(
+                                            "monthlyInstallment"
+                                        )
+                                            ?: 0.0,
+
+                                    startDate =
+                                        doc.getString(
+                                            "startDate"
+                                        )
+                                            ?: "",
+
+                                    note =
+                                        doc.getString("note")
+                                            ?: "",
+
+                                    lastEditedDate =
+                                        doc.getString(
+                                            "lastEditedDate"
+                                        )
+                                            ?: "",
+
+                                    editHistory =
+                                        doc.get(
+                                            "editHistory"
+                                        ) as? List<String>
+                                            ?: emptyList(),
+
+                                    borrowings =
+                                        borrowings,
+
+                                    // NEW:
+                                    // Cloud থেকে dueDate restore হবে
+                                    dueDate =
+                                        doc.getString(
+                                            "dueDate"
+                                        )
+                                            ?.ifBlank {
+                                                null
+                                            }
+                                )
+
+                            } catch (_: Exception) {
+                                null
+                            }
+                        }
+
+                    // IMPORTANT:
+                    // Cloud empty হলে local data clear হবে।
+                    loans = cloudLoans
+                    saveLoans(
+                        prefs,
+                        cloudLoans
+                    )
                 }
-            }
+
         registrations.add(loansReg)
 
-        val paymentsReg = firestore.collection("users").document(userId).collection("loanPayments")
-            .addSnapshotListener { snapshot, error ->
-                if (error == null && snapshot != null) {
-                    val cloudPayments = snapshot.documents.mapNotNull { doc ->
-                        try {
-                            LoanPayment(
-                                id = doc.getLong("id") ?: 0L,
-                                loanId = doc.getLong("loanId") ?: 0L,
-                                amount = doc.getDouble("amount") ?: 0.0,
-                                date = doc.getString("date") ?: "",
-                                note = doc.getString("note") ?: ""
-                            )
-                        } catch (e: Exception) { null }
+
+        // =====================================================
+        // LOAN PAYMENTS
+        // =====================================================
+
+        val paymentsReg =
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("loanPayments")
+                .addSnapshotListener { snapshot, error ->
+
+                    if (error != null) {
+                        cloudError =
+                            "Loan payment Cloud data load হয়নি: ${error.message}"
+                        return@addSnapshotListener
                     }
-                    if (cloudPayments.isNotEmpty()) {
-                        loanPayments = cloudPayments
-                        saveLoanPayments(prefs, cloudPayments)
-                    }
+
+                    if (snapshot == null) return@addSnapshotListener
+
+                    val cloudPayments =
+                        snapshot.documents.mapNotNull { doc ->
+
+                            try {
+
+                                LoanPayment(
+                                    id =
+                                        doc.getLong("id")
+                                            ?: 0L,
+
+                                    loanId =
+                                        doc.getLong(
+                                            "loanId"
+                                        )
+                                            ?: 0L,
+
+                                    amount =
+                                        doc.getDouble(
+                                            "amount"
+                                        )
+                                            ?: 0.0,
+
+                                    date =
+                                        doc.getString("date")
+                                            ?: "",
+
+                                    note =
+                                        doc.getString("note")
+                                            ?: "",
+
+                                    // NEW:
+                                    // Home / Personal source
+                                    fundSource =
+                                        doc.getString(
+                                            "fundSource"
+                                        )
+                                            ?.ifBlank {
+                                                "personal"
+                                            }
+                                            ?: "personal",
+
+                                    sourceTransactionId =
+                                        doc.getLong(
+                                            "sourceTransactionId"
+                                        )
+                                )
+
+                            } catch (_: Exception) {
+                                null
+                            }
+                        }
+
+                    // IMPORTANT:
+                    // Cloud empty হলে local data clear হবে।
+                    loanPayments =
+                        cloudPayments
+
+                    saveLoanPayments(
+                        prefs,
+                        cloudPayments
+                    )
                 }
-            }
+
         registrations.add(paymentsReg)
 
-        val lendingsReg = firestore.collection("users").document(userId).collection("lendings")
-            .addSnapshotListener { snapshot, error ->
-                if (error == null && snapshot != null) {
-                    val cloudLendings = snapshot.documents.mapNotNull { doc ->
-                        try {
-                            LendingAccount(
-                                id = doc.getLong("id") ?: 0L,
-                                person = doc.getString("person") ?: "",
-                                amount = doc.getDouble("amount") ?: 0.0,
-                                date = doc.getString("date") ?: "",
-                                note = doc.getString("note") ?: ""
-                            )
-                        } catch (e: Exception) { null }
+
+        // =====================================================
+        // LOAN INTEREST TERMS
+        // =====================================================
+
+        val interestReg =
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("loanInterestTerms")
+                .addSnapshotListener { snapshot, error ->
+
+                    if (error != null) {
+                        cloudError =
+                            "Loan interest Cloud data load হয়নি: ${error.message}"
+                        return@addSnapshotListener
                     }
-                    if (cloudLendings.isNotEmpty()) {
-                        lendings = cloudLendings
-                        saveLendings(prefs, cloudLendings)
-                    }
+
+                    if (snapshot == null) return@addSnapshotListener
+
+                    val cloudInterestTerms =
+                        snapshot.documents.mapNotNull { doc ->
+
+                            try {
+
+                                LoanInterestTerms(
+                                    loanId =
+                                        doc.getLong(
+                                            "loanId"
+                                        )
+                                            ?: 0L,
+
+                                    interestRate =
+                                        doc.getDouble(
+                                            "interestRate"
+                                        )
+                                            ?: 0.0,
+
+                                    totalInterest =
+                                        doc.getDouble(
+                                            "totalInterest"
+                                        )
+                                            ?: 0.0,
+
+                                    interestType =
+                                        doc.getString(
+                                            "interestType"
+                                        )
+                                            ?: "fixed"
+                                )
+
+                            } catch (_: Exception) {
+                                null
+                            }
+                        }
+
+                    // IMPORTANT:
+                    // Cloud empty হলে local data clear হবে।
+                    loanInterestTerms =
+                        cloudInterestTerms
+
+                    saveLoanInterestTerms(
+                        prefs,
+                        cloudInterestTerms
+                    )
                 }
-            }
+
+        registrations.add(interestReg)
+
+
+        // =====================================================
+        // LENDINGS
+        // =====================================================
+
+        val lendingsReg =
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("lendings")
+                .addSnapshotListener { snapshot, error ->
+
+                    if (error != null) {
+                        cloudError =
+                            "Lending Cloud data load হয়নি: ${error.message}"
+                        return@addSnapshotListener
+                    }
+
+                    if (snapshot == null) return@addSnapshotListener
+
+                    val cloudLendings =
+                        snapshot.documents.mapNotNull { doc ->
+
+                            try {
+
+                                LendingAccount(
+                                    id =
+                                        doc.getLong("id")
+                                            ?: 0L,
+
+                                    person =
+                                        doc.getString(
+                                            "person"
+                                        )
+                                            ?: "",
+
+                                    amount =
+                                        doc.getDouble(
+                                            "amount"
+                                        )
+                                            ?: 0.0,
+
+                                    date =
+                                        doc.getString("date")
+                                            ?: "",
+
+                                    note =
+                                        doc.getString("note")
+                                            ?: "",
+
+                                    // NEW:
+                                    dueDate =
+                                        doc.getString(
+                                            "dueDate"
+                                        )
+                                            ?.ifBlank {
+                                                null
+                                            },
+
+                                    // NEW:
+                                    fundSource =
+                                        doc.getString(
+                                            "fundSource"
+                                        )
+                                            ?.ifBlank {
+                                                "personal"
+                                            }
+                                            ?: "personal"
+                                )
+
+                            } catch (_: Exception) {
+                                null
+                            }
+                        }
+
+                    // IMPORTANT:
+                    // Cloud empty হলে local data clear হবে।
+                    lendings =
+                        cloudLendings
+
+                    saveLendings(
+                        prefs,
+                        cloudLendings
+                    )
+                }
+
         registrations.add(lendingsReg)
 
-        val returnsReg = firestore.collection("users").document(userId).collection("lendingReturns")
-            .addSnapshotListener { snapshot, error ->
-                if (error == null && snapshot != null) {
-                    val cloudReturns = snapshot.documents.mapNotNull { doc ->
-                        try {
-                            LendingReturn(
-                                id = doc.getLong("id") ?: 0L,
-                                lendingId = doc.getLong("lendingId") ?: 0L,
-                                amount = doc.getDouble("amount") ?: 0.0,
-                                date = doc.getString("date") ?: "",
-                                note = doc.getString("note") ?: ""
-                            )
-                        } catch (e: Exception) { null }
+
+        // =====================================================
+        // LENDING RETURNS
+        // =====================================================
+
+        val returnsReg =
+            firestore
+                .collection("users")
+                .document(userId)
+                .collection("lendingReturns")
+                .addSnapshotListener { snapshot, error ->
+
+                    if (error != null) {
+                        cloudError =
+                            "Lending return Cloud data load হয়নি: ${error.message}"
+                        return@addSnapshotListener
                     }
-                    if (cloudReturns.isNotEmpty()) {
-                        lendingReturns = cloudReturns
-                        saveLendingReturns(prefs, cloudReturns)
-                    }
+
+                    if (snapshot == null) return@addSnapshotListener
+
+                    val cloudReturns =
+                        snapshot.documents.mapNotNull { doc ->
+
+                            try {
+
+                                LendingReturn(
+                                    id =
+                                        doc.getLong("id")
+                                            ?: 0L,
+
+                                    lendingId =
+                                        doc.getLong(
+                                            "lendingId"
+                                        )
+                                            ?: 0L,
+
+                                    amount =
+                                        doc.getDouble(
+                                            "amount"
+                                        )
+                                            ?: 0.0,
+
+                                    date =
+                                        doc.getString("date")
+                                            ?: "",
+
+                                    note =
+                                        doc.getString("note")
+                                            ?: "",
+
+                                    // NEW:
+                                    fundSource =
+                                        doc.getString(
+                                            "fundSource"
+                                        )
+                                            ?.ifBlank {
+                                                "personal"
+                                            }
+                                            ?: "personal"
+                                )
+
+                            } catch (_: Exception) {
+                                null
+                            }
+                        }
+
+                    // IMPORTANT:
+                    // Cloud empty হলে local data clear হবে।
+                    lendingReturns =
+                        cloudReturns
+
+                    saveLendingReturns(
+                        prefs,
+                        cloudReturns
+                    )
                 }
-            }
+
         registrations.add(returnsReg)
     }
 
@@ -403,7 +873,13 @@ class MainViewModel : ViewModel() {
 
             // পরিবারের shared mark করা home লেনদেন লোকাল থেকেও সরিয়ে ফেলা হয়
             personalTransactions = personalTransactions.filter {
-                !((it.type == "home" || it.type == "home_expense") && it.addedByUid != null)
+                !(
+                        (
+                                it.type == "home" ||
+                                        it.type == "home_expense" ||
+                                        it.type == "home_adjustment"
+                                ) && it.addedByUid != null
+                        )
             }
             saveTransactions(prefs, personalTransactions)
             saveAutoBackup(context)
@@ -453,11 +929,19 @@ class MainViewModel : ViewModel() {
     /** Join/Create করার পর নিজের পুরনো home লেনদেনগুলো shared collection-এ পাঠানো হয়। */
     private fun markAndUploadHomeTransactions(householdId: String) {
         val myName = FirebaseAuth.getInstance().currentUser?.displayName ?: ""
-        val homeTxns = personalTransactions.filter { it.type == "home" || it.type == "home_expense" }
+        val homeTxns = personalTransactions.filter {
+            it.type == "home" ||
+                    it.type == "home_expense" ||
+                    it.type == "home_adjustment"
+        }
         if (homeTxns.isEmpty()) return
 
         personalTransactions = personalTransactions.map { t ->
-            if (t.type == "home" || t.type == "home_expense") {
+            if (
+                t.type == "home" ||
+                t.type == "home_expense" ||
+                t.type == "home_adjustment"
+            ) {
                 t.copy(addedByUid = currentUserId, addedByName = myName ?: "")
             } else t
         }
@@ -507,10 +991,16 @@ class MainViewModel : ViewModel() {
         type: String,
         walletId: String,
         receiptImage: String? = null,
+        audioMemoPath: String? = null,
+        transactionId: Long? = null,
         onComplete: () -> Unit
     ) {
+        // "home" (প্রবাস থেকে দেশে রেমিট্যান্স) লেনদেনের জন্য তখনকার exchange rate সংরক্ষণ করা হয়,
+        // যাতে পরে মাস অনুযায়ী rate change ট্র্যাক করা যায়।
+        val exchangeRateUsed = if (type == "home" && usdToBdt > 0.0) usdToBdt else null
+
         val transaction = Transaction(
-            id = System.currentTimeMillis(),
+            id = transactionId ?: System.currentTimeMillis(),
             type = type,
             amount = amount,
             currency = currency,
@@ -518,11 +1008,14 @@ class MainViewModel : ViewModel() {
             reason = reason,
             date = date,
             receiptImage = receiptImage,
-            walletId = walletId
+            audioMemoPath = audioMemoPath,
+            walletId = walletId,
+            exchangeRateUsed = exchangeRateUsed
         )
 
         // পরিবারের shared home লেনদেন হলে addedBy mark করা হয়
-        val isSharedHome = household != null && (type == "home" || type == "home_expense")
+        val isSharedHome = household != null &&
+                (type == "home" || type == "home_expense" || type == "home_adjustment")
         val marked = if (isSharedHome) transaction.copy(
             addedByUid = currentUserId,
             addedByName = FirebaseAuth.getInstance().currentUser?.displayName ?: ""
@@ -530,16 +1023,20 @@ class MainViewModel : ViewModel() {
 
         personalTransactions = (personalTransactions + marked).distinctBy { it.id }
         saveTransactions(prefs, personalTransactions)
-        saveAutoBackup(context)
+        val backupCreated = saveAutoBackup(context)
+        LocalBackupReminderManager.showAfterEntry(context, currentUserId, backupCreated)
 
         // নতুন লেনদেন সফলভাবে সেভ হলে sound + মৃদু vibration feedback
         SoundHapticHelper.playTransactionSavedFeedback(context)
 
         if (currentUserId != "guest") {
             saveTransactionToFirestore(firestore, currentUserId, marked, {
-                Toast.makeText(context, "☁️ Cloud-এ save হয়েছে", Toast.LENGTH_SHORT).show()
-            }, { message ->
-                Toast.makeText(context, "⚠️ Cloud save হয়নি: $message", Toast.LENGTH_LONG).show()
+                makeText(context, "☁️ Cloud-এ save হয়েছে", Toast.LENGTH_SHORT).show()
+            }, onError = { message ->
+                WarningPopupManager.show(
+                    title = "Cloud Save Failed",
+                    message = "Cloud-এ হিসাবটি save করা যায়নি।\n\n$message"
+                )
             })
         }
 
@@ -563,7 +1060,12 @@ class MainViewModel : ViewModel() {
                     .sumOf { convertToBdt(it.amount, it.currency) }
                 val percentage = spent / budget.limit
                 if (spent >= budget.limit) {
-                    Toast.makeText(context, "⚠️ $category Budget Limit Cross হয়েছে!", Toast.LENGTH_LONG).show()
+                    WarningPopupManager.show(
+                        title = "$category Budget Limit Crossed",
+                        message = "আপনার $category Budget Limit অতিক্রম করেছে।\n\n" +
+                                "খরচ: ৳${formatMoney(spent)}\n" +
+                                "Limit: ৳${formatMoney(budget.limit)}"
+                    )
                     val newNotification = NotificationItem(
                         title = "🚨 $category Budget Limit Crossed",
                         message = "Budget limit cross হয়েছে।\nখরচ: ৳${formatMoney(spent)} / Limit: ৳${formatMoney(budget.limit)}"
@@ -571,11 +1073,19 @@ class MainViewModel : ViewModel() {
                     notifications = notifications + newNotification
                     NotificationStorage.save(context, notifications, currentUserId)
                 } else if (percentage >= 0.80) {
-                    Toast.makeText(context, "⚠️ $category Budget-এর 80% ব্যবহার হয়েছে。", Toast.LENGTH_LONG).show()
+                    WarningPopupManager.show(
+                        title = "⚠️ $category Budget Warning",
+                        message = "Budget-এর 80% ব্যবহার হয়েছে।\n\n" +
+                                "খরচ: ৳${formatMoney(spent)}\n" +
+                                "Limit: ৳${formatMoney(budget.limit)}"
+                    )
+
                     val newNotification = NotificationItem(
                         title = "⚠️ $category Budget Warning",
-                        message = "Budget-এর 80% ব্যবহার হয়েছে।\nখরচ: ৳${formatMoney(spent)} / Limit: ৳${formatMoney(budget.limit)}"
+                        message = "Budget-এর 80% ব্যবহার হয়েছে।\n" +
+                                "খরচ: ৳${formatMoney(spent)} / Limit: ৳${formatMoney(budget.limit)}"
                     )
+
                     notifications = notifications + newNotification
                     NotificationStorage.save(context, notifications, currentUserId)
                 }
@@ -597,16 +1107,20 @@ class MainViewModel : ViewModel() {
                 HouseholdRepository.saveSharedHomeTransaction(firestore, it.id, updatedTransaction)
             }
         }
-        saveAutoBackup(context)
+        val backupCreated = saveAutoBackup(context)
+        LocalBackupReminderManager.showAfterEntry(context, currentUserId, backupCreated)
 
         // লেনদেন সফলভাবে এডিট হলে হালকা feedback
         SoundHapticHelper.playTransactionUpdatedFeedback(context)
 
         if (currentUserId != "guest") {
             saveTransactionToFirestore(firestore, currentUserId, updatedTransaction, {
-                Toast.makeText(context, "✏️ Cloud data update হয়েছে", Toast.LENGTH_SHORT).show()
+                makeText(context, "✏️ Cloud data update হয়েছে", Toast.LENGTH_SHORT).show()
             }, { message ->
-                Toast.makeText(context, "⚠️ Cloud update হয়নি: $message", Toast.LENGTH_LONG).show()
+                WarningPopupManager.show(
+                    title = "Cloud Update Failed",
+                    message = "Cloud data update করা যায়নি।\n\n$message"
+                )
             })
         }
     }
@@ -631,9 +1145,12 @@ class MainViewModel : ViewModel() {
 
         if (currentUserId != "guest") {
             deleteTransactionFromFirestore(firestore, currentUserId, transaction.id, {
-                Toast.makeText(context, "🗑️ Cloud data delete হয়েছে", Toast.LENGTH_SHORT).show()
+                makeText(context, "🗑️ Cloud data delete হয়েছে", Toast.LENGTH_SHORT).show()
             }, { message ->
-                Toast.makeText(context, "⚠️ Cloud delete হয়নি: $message", Toast.LENGTH_LONG).show()
+                WarningPopupManager.show(
+                    title = "Cloud Delete Failed",
+                    message = "Cloud data delete করা যায়নি।\n\n$message"
+                )
             })
         }
     }
@@ -641,42 +1158,582 @@ class MainViewModel : ViewModel() {
     fun saveCategoryBudgetAction(context: Context, budget: CategoryBudget) {
         categoryBudgets = categoryBudgets.filterNot { it.month == budget.month && it.category == budget.category } + budget
         saveCategoryBudgets(prefs, categoryBudgets)
-        Toast.makeText(context, "✅ ${budget.category} Budget Save হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "✅ ${budget.category} Budget Save হয়েছে", Toast.LENGTH_SHORT).show()
+    }
+
+    fun addSavingsGoal(
+        context: Context,
+        name: String,
+        targetAmount: Double,
+        targetDate: String,
+        frequency: String
+    ) {
+        val goal = SavingsGoal(
+            id = System.currentTimeMillis(),
+            name = name.trim(),
+            targetAmount = targetAmount,
+            savedAmount = 0.0,
+            targetDate = targetDate,
+            frequency = frequency
+        )
+        savingsGoals = savingsGoals + goal
+        saveSavingsGoals(prefs, savingsGoals)
+        saveAutoBackup(context)
+    }
+
+    fun addSavingsContribution(context: Context, goalId: Long, amount: Double) {
+        savingsGoals = savingsGoals.map { goal ->
+            if (goal.id == goalId) goal.copy(savedAmount = goal.savedAmount + amount) else goal
+        }
+        saveSavingsGoals(prefs, savingsGoals)
+        saveAutoBackup(context)
+    }
+
+    fun deleteSavingsGoal(context: Context, goalId: Long) {
+        savingsGoals = savingsGoals.filterNot { it.id == goalId }
+        saveSavingsGoals(prefs, savingsGoals)
+        saveAutoBackup(context)
+    }
+
+    fun saveFinancialMilestone(context: Context, milestone: FinancialMilestone) {
+        financialMilestones = financialMilestones
+            .filterNot { it.id == milestone.id }
+            .plus(milestone.copy(title = milestone.title.trim(), note = milestone.note.trim()))
+        saveFinancialMilestones(prefs, financialMilestones)
+        saveAutoBackup(context)
+    }
+
+    fun deleteFinancialMilestone(context: Context, milestoneId: Long) {
+        financialMilestones = financialMilestones.filterNot { it.id == milestoneId }
+        saveFinancialMilestones(prefs, financialMilestones)
+        saveAutoBackup(context)
     }
 
     fun addLoan(context: Context, name: String, type: String, amount: Double, monthly: Double, date: String, note: String, dueDate: String? = null) {
         val newLoan = LoanAccount(System.currentTimeMillis(), name, type, amount, monthly, date, note, dueDate = dueDate)
         loans = loans + newLoan
         persistLoanData(context)
-        Toast.makeText(context, "✅ নতুন ঋণ যোগ করা হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "✅ নতুন ঋণ যোগ করা হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     fun updateLoan(context: Context, loan: LoanAccount, name: String, type: String, amount: Double, monthly: Double, date: String, note: String, dueDate: String? = null) {
-        val updated = loan.copy(name = name, sourceType = type, principal = amount, monthlyInstallment = monthly, startDate = date, note = note, lastEditedDate = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date()), editHistory = loan.editHistory + SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date()), dueDate = dueDate)
-        loans = loans.map { if (it.id == loan.id) updated else it }
+        if (amount <= 0.0) {
+            WarningPopupManager.show(
+                title = "ঋণের পরিমাণ সঠিক নয়",
+                message = "ঋণের পরিমাণ ০-এর বেশি দিন।"
+            )
+            return
+        }
+
+        val existingInterest =
+            loanInterestTerms
+                .firstOrNull { it.loanId == loan.id }
+                ?.totalInterest
+                ?: 0.0
+
+        val alreadyPaid =
+            loanPayments
+                .filter { it.loanId == loan.id }
+                .sumOf { it.amount }
+
+        val newTotalPayable =
+            amount + existingInterest
+
+        if (newTotalPayable + 0.000001 < alreadyPaid) {
+            WarningPopupManager.show(
+                title = "ঋণের পরিমাণ কমানো যাবে না",
+                message =
+                    "এই Loan-এ ইতিমধ্যে ৳${formatMoney(alreadyPaid)} পরিশোধ হয়েছে।\n\n" +
+                            "বর্তমান Interest সহ মোট payable ৳${formatMoney(newTotalPayable)}।\n\n" +
+                            "তাই পরিশোধিত টাকার চেয়ে কম Loan amount দেওয়া যাবে না।"
+            )
+            return
+        }
+
+        val updated = loan.copy(
+            name = name,
+            sourceType = type,
+            principal = amount,
+            monthlyInstallment = monthly,
+            startDate = date,
+            note = note,
+            lastEditedDate =
+                SimpleDateFormat(
+                    "dd/MM/yyyy HH:mm",
+                    Locale.getDefault()
+                ).format(Date()),
+            editHistory =
+                loan.editHistory +
+                        SimpleDateFormat(
+                            "dd/MM/yyyy HH:mm",
+                            Locale.getDefault()
+                        ).format(Date()),
+            dueDate = dueDate
+        )
+
+        loans =
+            loans.map {
+                if (it.id == loan.id) updated else it
+            }
+
         persistLoanData(context)
-        Toast.makeText(context, "✅ ঋণের তথ্য আপডেট হয়েছে", Toast.LENGTH_SHORT).show()
+
+        makeText(
+            context,
+            "✅ ঋণের তথ্য আপডেট হয়েছে",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    /**
+     * Home → Loan payment-এর জন্য available Home balance যাচাই।
+     * Extra ছাড়া shortage থাকলে payment save হবে না।
+     */
+    fun getHomeLoanShortage(amount: Double): Double {
+        if (amount <= 0.0) return 0.0
+        return (amount - homeBalance).coerceAtLeast(0.0)
+    }
+
+    /**
+     * Home-only Extra/Adjustment history-তে রাখা হয়।
+     * এটি Personal balance বা Personal expense নয়।
+     */
+    private fun addHomeAdjustment(
+        context: Context,
+        amount: Double,
+        date: String,
+        reason: String
+    ) {
+        if (amount <= 0.0) return
+
+        val adjustment = Transaction(
+            id = System.currentTimeMillis(),
+            type = "home_adjustment",
+            amount = amount,
+            currency = "BDT",
+            category = "Home Adjustment",
+            reason = reason,
+            date = date,
+            walletId = "default_cash"
+        )
+
+        personalTransactions = (personalTransactions + adjustment).distinctBy { it.id }
+        saveTransactions(prefs, personalTransactions)
+        saveAutoBackup(context)
+
+        if (currentUserId != "guest") {
+            saveTransactionToFirestore(
+                firestore,
+                currentUserId,
+                adjustment,
+                {},
+                {}
+            )
+        }
+
+        // Household থাকলে adjustment-টিও Home ledger-এ shared করা হয়।
+        household?.let {
+            HouseholdRepository.saveSharedHomeTransaction(
+                firestore,
+                it.id,
+                adjustment
+            )
+        }
+    }
+
+    /**
+     * Home → Loan payment save করার নতুন নিরাপদ path।
+     *
+     * extraHomeAmount:
+     * - shortage না থাকলে 0 রাখা হবে; Extra UI দেখানোর প্রয়োজন নেই।
+     * - shortage থাকলে অন্তত shortage পরিমাণ হতে হবে।
+     * - Extra shortage-এর চেয়ে বেশি হলেও allowed; অতিরিক্তটাও Home adjustment হিসেবে থাকবে।
+     *
+     * return:
+     * - true = payment save হয়েছে
+     * - false = validation fail, কিছু save হয়নি
+     */
+    fun addHomeLoanPayment(
+        context: Context,
+        loan: LoanAccount,
+        amount: Double,
+        date: String,
+        note: String,
+        extraHomeAmount: Double,
+        sourceTransactionId: Long? = null
+    ): Boolean {
+        if (amount <= 0.0) {
+            WarningPopupManager.show(
+                title = "পরিশোধের পরিমাণ সঠিক নয়",
+                message = "Loan payment-এর পরিমাণ ০-এর বেশি দিন।"
+            )
+            return false
+        }
+
+        val interest =
+            loanInterestTerms
+                .firstOrNull { it.loanId == loan.id }
+                ?.totalInterest
+                ?: 0.0
+
+        val alreadyPaid =
+            loanPayments
+                .filter { it.loanId == loan.id }
+                .sumOf { it.amount }
+
+        val totalPayable =
+            loan.principal + interest
+
+        val remaining =
+            (totalPayable - alreadyPaid)
+                .coerceAtLeast(0.0)
+
+        if (amount > remaining + 0.000001) {
+            WarningPopupManager.show(
+                title = "Loan amount-এর বেশি",
+                message = "এই Loan-এর বাকি পরিমাণ ৳${formatMoney(remaining)}।\n\n" +
+                        "আপনি ৳${formatMoney(amount)} দিতে চাচ্ছেন।"
+            )
+            return false
+        }
+
+        val shortage = getHomeLoanShortage(amount)
+        val extra = extraHomeAmount.coerceAtLeast(0.0)
+
+        if (shortage > 0.000001 && extra + 0.000001 < shortage) {
+            WarningPopupManager.show(
+                title = "Home balance যথেষ্ট নয়",
+                message = "এই payment-এর জন্য আরও ৳${formatMoney(shortage)} দরকার।\n\n" +
+                        "Extra/Adjustment কমপক্ষে ৳${formatMoney(shortage)} হতে হবে।"
+            )
+            return false
+        }
+
+        // Extra থাকলে আগে Home adjustment হিসেবে history-তে যোগ হবে।
+        if (extra > 0.000001) {
+            addHomeAdjustment(
+                context = context,
+                amount = extra,
+                date = date,
+                reason = "Home Loan Payment Extra/Adjustment"
+            )
+        }
+
+        val payment = LoanPayment(
+            id = System.currentTimeMillis(),
+            loanId = loan.id,
+            amount = amount,
+            date = date,
+            note = if (
+                note.isBlank()
+            ) {
+                "বাড়িতে পাঠানো টাকা থেকে Loan payment"
+            } else {
+                note
+            },
+            fundSource = "home",
+            sourceTransactionId = sourceTransactionId
+        )
+
+        loanPayments = loanPayments + payment
+        persistLoanData(context)
+
+        makeText(
+            context,
+            "✅ Home থেকে Loan payment সেভ হয়েছে",
+            Toast.LENGTH_SHORT
+        ).show()
+
+        return true
     }
 
     fun addLoanPayment(context: Context, loan: LoanAccount, amount: Double, date: String, note: String, isHome: Boolean) {
-        val payment = LoanPayment(System.currentTimeMillis(), loan.id, amount, date, note)
+        if (isHome) {
+            // পুরোনো callback compatibility: Extra দেওয়া না হলে shortage-এ save বন্ধ থাকবে।
+            addHomeLoanPayment(
+                context = context,
+                loan = loan,
+                amount = amount,
+                date = date,
+                note = note,
+                extraHomeAmount = 0.0
+            )
+            return
+        }
+
+        val interest =
+            loanInterestTerms
+                .firstOrNull { it.loanId == loan.id }
+                ?.totalInterest
+                ?: 0.0
+
+        val alreadyPaid =
+            loanPayments
+                .filter { it.loanId == loan.id }
+                .sumOf { it.amount }
+
+        val totalPayable =
+            loan.principal + interest
+
+        val remaining =
+            (totalPayable - alreadyPaid)
+                .coerceAtLeast(0.0)
+
+        if (amount <= 0.0 || amount > remaining + 0.000001) {
+            WarningPopupManager.show(
+                title = "Loan payment সঠিক নয়",
+                message = "এই Loan-এর সর্বোচ্চ বাকি পরিমাণ ৳${formatMoney(remaining)}।"
+            )
+            return
+        }
+
+        val payment = LoanPayment(
+            id = System.currentTimeMillis(),
+            loanId = loan.id,
+            amount = amount,
+            date = date,
+            note = note,
+            fundSource = "personal"
+        )
         loanPayments = loanPayments + payment
         persistLoanData(context)
-        if (!isHome) Toast.makeText(context, "✅ পরিশোধের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "✅ পরিশোধের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
-    fun addLending(context: Context, person: String, amount: Double, date: String, note: String, dueDate: String? = null) {
-        val lending = LendingAccount(System.currentTimeMillis(), person, amount, date, note, dueDate = dueDate)
+
+    fun updateLoanPayment(
+        context: Context,
+        payment: LoanPayment,
+        amount: Double,
+        date: String,
+        note: String
+    ): Boolean {
+
+        if (amount <= 0.0) {
+            WarningPopupManager.show(
+                title = "পরিশোধের পরিমাণ সঠিক নয়",
+                message = "Loan payment-এর পরিমাণ ০-এর বেশি দিন।"
+            )
+            return false
+        }
+
+        val loan = loans.firstOrNull {
+            it.id == payment.loanId
+        }
+
+        if (loan == null) {
+            WarningPopupManager.show(
+                title = "Loan পাওয়া যায়নি",
+                message = "এই payment-এর সাথে যুক্ত Loan খুঁজে পাওয়া যায়নি।"
+            )
+            return false
+        }
+
+        val interest =
+            loanInterestTerms
+                .firstOrNull { it.loanId == loan.id }
+                ?.totalInterest
+                ?: 0.0
+
+        val totalPayable =
+            loan.principal + interest
+
+        val paidWithoutCurrent =
+            loanPayments
+                .filter {
+                    it.loanId == payment.loanId &&
+                            it.id != payment.id
+                }
+                .sumOf { it.amount }
+
+        val remainingForThisPayment =
+            (totalPayable - paidWithoutCurrent)
+                .coerceAtLeast(0.0)
+
+        if (amount > remainingForThisPayment + 0.000001) {
+            WarningPopupManager.show(
+                title = "Loan amount-এর বেশি",
+                message =
+                    "এই Loan-এ সর্বোচ্চ ৳${formatMoney(remainingForThisPayment)} দেওয়া যাবে।"
+            )
+            return false
+        }
+
+        val updatedPayment =
+            payment.copy(
+                amount = amount,
+                date = date,
+                note = note
+            )
+
+        loanPayments =
+            loanPayments.map {
+                if (it.id == payment.id) {
+                    updatedPayment
+                } else {
+                    it
+                }
+            }
+
+        persistLoanData(context)
+
+        if (currentUserId != "guest") {
+            firestore
+                .collection("users")
+                .document(currentUserId)
+                .collection("loanPayments")
+                .document(payment.id.toString())
+                .set(
+                    mapOf(
+                        "id" to updatedPayment.id,
+                        "loanId" to updatedPayment.loanId,
+                        "amount" to updatedPayment.amount,
+                        "date" to updatedPayment.date,
+                        "note" to updatedPayment.note,
+                        "fundSource" to updatedPayment.fundSource,
+                        "sourceTransactionId" to updatedPayment.sourceTransactionId
+                    )
+                )
+        }
+
+        SoundHapticHelper.playTransactionUpdatedFeedback(
+            context
+        )
+
+        makeText(
+            context,
+            "✏️ Loan payment আপডেট হয়েছে",
+            Toast.LENGTH_SHORT
+        ).show()
+
+        return true
+    }
+
+    fun deleteLoanPayment(
+        context: Context,
+        payment: LoanPayment
+    ): Boolean {
+
+        if (
+            loanPayments.none {
+                it.id == payment.id
+            }
+        ) {
+            WarningPopupManager.show(
+                title = "Payment পাওয়া যায়নি",
+                message = "এই Loan payment আর পাওয়া যাচ্ছে না।"
+            )
+            return false
+        }
+
+        loanPayments =
+            loanPayments.filter {
+                it.id != payment.id
+            }
+
+        persistLoanData(context)
+
+        if (currentUserId != "guest") {
+            firestore
+                .collection("users")
+                .document(currentUserId)
+                .collection("loanPayments")
+                .document(payment.id.toString())
+                .delete()
+        }
+
+        SoundHapticHelper.playTransactionDeletedFeedback(
+            context
+        )
+
+        makeText(
+            context,
+            "🗑️ Loan payment মুছে ফেলা হয়েছে",
+            Toast.LENGTH_SHORT
+        ).show()
+
+        return true
+    }
+
+    fun addLending(
+        context: Context,
+        person: String,
+        amount: Double,
+        date: String,
+        note: String,
+        dueDate: String? = null,
+        fundSource: String = "personal"
+    ) {
+        val resolvedSource =
+            if (fundSource.equals("home", ignoreCase = true) ||
+                note.contains("[HOME]", ignoreCase = true)
+            ) {
+                "home"
+            } else {
+                "personal"
+            }
+        val lending = LendingAccount(
+            System.currentTimeMillis(),
+            person,
+            amount,
+            date,
+            note,
+            dueDate = dueDate,
+            fundSource = resolvedSource
+        )
         lendings = lendings + lending
         persistLoanData(context)
-        Toast.makeText(context, "✅ ধারের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "✅ ধারের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     fun addLendingReturn(context: Context, lending: LendingAccount, amount: Double, date: String, note: String) {
-        val ret = LendingReturn(System.currentTimeMillis(), lending.id, amount, date, note)
-        lendingReturns = lendingReturns + ret
+        if (amount <= 0.0) {
+            WarningPopupManager.show(
+                title = "ফেরতের পরিমাণ সঠিক নয়",
+                message = "ধার ফেরতের পরিমাণ ০-এর বেশি দিন।"
+            )
+            return
+        }
+
+        val alreadyReturned =
+            lendingReturns
+                .filter { it.lendingId == lending.id }
+                .sumOf { it.amount }
+
+        val outstanding =
+            (lending.amount - alreadyReturned)
+                .coerceAtLeast(0.0)
+
+        if (amount > outstanding + 0.000001) {
+            WarningPopupManager.show(
+                title = "ফেরতের পরিমাণ বেশি",
+                message =
+                    "এই ধার থেকে সর্বোচ্চ ৳${formatMoney(outstanding)} ফেরত নেওয়া যাবে।\n\n" +
+                            "আপনি ৳${formatMoney(amount)} দিতে চাচ্ছেন।"
+            )
+            return
+        }
+
+        val ret =
+            LendingReturn(
+                System.currentTimeMillis(),
+                lending.id,
+                amount,
+                date,
+                note,
+                fundSource = if (FundSource.isHomeLending(lending)) "home" else "personal"
+            )
+
+        lendingReturns =
+            lendingReturns + ret
+
         persistLoanData(context)
-        Toast.makeText(context, "✅ ধার ফেরতের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
+
+        makeText(
+            context,
+            "✅ ধার ফেরতের তথ্য সেভ হয়েছে",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     fun updateBorrowing(context: Context, loan: LoanAccount, borrowing: LoanBorrowing, amount: Double, date: String, note: String) {
@@ -684,14 +1741,14 @@ class MainViewModel : ViewModel() {
         val updatedLoan = loan.copy(borrowings = loan.borrowings.map { if (it.id == borrowing.id) updatedBorrowing else it })
         loans = loans.map { if (it.id == loan.id) updatedLoan else it }
         persistLoanData(context)
-        Toast.makeText(context, "✅ ঋণের এন্ট্রি আপডেট হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "✅ ঋণের এন্ট্রি আপডেট হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     fun deleteBorrowing(context: Context, loan: LoanAccount, borrowing: LoanBorrowing) {
         val updatedLoan = loan.copy(borrowings = loan.borrowings.filter { it.id != borrowing.id })
         loans = loans.map { if (it.id == loan.id) updatedLoan else it }
         persistLoanData(context)
-        Toast.makeText(context, "🗑️ এন্ট্রিটি মুছে ফেলা হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "🗑️ এন্ট্রিটি মুছে ফেলা হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     private fun persistLoanData(context: Context) {
@@ -704,7 +1761,15 @@ class MainViewModel : ViewModel() {
         saveAutoBackup(context)
 
         if (currentUserId != "guest") {
-            syncAllLoanAndLendingData(firestore, currentUserId, loans, loanPayments, lendings, lendingReturns)
+            syncAllLoanAndLendingData(
+                firestore = firestore,
+                userId = currentUserId,
+                loans = loans,
+                loanPayments = loanPayments,
+                lendings = lendings,
+                lendingReturns = lendingReturns,
+                loanInterestTerms = loanInterestTerms
+            )
         }
     }
 
@@ -713,7 +1778,7 @@ class MainViewModel : ViewModel() {
         wallets = wallets + newWallet
         saveWallets(prefs, wallets)
         saveAutoBackup(context)
-        Toast.makeText(context, "✅ নতুন অ্যাকাউন্ট যোগ হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "✅ নতুন অ্যাকাউন্ট যোগ হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     fun updateWallet(context: Context, wallet: Wallet) {
@@ -724,13 +1789,16 @@ class MainViewModel : ViewModel() {
 
     fun deleteWallet(context: Context, walletId: String) {
         if (walletId == "default_cash") {
-            Toast.makeText(context, "ডিফল্ট অ্যাকাউন্ট মোছা সম্ভব নয়", Toast.LENGTH_SHORT).show()
+            WarningPopupManager.show(
+                title = "অ্যাকাউন্ট মুছে ফেলা যাবে না",
+                message = "ডিফল্ট অ্যাকাউন্টটি মুছে ফেলা সম্ভব নয়।"
+            )
             return
         }
         wallets = wallets.filter { it.id != walletId }
         saveWallets(prefs, wallets)
         saveAutoBackup(context)
-        Toast.makeText(context, "🗑️ অ্যাকাউন্ট মুছে ফেলা হয়েছে", Toast.LENGTH_SHORT).show()
+        makeText(context, "🗑️ অ্যাকাউন্ট মুছে ফেলা হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     fun getWalletBalance(walletId: String): Double {
@@ -739,7 +1807,7 @@ class MainViewModel : ViewModel() {
         val income = walletTransactions.filter { it.type == "income" }.sumOf { convertToBdt(it.amount, it.currency) }
         val expense = walletTransactions.filter { it.type == "expense" }.sumOf { convertToBdt(it.amount, it.currency) }
         val home = walletTransactions.filter { it.type == "home" }.sumOf { convertToBdt(it.amount, it.currency) }
-        
+
         // Simplified: assuming loans/lendings are from default wallet for now
         // If we want per-wallet loans, we'd need to update those models too.
         return wallet.initialBalance + income - expense - home
@@ -754,10 +1822,11 @@ class MainViewModel : ViewModel() {
         lendingReturns = emptyList()
         categoryBudgets = emptyList()
         notifications = emptyList()
-        
+        financialMilestones = emptyList()
+
         prefs.edit().clear().apply()
         NotificationStorage.save(context, emptyList(), currentUserId)
-        
+
         if (currentUserId != "guest") {
             // Delete from Firestore logic can be added here
         }
@@ -773,8 +1842,19 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun saveAutoBackup(context: Context) {
-        saveAutoBackup(context, currentUserId, transactions, usdToBdt, usdToMvr, loans, loanPayments, lendings, lendingReturns, wallets)
+    fun saveAutoBackup(context: Context): Boolean {
+        return saveAutoBackup(
+            context,
+            currentUserId,
+            transactions,
+            usdToBdt,
+            usdToMvr,
+            loans,
+            loanPayments,
+            lendings,
+            lendingReturns,
+            wallets
+        )
     }
 
     // --------------------------------------------------
@@ -783,6 +1863,33 @@ class MainViewModel : ViewModel() {
 
     private fun persistShoppingList(context: Context) {
         ShoppingListStorage.save(context, currentUserId, shoppingItems)
+    }
+
+    private fun persistWishlist(context: Context) {
+        WishlistStorage.save(context, currentUserId, wishlistItems)
+    }
+
+    fun addWishlistItem(context: Context, name: String, price: Double) {
+        wishlistItems = wishlistItems + WishlistItem(name = name.trim(), price = price)
+        persistWishlist(context)
+    }
+
+    fun deleteWishlistItem(context: Context, id: Long) {
+        wishlistItems = wishlistItems.filterNot { it.id == id }
+        persistWishlist(context)
+    }
+
+    fun notifyAffordableWishlistItems(context: Context) {
+        val affordableItems = wishlistItems.filter { !it.notifiedAffordable && balance >= it.price }
+        if (affordableItems.isEmpty()) return
+
+        val notifiedIds = affordableItems
+            .filter { WishlistNotificationManager.notifyAffordable(context, it) }
+            .map { it.id }
+        wishlistItems = wishlistItems.map { item ->
+            if (item.id in notifiedIds) item.copy(notifiedAffordable = true) else item
+        }
+        persistWishlist(context)
     }
 
     fun addShoppingItem(context: Context, name: String, amount: Double, currency: String, category: String, note: String) {
@@ -859,11 +1966,11 @@ class MainViewModel : ViewModel() {
     }
 
     fun convertToBdt(amount: Double, currency: String): Double {
-        return when (currency) {
-            "BDT" -> amount
-            "USD" -> amount * usdToBdt
-            "MVR" -> if (usdToMvr > 0) amount * (usdToBdt / usdToMvr) else 0.0
-            else -> 0.0
+        return when (currency.trim().uppercase(Locale.getDefault())) {
+            "", "BDT", "৳", "TK", "TAKA" -> amount
+            "USD", "$" -> amount * usdToBdt
+            "MVR", "RF", "RUFIYAA" -> if (usdToMvr > 0) amount * (usdToBdt / usdToMvr) else 0.0
+            else -> amount
         }
     }
 
@@ -874,7 +1981,7 @@ class MainViewModel : ViewModel() {
         lendings = cloudLendings
         lendingReturns = cloudReturns
         if (cloudWallets.isNotEmpty()) wallets = cloudWallets
-        
+
         saveTransactions(prefs, transactions)
         saveLoans(prefs, loans)
         saveLoanPayments(prefs, loanPayments)
@@ -887,7 +1994,7 @@ class MainViewModel : ViewModel() {
         val payments = loanPayments.filter { it.loanId == loan.id }
         val totalPaid = payments.sumOf { it.amount }
         val remaining = loan.principal - totalPaid
-        
+
         val sb = StringBuilder()
         sb.append("📋 ঋণ স্টেটমেন্ট\n")
         sb.append("ব্যাংক/ব্যক্তি: ${loan.name}\n")
@@ -895,7 +2002,7 @@ class MainViewModel : ViewModel() {
         sb.append("পরিশোধ হয়েছে: ৳${formatMoney(totalPaid)}\n")
         sb.append("বাকি আছে: ৳${formatMoney(remaining)}\n")
         if (loan.dueDate != null) sb.append("পরিশোধের তারিখ: ${loan.dueDate}\n")
-        
+
         if (payments.isNotEmpty()) {
             sb.append("\nপরিশোধের ইতিহাস:\n")
             payments.forEach { p -> sb.append("- ${p.date}: ৳${formatMoney(p.amount)}\n") }
@@ -907,7 +2014,7 @@ class MainViewModel : ViewModel() {
         val returns = lendingReturns.filter { it.lendingId == lending.id }
         val totalReturned = returns.sumOf { it.amount }
         val remaining = lending.amount - totalReturned
-        
+
         val sb = StringBuilder()
         sb.append("🤝 পাওনা স্টেটমেন্ট\n")
         sb.append("ব্যক্তি: ${lending.person}\n")
@@ -915,7 +2022,7 @@ class MainViewModel : ViewModel() {
         sb.append("ফেরত পাওয়া: ৳${formatMoney(totalReturned)}\n")
         sb.append("বাকি পাওনা: ৳${formatMoney(remaining)}\n")
         if (lending.dueDate != null) sb.append("ফেরত পাওয়ার তারিখ: ${lending.dueDate}\n")
-        
+
         if (returns.isNotEmpty()) {
             sb.append("\nফেরত পাওয়ার ইতিহাস:\n")
             returns.forEach { r -> sb.append("- ${r.date}: ৳${formatMoney(r.amount)}\n") }
@@ -949,13 +2056,13 @@ class MainViewModel : ViewModel() {
         val filtered = transactions.filter { it.reason.contains(query, ignoreCase = true) || it.category.contains(query, ignoreCase = true) }
         val income = filtered.filter { it.type == "income" }.sumOf { it.amount }
         val expense = filtered.filter { it.type != "income" }.sumOf { it.amount }
-        
+
         val sb = StringBuilder()
         sb.append("📊 সার্চ রেজাল্ট সামারি: $query\n")
         sb.append("মোট আয়: ৳${formatMoney(income)}\n")
         sb.append("মোট খরচ: ৳${formatMoney(expense)}\n")
         sb.append("নিট ব্যালেন্স: ৳${formatMoney(income - expense)}\n\n")
-        
+
         if (filtered.isNotEmpty()) {
             sb.append("লেনদেনের ইতিহাস:\n")
             filtered.sortedByDescending { it.date }.forEach { t ->

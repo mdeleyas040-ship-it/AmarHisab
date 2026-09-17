@@ -9,9 +9,20 @@ data class Transaction(
     val reason: String,
     val date: String,
     val receiptImage: String? = null,
+    val audioMemoPath: String? = null,
     val walletId: String = "default_cash",
     val addedByUid: String? = null,
-    val addedByName: String? = null
+    val addedByName: String? = null,
+    // "home" (remittance) transaction পাঠানোর সময়ে ব্যবহৃত exchange rate (1 USD = কত BDT)।
+    // ঐতিহাসিক rate ট্র্যাক করার জন্য save করা হয়, পুরনো entry-তে null থাকবে।
+    val exchangeRateUsed: Double? = null
+)
+
+data class ScratchNote(
+    val id: Long,
+    val title: String,
+    val content: String,
+    val updatedAt: Long
 )
 
 data class Wallet(
@@ -21,6 +32,25 @@ data class Wallet(
     val initialBalance: Double = 0.0,
     val currency: String = "BDT",
     val color: Int = 0xFF4CAF50.toInt()
+)
+
+data class SavingsGoal(
+    val id: Long,
+    val name: String,
+    val targetAmount: Double,
+    val savedAmount: Double,
+    val targetDate: String,
+    val frequency: String = "daily"
+)
+
+data class FinancialMilestone(
+    val id: Long,
+    val title: String,
+    val amount: Double,
+    val currency: String,
+    val date: String,
+    val note: String = "",
+    val linkedTransactionId: Long? = null
 )
 
 data class BackupData(
@@ -68,7 +98,11 @@ data class LoanPayment(
     val amount: Double,
     val date: String,
     val note: String,
-    val fundSource: String = "personal"
+    val fundSource: String = "personal",
+
+    // Home → Loan payment-এর মূল Home transaction-এর ID
+    // পুরোনো payment-এর জন্য null থাকবে।
+    val sourceTransactionId: Long? = null
 )
 
 data class LendingAccount(
@@ -78,7 +112,9 @@ data class LendingAccount(
     val date: String,
     val note: String,
     val dueDate: String? = null,
-    val fundSource: String = "personal"
+    val fundSource: String = "personal",
+    val walletId: String = "default_cash",
+    val currency: String = "BDT"
 )
 
 data class LendingReturn(
@@ -87,7 +123,9 @@ data class LendingReturn(
     val amount: Double,
     val date: String,
     val note: String,
-    val fundSource: String = "personal"
+    val fundSource: String = "personal",
+    val walletId: String = "default_cash",
+    val currency: String = "BDT"
 )
 
 data class LoanInterestTerms(

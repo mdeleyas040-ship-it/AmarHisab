@@ -118,9 +118,11 @@ object HouseholdRepository {
             "reason" to transaction.reason,
             "date" to transaction.date,
             "receiptImage" to (transaction.receiptImage ?: ""),
+            "audioMemoPath" to (transaction.audioMemoPath ?: ""),
             "walletId" to transaction.walletId,
             "addedByUid" to (transaction.addedByUid ?: ""),
-            "addedByName" to (transaction.addedByName ?: "")
+            "addedByName" to (transaction.addedByName ?: ""),
+            "exchangeRateUsed" to (transaction.exchangeRateUsed ?: -1.0)
         )
         firestore.collection("households").document(householdId)
             .collection("homeTransactions")
@@ -180,9 +182,11 @@ object HouseholdRepository {
             reason = doc.getString("reason") ?: "",
             date = doc.getString("date") ?: "",
             receiptImage = doc.getString("receiptImage")?.takeIf { it.isNotBlank() },
+            audioMemoPath = doc.getString("audioMemoPath")?.takeIf { it.isNotBlank() },
             walletId = doc.getString("walletId") ?: "default_cash",
             addedByUid = doc.getString("addedByUid")?.takeIf { it.isNotBlank() },
-            addedByName = doc.getString("addedByName")?.takeIf { it.isNotBlank() }
+            addedByName = doc.getString("addedByName")?.takeIf { it.isNotBlank() },
+            exchangeRateUsed = doc.getDouble("exchangeRateUsed")?.takeIf { it > 0.0 }
         )
     } catch (_: Exception) { null }
 }

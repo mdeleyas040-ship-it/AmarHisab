@@ -1,3 +1,4 @@
+
 package com.eleyas.expensetracker.ui.components
 
 import androidx.compose.foundation.layout.Column
@@ -12,12 +13,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.Dialog
-import androidx.compose.material3.DialogProperties
+import androidx.compose.material.icons.filled.VolunteerActivism
+import androidx.compose.material.icons.filled.Savings
+import androidx.compose.material.icons.filled.NoteAlt
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.CurrencyExchange
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -45,6 +52,12 @@ fun AmarHisabTopMenu(
     onFamilyShare: () -> Unit,
     onCalendar: () -> Unit,
     onShoppingList: () -> Unit,
+    onScratchpad: () -> Unit,
+    onSavings: () -> Unit,
+    onWishlist: () -> Unit,
+    onBirthday: () -> Unit,
+    onZakatCharity: () -> Unit,
+    onRemittanceHistory: () -> Unit,
     onSettings: () -> Unit
 ) {
     var showHelp by remember { mutableStateOf(false) }
@@ -98,13 +111,49 @@ fun AmarHisabTopMenu(
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
         TopMenuItem(Icons.Default.Groups, "পরিবার শেয়ার") {
-            onDismiss(); onFamilyShare()
+            onDismiss()
+            onFamilyShare()
         }
+
         TopMenuItem(Icons.Default.CalendarMonth, "ক্যালেন্ডার") {
-            onDismiss(); onCalendar()
+            onDismiss()
+            onCalendar()
         }
+
         TopMenuItem(Icons.Default.ShoppingCart, "বাজারের ফর্দ") {
-            onDismiss(); onShoppingList()
+            onDismiss()
+            onShoppingList()
+        }
+
+        TopMenuItem(Icons.Default.NoteAlt, "কুইক মেমো প্যাড") {
+            onDismiss()
+            onScratchpad()
+        }
+
+        TopMenuItem(Icons.Default.Savings, "সেভিংস লক্ষ্য") {
+            onDismiss()
+            onSavings()
+        }
+
+        TopMenuItem(Icons.Default.Favorite, "পরে কিনব") {
+            onDismiss()
+            onWishlist()
+        }
+
+        // জন্মদিন
+        TopMenuItem(Icons.Default.Cake, "জন্মদিন") {
+            onDismiss()
+            onBirthday()
+        }
+
+        TopMenuItem(Icons.Default.VolunteerActivism, "যাকাত ও চ্যারিটি") {
+            onDismiss()
+            onZakatCharity()
+        }
+
+        TopMenuItem(Icons.Default.CurrencyExchange, "রেমিট্যান্স হিস্ট্রি") {
+            onDismiss()
+            onRemittanceHistory()
         }
 
         HorizontalDivider(
@@ -116,8 +165,10 @@ fun AmarHisabTopMenu(
             onDismiss()
             showHelp = true
         }
+
         TopMenuItem(Icons.Default.Settings, "সেটিংস") {
-            onDismiss(); onSettings()
+            onDismiss()
+            onSettings()
         }
     }
 
@@ -134,7 +185,11 @@ fun AmarHisabTopMenu(
                 shape = RoundedCornerShape(20.dp),
                 color = MaterialTheme.colorScheme.background
             ) {
-                HelpScreen(onBack = { showHelp = false })
+                HelpScreen(
+                    onBack = {
+                        showHelp = false
+                    }
+                )
             }
         }
     }

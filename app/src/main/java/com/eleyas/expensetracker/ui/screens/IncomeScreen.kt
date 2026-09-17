@@ -1,6 +1,5 @@
 package com.eleyas.expensetracker.ui.screens
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,7 +22,6 @@ import com.eleyas.expensetracker.ui.theme.Green
 import com.eleyas.expensetracker.ui.theme.IncomeGreen
 import com.eleyas.expensetracker.util.*
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun IncomeScreen(
     modifier: Modifier,
@@ -50,8 +48,6 @@ fun IncomeScreen(
             var index = 2
 
             for ((_, list) in groupedTransactions) {
-                index += 1
-
                 val targetIndex = list.indexOfFirst { it.id == targetTransactionId }
 
                 if (targetIndex >= 0) {
@@ -75,8 +71,8 @@ fun IncomeScreen(
     LazyColumn(
         state = listState,
         modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(horizontal = ScreenHorizontalPadding, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(SectionSpacing)
+        contentPadding = PaddingValues(horizontal = ScreenHorizontalPadding, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         item {
             Card(
@@ -189,37 +185,7 @@ fun IncomeScreen(
             }
         }
 
-        groupedTransactions.forEach { (date, list) ->
-            stickyHeader {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    Row(
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            modifier = Modifier.size(8.dp),
-                            shape = RoundedCornerShape(50),
-                            color = IncomeGreen
-                        ) {}
-                        Spacer(Modifier.width(9.dp))
-                        Text(
-                            text = date,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "${list.size}টি",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
+        groupedTransactions.forEach { (_, list) ->
             items(list) { trans ->
                 val wallet = wallets.firstOrNull { it.id == trans.walletId }
                 TransactionCard(
