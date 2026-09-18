@@ -22,7 +22,9 @@ object HomeLedgerEngine {
         loanPayments: List<LoanPayment>,
         lendings: List<LendingAccount>,
         lendingReturns: List<LendingReturn>,
-        amountConverter: (Transaction) -> Double = { it.amount }
+        amountConverter: (Transaction) -> Double = { it.amount },
+        lendingAmountConverter: (LendingAccount) -> Double = { it.amount },
+        lendingReturnAmountConverter: (LendingReturn) -> Double = { it.amount }
     ): List<HomeLedgerEntry> {
         val entries = mutableListOf<HomeLedgerEntry>()
 
@@ -66,6 +68,21 @@ object HomeLedgerEngine {
             }
         }
 
+        // Home loan principal is Home IN; personal loans never enter this ledger.
+        loans.filter(FundSource::isHomeLoan).forEach { loan ->
+            entries += HomeLedgerEntry(
+                id = "loan_received_home_${loan.id}",
+                date = loan.startDate,
+                title = "Home Loan Received — ${loan.name}",
+                category = "Home Loan Received",
+                amount = loan.principal,
+                direction = HomeLedgerDirection.IN,
+                sourceType = HomeLedgerSourceType.HOME_LOAN_RECEIVED,
+                sourceId = loan.id.toString(),
+                note = loan.note
+            )
+        }
+
         val loanNames = loans.associateBy { it.id }
         loanPayments.filter(FundSource::isHomeLoanPayment).forEach { payment ->
             val loan = loanNames[payment.loanId]
@@ -76,7 +93,7 @@ object HomeLedgerEngine {
                 category = "ঋণ পরিশোধ",
                 amount = payment.amount,
                 direction = HomeLedgerDirection.OUT,
-                sourceType = HomeLedgerSourceType.LOAN_REPAYMENT_RECEIVED,
+                sourceType = HomeLedgerSourceType.HOME_LOAN_PAYMENT,
                 sourceId = payment.id.toString(),
                 note = payment.note
             )
@@ -89,7 +106,7 @@ object HomeLedgerEngine {
                 date = lending.date,
                 title = "ধার দেওয়া — ${lending.person}",
                 category = "ধার দেওয়া",
-                amount = lending.amount,
+                amount = lendingAmountConverter(lending),
                 direction = HomeLedgerDirection.OUT,
                 sourceType = HomeLedgerSourceType.LENDING_GIVEN,
                 sourceId = lending.id.toString(),
@@ -105,7 +122,7 @@ object HomeLedgerEngine {
                 date = ret.date,
                 title = "ধার ফেরত${lending?.person?.let { " — $it" } ?: ""}",
                 category = "ধার ফেরত",
-                amount = ret.amount,
+                amount = lendingReturnAmountConverter(ret),
                 direction = HomeLedgerDirection.IN,
                 sourceType = HomeLedgerSourceType.LENDING_RETURN_RECEIVED,
                 sourceId = ret.id.toString(),
