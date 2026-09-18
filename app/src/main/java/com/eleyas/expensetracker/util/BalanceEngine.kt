@@ -36,7 +36,8 @@ object BalanceEngine {
             .filter { it.type.equals("home", ignoreCase = true) }
             .sumOf { amountConverter(it) }
 
-        val loanReceived = loans.filterNot(FundSource::isHomeLoan).sumOf { it.principal }
+        // Every loan is received into Personal first. Home gets money only through a separate Home transfer.
+        val loanReceived = loans.sumOf { it.principal }
 
         val personalLoanPaid = loanPayments
             .filterNot { FundSource.isHomeLoanPayment(it) }
