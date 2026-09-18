@@ -54,8 +54,8 @@ object VoiceCommandProcessor {
             }
         }
 
-        // Accept comma-grouped amounts such as 1,500 and simple decimals.
-        val amountPattern = Regex("(?<![\\d.])\\d+(?:[.,]\\d{1,2}|(?:,\\d{3})+)?")
+        // Match grouped thousands before decimal values so 1,500 is not read as 1.50.
+        val amountPattern = Regex("(?<![\d.])(?:\d{1,3}(?:,\d{3})+|\d+(?:[.]\d{1,2})?)")
         val candidates = amountPattern.findAll(normalized).map { it.value }
 
         return candidates
