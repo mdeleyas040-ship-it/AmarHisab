@@ -41,16 +41,14 @@ fun NewsTickerBar(
 
     val textStyle = TextStyle(
         color = contentColor,
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Medium,
-        lineHeight = 16.sp
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Medium
     )
 
     var messageIndex by remember(messages) { mutableIntStateOf(0) }
     val currentIndex = messageIndex % messages.size
-    val currentMessage = messages[currentIndex]
-        .trim()
-        .ifBlank { "💡 ট্যাপ করে আজকের টিপস ও ইনসাইট দেখুন" }
+    val currentMessage = messages[currentIndex].trim()
+        .ifBlank { "আজকের টিপস ও ইনসাইট" }
 
     LaunchedEffect(currentIndex, messages) {
         if (messages.size > 1) {
@@ -59,59 +57,36 @@ fun NewsTickerBar(
         }
     }
 
-    BoxWithConstraints(
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp)
+            .height(40.dp)
             .background(backgroundColor)
             .clickable(onClick = onTickerClick)
+            .padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
+        Text(
+            text = "💡 টিপস ও ইনসাইট",
+            color = contentColor,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            softWrap = false
+        )
+
+        Spacer(Modifier.width(10.dp))
+
+        Text(
+            text = currentMessage,
+            style = textStyle,
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .padding(vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                color = contentColor.copy(alpha = 0.16f),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.padding(start = 6.dp)
-            ) {
-                Text(
-                    text = "💡 টিপস ও ইনসাইট",
-                    color = contentColor,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
-            }
-
-            Spacer(Modifier.width(4.dp))
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .clipToBounds(),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                Text(
-                    text = currentMessage,
-                    style = textStyle,
-                    maxLines = 2,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            Text(
-                text = "বিস্তারিত ›",
-                color = contentColor.copy(alpha = 0.85f),
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-        }
+                .weight(1f)
+                .clipToBounds(),
+            maxLines = 1,
+            softWrap = false,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+        )
     }
 }
 
