@@ -2056,9 +2056,20 @@ class MainViewModel : ViewModel() {
 
     fun exportSearchResultsPdf(context: Context, uri: Uri, query: String) {
         val filtered = transactions.filter { it.reason.contains(query, ignoreCase = true) || it.category.contains(query, ignoreCase = true) }
-        val income = filtered.filter { it.type == "income" }.sumOf { it.amount }
-        val expense = filtered.filter { it.type != "income" }.sumOf { it.amount }
-        ReportExporter.exportToPdf(context, uri, filtered, income, expense, income - expense)
+        val income = filtered
+            .filter { it.type == "income" }
+            .sumOf { convertToBdt(it.amount, it.currency) }
+        val expense = filtered
+            .filter { it.type != "income" }
+            .sumOf { convertToBdt(it.amount, it.currency) }
+        ReportExporter.exportToPdf(
+            context,
+            uri,
+            filtered,
+            income,
+            expense,
+            income - expense
+        )
     }
 
     fun generateSearchStatement(query: String): String {
