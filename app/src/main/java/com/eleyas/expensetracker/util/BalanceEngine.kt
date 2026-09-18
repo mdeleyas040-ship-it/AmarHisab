@@ -20,7 +20,9 @@ object BalanceEngine {
         loanPayments: List<LoanPayment>,
         lendings: List<LendingAccount>,
         lendingReturns: List<LendingReturn>,
-        amountConverter: (Transaction) -> Double = { it.amount }
+        amountConverter: (Transaction) -> Double = { it.amount },
+        lendingAmountConverter: (LendingAccount) -> Double = { it.amount },
+        lendingReturnAmountConverter: (LendingReturn) -> Double = { it.amount }
     ): Double {
         val income = transactions
             .filter { it.type.equals("income", ignoreCase = true) }
@@ -34,7 +36,7 @@ object BalanceEngine {
             .filter { it.type.equals("home", ignoreCase = true) }
             .sumOf { amountConverter(it) }
 
-        val loanReceived = loans.sumOf { it.principal }
+        val loanReceived = loans.filterNot(FundSource::isHomeLoan).sumOf { it.principal }
 
         val personalLoanPaid = loanPayments
             .filterNot { FundSource.isHomeLoanPayment(it) }
@@ -46,8 +48,8 @@ object BalanceEngine {
             !FundSource.isHomeLendingReturn(ret, lendingById[ret.lendingId])
         }
 
-        val moneyLent = personalLendings.sumOf { it.amount }
-        val moneyReturned = personalReturns.sumOf { it.amount }
+        val moneyLent = personalLendings.sumOf { lendingAmountConverter(it) }
+        val moneyReturned = personalReturns.sumOf { lendingReturnAmountConverter(it) }
 
         return wallets.sumOf { it.initialBalance } +
             income +
