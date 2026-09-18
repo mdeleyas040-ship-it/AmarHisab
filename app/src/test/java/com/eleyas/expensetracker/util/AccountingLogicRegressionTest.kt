@@ -1,6 +1,5 @@
 package com.eleyas.expensetracker.util
 
-import com.eleyas.expensetracker.model.HomeLedgerDirection
 import com.eleyas.expensetracker.model.LendingAccount
 import com.eleyas.expensetracker.model.LendingReturn
 import com.eleyas.expensetracker.model.LoanAccount
@@ -266,19 +265,19 @@ class AccountingLogicRegressionTest {
 
         val byId = entries.associateBy { it.id }
 
-        assertEquals(HomeLedgerDirection.IN, byId["tx_home_1"]?.direction)
+        assertEquals("IN", byId["tx_home_1"]?.direction?.name)
         assertEquals(4_000.0, byId["tx_home_1"]?.amount ?: 0.0, 0.001)
 
-        assertEquals(HomeLedgerDirection.OUT, byId["tx_home_expense_2"]?.direction)
+        assertEquals("OUT", byId["tx_home_expense_2"]?.direction?.name)
         assertEquals(1_000.0, byId["tx_home_expense_2"]?.amount ?: 0.0, 0.001)
 
-        assertEquals(HomeLedgerDirection.OUT, byId["loan_payment_home_1"]?.direction)
+        assertEquals("OUT", byId["loan_payment_home_1"]?.direction?.name)
         assertEquals(1_500.0, byId["loan_payment_home_1"]?.amount ?: 0.0, 0.001)
 
-        assertEquals(HomeLedgerDirection.OUT, byId["lending_home_1"]?.direction)
+        assertEquals("OUT", byId["lending_home_1"]?.direction?.name)
         assertEquals(1_000.0, byId["lending_home_1"]?.amount ?: 0.0, 0.001)
 
-        assertEquals(HomeLedgerDirection.IN, byId["lending_return_home_1"]?.direction)
+        assertEquals("IN", byId["lending_return_home_1"]?.direction?.name)
         assertEquals(1_000.0, byId["lending_return_home_1"]?.amount ?: 0.0, 0.001)
     }
 }
