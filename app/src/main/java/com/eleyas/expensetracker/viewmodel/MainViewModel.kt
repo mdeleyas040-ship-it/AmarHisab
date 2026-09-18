@@ -440,7 +440,15 @@ class MainViewModel : ViewModel() {
                                         )
                                             ?.ifBlank {
                                                 null
+                                            },
+                                    fundSource =
+                                        doc.getString(
+                                            "fundSource"
+                                        )
+                                            ?.ifBlank {
+                                                "personal"
                                             }
+                                            ?: "personal"
                                 )
 
                             } catch (_: Exception) {
@@ -1209,14 +1217,15 @@ class MainViewModel : ViewModel() {
         saveAutoBackup(context)
     }
 
-    fun addLoan(context: Context, name: String, type: String, amount: Double, monthly: Double, date: String, note: String, dueDate: String? = null) {
-        val newLoan = LoanAccount(System.currentTimeMillis(), name, type, amount, monthly, date, note, dueDate = dueDate)
+    fun addLoan(context: Context, name: String, type: String, amount: Double, monthly: Double, date: String, note: String, dueDate: String? = null, fundSource: String = "personal") {
+        val resolvedFundSource = if (fundSource.equals("home", ignoreCase = true)) "home" else "personal"
+        val newLoan = LoanAccount(System.currentTimeMillis(), name, type, amount, monthly, date, note, dueDate = dueDate, fundSource = resolvedFundSource)
         loans = loans + newLoan
         persistLoanData(context)
         makeText(context, "✅ নতুন ঋণ যোগ করা হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
-    fun updateLoan(context: Context, loan: LoanAccount, name: String, type: String, amount: Double, monthly: Double, date: String, note: String, dueDate: String? = null) {
+    fun updateLoan(context: Context, loan: LoanAccount, name: String, type: String, amount: Double, monthly: Double, date: String, note: String, dueDate: String? = null, fundSource: String = loan.fundSource) {
         if (amount <= 0.0) {
             WarningPopupManager.show(
                 title = "ঋণের পরিমাণ সঠিক নয়",
@@ -1268,7 +1277,8 @@ class MainViewModel : ViewModel() {
                             "dd/MM/yyyy HH:mm",
                             Locale.getDefault()
                         ).format(Date()),
-            dueDate = dueDate
+            dueDate = dueDate,
+            fundSource = if (fundSource.equals("home", ignoreCase = true)) "home" else "personal"
         )
 
         loans =
@@ -1398,25 +1408,13 @@ class MainViewModel : ViewModel() {
         }
 
         val shortage = getHomeLoanShortage(amount)
-        val extra = extraHomeAmount.coerceAtLeast(0.0)
-
-        if (shortage > 0.000001 && extra + 0.000001 < shortage) {
+        if (shortage > 0.000001) {
             WarningPopupManager.show(
                 title = "Home balance যথেষ্ট নয়",
-                message = "এই payment-এর জন্য আরও ৳${formatMoney(shortage)} দরকার।\n\n" +
-                        "Extra/Adjustment কমপক্ষে ৳${formatMoney(shortage)} হতে হবে।"
+                message = "এই Home Loan payment-এর জন্য আরও ৳" + formatMoney(shortage) + " Home fund প্রয়োজন.\n\n" +
+                        "Loan payment তৈরি করতে Home Adjustment দিয়ে কৃত্রিমভাবে balance বাড়ানো যাবে না."
             )
             return false
-        }
-
-        // Extra থাকলে আগে Home adjustment হিসেবে history-তে যোগ হবে।
-        if (extra > 0.000001) {
-            addHomeAdjustment(
-                context = context,
-                amount = extra,
-                date = date,
-                reason = "Home Loan Payment Extra/Adjustment"
-            )
         }
 
         val payment = LoanPayment(
@@ -1808,9 +1806,19 @@ class MainViewModel : ViewModel() {
         val expense = walletTransactions.filter { it.type == "expense" }.sumOf { convertToBdt(it.amount, it.currency) }
         val home = walletTransactions.filter { it.type == "home" }.sumOf { convertToBdt(it.amount, it.currency) }
 
-        // Simplified: assuming loans/lendings are from default wallet for now
-        // If we want per-wallet loans, we'd need to update those models too.
-        return wallet.initialBalance + income - expense - home
+        if (walletId != "default_cash") {
+            return wallet.initialBalance + income - expense - home
+        }
+
+        val personalLoanReceived = loans.filterNot(FundSource::isHomeLoan).sumOf { it.principal }
+        val personalLoanPaid = loanPayments.filterNot(FundSource::isHomeLoanPayment).sumOf { it.amount }
+        val personalLent = lendings.filterNot(FundSource::isHomeLending).sumOf { convertToBdt(it.amount, it.currency) }
+        val personalReturned = lendingReturns.filter { ret ->
+            !FundSource.isHomeLendingReturn(ret, lendings.firstOrNull { it.id == ret.lendingId })
+        }.sumOf { convertToBdt(it.amount, it.currency) }
+
+        return wallet.initialBalance + income - expense - home +
+            personalLoanReceived - personalLoanPaid - personalLent + personalReturned
     }
 
     fun resetCurrentAccountData(context: Context, onComplete: () -> Unit) {
@@ -1968,8 +1976,8 @@ class MainViewModel : ViewModel() {
     fun convertToBdt(amount: Double, currency: String): Double {
         return when (currency.trim().uppercase(Locale.getDefault())) {
             "", "BDT", "৳", "TK", "TAKA" -> amount
-            "USD", "$" -> amount * usdToBdt
-            "MVR", "RF", "RUFIYAA" -> if (usdToMvr > 0) amount * (usdToBdt / usdToMvr) else 0.0
+            "USD", "$" -> if (usdToBdt > 0.0) amount * usdToBdt else amount
+            "MVR", "RF", "RUFIYAA" -> if (usdToMvr > 0.0 && usdToBdt > 0.0) amount * (usdToBdt / usdToMvr) else amount
             else -> amount
         }
     }
