@@ -822,6 +822,14 @@ fun AddTransactionDialog(
         mutableStateOf("")
     }
 
+    // Only unpaid loans are relevant to the Home Transfer → Loan Repayment flow.
+    val activeHomeTransferLoans = loans.filter { loan ->
+        val paid = loanPayments
+            .filter { it.loanId == loan.id }
+            .sumOf { it.amount }
+        (loan.principal - paid).coerceAtLeast(0.0) > 0.0
+    }
+
     var reason by remember(existingTransaction?.id) {
         mutableStateOf(
             existingTransaction?.reason ?: ""
@@ -1782,7 +1790,7 @@ fun AddTransactionDialog(
 
                     if (
                         type == "home" &&
-                        loans.isNotEmpty()
+                        activeHomeTransferLoans.isNotEmpty()
                     ) {
 
                         Spacer(
@@ -1829,7 +1837,7 @@ fun AddTransactionDialog(
                                 ) {
 
                                     Text(
-                                        "Loan",
+                                        "ঋণ পরিশোধ",
                                         color = scheme.onSurfaceVariant,
                                         fontSize = 11.sp
                                     )
@@ -2255,7 +2263,7 @@ fun AddTransactionDialog(
                     )
 
                     PremiumLoanSelector(
-                        loans = loans,
+                        loans = activeHomeTransferLoans,
                         loanPayments = loanPayments,
                         selectedLoanId = selectedLoanId,
                         onLoanSelected = { id ->
