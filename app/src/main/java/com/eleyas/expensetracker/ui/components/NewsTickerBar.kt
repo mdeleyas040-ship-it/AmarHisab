@@ -14,11 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,6 +59,13 @@ fun NewsTickerBar(
         }
     }
 
+    BoxWithConstraints(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(52.dp)
+            .background(backgroundColor)
+            .clickable(onClick = onTickerClick)
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -68,28 +73,21 @@ fun NewsTickerBar(
                 .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             Surface(
                 color = contentColor.copy(alpha = 0.16f),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.padding(start = 6.dp)
             ) {
-
                 Text(
                     text = "💡 টিপস ও ইনসাইট",
                     color = contentColor,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(
-                        horizontal = 8.dp,
-                        vertical = 4.dp
-                    )
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )
             }
 
-            Spacer(
-                modifier = Modifier.width(4.dp)
-            )
+            Spacer(Modifier.width(4.dp))
 
             Box(
                 modifier = Modifier
@@ -98,7 +96,6 @@ fun NewsTickerBar(
                     .clipToBounds(),
                 contentAlignment = Alignment.CenterStart
             ) {
-
                 Text(
                     text = currentMessage,
                     style = textStyle,
@@ -112,9 +109,7 @@ fun NewsTickerBar(
                 color = contentColor.copy(alpha = 0.85f),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(
-                    horizontal = 8.dp
-                )
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
         }
     }
