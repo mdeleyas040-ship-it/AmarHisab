@@ -1,8 +1,5 @@
 package com.eleyas.expensetracker.ui.components
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,13 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -32,10 +26,8 @@ import com.eleyas.expensetracker.ui.theme.AccentGreen
 import com.eleyas.expensetracker.ui.theme.Green
 import com.eleyas.expensetracker.util.FinancialTip
 import kotlinx.coroutines.delay
-import kotlin.math.roundToInt
 
-private const val TICKER_SPEED_PX_PER_SEC = 90f
-private const val TICKER_PAUSE_MILLIS = 1800L
+private const val TICKER_MESSAGE_DISPLAY_MILLIS = 5000L
 
 @Composable
 fun NewsTickerBar(
@@ -47,124 +39,55 @@ fun NewsTickerBar(
 ) {
     if (messages.isEmpty()) return
 
-    val textMeasurer = rememberTextMeasurer()
-
     val textStyle = TextStyle(
         color = contentColor,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Medium
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Medium,
+        lineHeight = 16.sp
     )
+
+    var messageIndex by remember(messages) { mutableIntStateOf(0) }
+    val currentIndex = messageIndex % messages.size
+    val currentMessage = messages[currentIndex]
+        .trim()
+        .ifBlank { "💡 ট্যাপ করে আজকের টিপস ও ইনসাইট দেখুন" }
+
+    LaunchedEffect(currentIndex, messages) {
+        if (messages.size > 1) {
+            delay(TICKER_MESSAGE_DISPLAY_MILLIS)
+            messageIndex = (messageIndex + 1) % messages.size
+        }
+    }
 
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .height(38.dp)
+            .height(52.dp)
             .background(backgroundColor)
             .clickable(onClick = onTickerClick)
     ) {
-
-        val viewportWidthPx = constraints.maxWidth
-
-        var messageIndex by remember(messages) {
-            mutableIntStateOf(0)
-        }
-
-        val currentIndex = messageIndex % messages.size
-
-        val unitText = remember(
-            messages,
-            currentIndex
-        ) {
-            messages[currentIndex]
-                .trim()
-                .ifBlank {
-                    "💡 ট্যাপ করে আজকের টিপস ও ইনসাইট দেখুন"
-                } + "     "
-        }
-
-        val measuredWidthPx = remember(
-            unitText,
-            textMeasurer,
-            textStyle
-        ) {
-            runCatching {
-                textMeasurer.measure(
-                    text = AnnotatedString(unitText),
-                    style = textStyle
-                ).size.width
-            }.getOrDefault(viewportWidthPx)
-        }
-
-        val textWidthPx = maxOf(
-            measuredWidthPx,
-            1
-        )
-
-        val offsetX = remember {
-            Animatable(viewportWidthPx.toFloat())
-        }
-
-        LaunchedEffect(
-            currentIndex,
-            unitText,
-            textWidthPx,
-            viewportWidthPx
-        ) {
-
-            val durationMillis =
-                (
-                        (textWidthPx + viewportWidthPx) *
-                                1000f /
-                                TICKER_SPEED_PX_PER_SEC
-                        )
-                    .toInt()
-                    .coerceAtLeast(1500)
-
-            offsetX.snapTo(
-                viewportWidthPx.toFloat()
-            )
-
-            offsetX.animateTo(
-                targetValue = -textWidthPx.toFloat(),
-                animationSpec = tween(
-                    durationMillis = durationMillis,
-                    easing = LinearEasing
-                )
-            )
-
-            delay(TICKER_PAUSE_MILLIS)
-
-            messageIndex += 1
-        }
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(),
+                .fillMaxHeight()
+                .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             Surface(
                 color = contentColor.copy(alpha = 0.16f),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.padding(start = 6.dp)
             ) {
-
                 Text(
                     text = "💡 টিপস ও ইনসাইট",
                     color = contentColor,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(
-                        horizontal = 8.dp,
-                        vertical = 4.dp
-                    )
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )
             }
 
-            Spacer(
-                modifier = Modifier.width(4.dp)
-            )
+            Spacer(Modifier.width(4.dp))
 
             Box(
                 modifier = Modifier
@@ -173,25 +96,12 @@ fun NewsTickerBar(
                     .clipToBounds(),
                 contentAlignment = Alignment.CenterStart
             ) {
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .offset {
-                            IntOffset(
-                                offsetX.value.roundToInt(),
-                                0
-                            )
-                        }
-                ) {
-
-                    Text(
-                        text = unitText,
-                        style = textStyle,
-                        maxLines = 1,
-                        softWrap = false
-                    )
-                }
+                Text(
+                    text = currentMessage,
+                    style = textStyle,
+                    maxLines = 2,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             Text(
@@ -199,9 +109,7 @@ fun NewsTickerBar(
                 color = contentColor.copy(alpha = 0.85f),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(
-                    horizontal = 8.dp
-                )
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
         }
     }
