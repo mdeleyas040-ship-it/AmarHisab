@@ -26,6 +26,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -1150,6 +1151,7 @@ class MainViewModel : ViewModel() {
     }
 
     fun updateTransaction(context: Context, updatedTransaction: Transaction) {
+        val previousTransaction = transactions.firstOrNull { it.id == updatedTransaction.id }
         val inPersonal = personalTransactions.any { it.id == updatedTransaction.id }
         val inShared = sharedHomeTransactions.any { it.id == updatedTransaction.id }
 
@@ -1163,6 +1165,15 @@ class MainViewModel : ViewModel() {
                 HouseholdRepository.saveSharedHomeTransaction(firestore, it.id, updatedTransaction)
             }
         }
+
+        if (previousTransaction?.audioMemoPath != null &&
+            previousTransaction.audioMemoPath != updatedTransaction.audioMemoPath
+        ) {
+            runCatching {
+                File(previousTransaction.audioMemoPath!!).delete()
+            }
+        }
+
         val backupCreated = saveAutoBackup(context)
         LocalBackupReminderManager.showAfterEntry(context, currentUserId, backupCreated)
 
@@ -1189,6 +1200,10 @@ class MainViewModel : ViewModel() {
         personalTransactions = personalTransactions.filter { it.id != transaction.id }
         sharedHomeTransactions = sharedHomeTransactions.filter { it.id != transaction.id }
         saveTransactions(prefs, personalTransactions)
+
+        transaction.audioMemoPath?.let { path ->
+            runCatching { File(path).delete() }
+        }
         saveAutoBackup(context)
 
         // লেনদেন ডিলিট হলে কড়া feedback
@@ -1483,12 +1498,23 @@ class MainViewModel : ViewModel() {
 
         val shortage = getHomeLoanShortage(amount)
         if (shortage > 0.000001) {
-            WarningPopupManager.show(
-                title = "Home balance যথেষ্ট নয়",
-                message = "এই Home Loan payment-এর জন্য আরও ৳" + formatMoney(shortage) + " Home fund প্রয়োজন.\n\n" +
-                        "Loan payment তৈরি করতে Home Adjustment দিয়ে কৃত্রিমভাবে balance বাড়ানো যাবে না."
+            if (extraHomeAmount + 0.000001 < shortage) {
+                WarningPopupManager.show(
+                    title = "Home balance কম পড়ছে",
+                    message = "এই Loan payment-এর জন্য আরও ৳" + formatMoney(shortage) +
+                            " Home fund প্রয়োজন।\n\n" +
+                            "কমপক্ষে ৳" + formatMoney(shortage) +
+                            " Extra / Adjustment দিন।"
+                )
+                return false
+            }
+
+            addHomeAdjustment(
+                context = context,
+                amount = extraHomeAmount,
+                date = date,
+                reason = "Home Loan payment-এর জন্য Extra / Adjustment"
             )
-            return false
         }
 
         val payment = LoanPayment(
