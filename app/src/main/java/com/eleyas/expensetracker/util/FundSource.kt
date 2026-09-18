@@ -13,6 +13,10 @@ import java.util.Locale
  */
 object FundSource {
 
+    fun isHomeLoan(loan: LoanAccount): Boolean =
+        loan.fundSource.equals("home", ignoreCase = true) ||
+            loan.note.contains("[HOME_LOAN]", ignoreCase = true)
+
     fun isHomeLoanPayment(payment: LoanPayment): Boolean {
         return when (payment.fundSource.lowercase(Locale.getDefault())) {
             "home" -> true
@@ -26,6 +30,8 @@ object FundSource {
             }
         }
     }
+
+    fun isPersonalLoan(loan: LoanAccount): Boolean = !isHomeLoan(loan)
 
     fun isHomeLending(lending: LendingAccount): Boolean =
         lending.fundSource.equals("home", ignoreCase = true) ||
