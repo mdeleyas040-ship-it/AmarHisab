@@ -46,17 +46,7 @@ jobs:
           done
 
           storage="app/src/main/java/com/eleyas/expensetracker/util/StorageUtils.kt"
-          if ! grep -A3 '"backupVersion"' "$storage" | grep -qE '^[[:space:]]*5[[:space:]]*
-            exit 1
-          fi
-
-          if ! grep -q "fun buildBackupJson" "$storage"; then
-            echo "::error file=$storage::Canonical backup builder is missing."
-            exit 1
-          fi
-
-          echo "Accounting and data-protection lock verified."
-; then
+          if ! grep -A3 '"backupVersion"' "$storage" | grep -qE '^[[:space:]]*5[[:space:]]*$'; then
             echo "::error file=$storage::Canonical backup schema is not version 5; update protection intentionally if the schema changes."
             exit 1
           fi
