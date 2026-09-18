@@ -2036,7 +2036,8 @@ class MainViewModel : ViewModel() {
         saveTransactions(prefs, transactions)
         saveLoans(prefs, loans)
         saveLoanPayments(prefs, loanPayments)
-        saveLendings(prefs, lendings)        saveLendingReturns(prefs, lendingReturns)
+        saveLendings(prefs, lendings)
+        saveLendingReturns(prefs, lendingReturns)
         if (cloudWallets.isNotEmpty()) saveWallets(prefs, wallets)
     }
 
