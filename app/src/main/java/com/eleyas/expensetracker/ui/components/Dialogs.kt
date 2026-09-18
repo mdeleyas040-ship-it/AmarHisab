@@ -2059,21 +2059,7 @@ fun AddTransactionDialog(
                                         null
                                     }
 
-                                val extraAmount =
-                                    if (
-                                        type == "home" &&
-                                        selectedLoanId != null &&
-                                        loanAmount != null &&
-                                        loanAmount > homeBalance
-                                    ) {
-                                        extraHomeAmount
-                                            .replace(",", "")
-                                            .trim()
-                                            .toDoubleOrNull()
-                                            ?: 0.0
-                                    } else {
-                                        0.0
-                                    }
+                                val extraAmount = 0.0
 
                                 val shortage =
                                     if (
@@ -2106,14 +2092,10 @@ fun AddTransactionDialog(
                                         return@Button
                                     }
 
-                                    if (
-                                        shortage > 0.0 &&
-                                        extraAmount < shortage
-                                    ) {
-
+                                    if (shortage > 0.0) {
                                         WarningPopupManager.show(
-                                            title = "Extra / Adjustment প্রয়োজন",
-                                            message = "বাড়ির ব্যালেন্স কম পড়ছে। কমপক্ষে ৳${formatMoney(shortage)} Extra / Adjustment দিতে হবে।"
+                                            title = "Home balance যথেষ্ট নয়",
+                                            message = "এই Loan payment-এর জন্য আরও ৳" + formatMoney(shortage) + " Home fund প্রয়োজন। Home Adjustment দিয়ে কৃত্রিমভাবে balance বাড়ানো যাবে না।"
                                         )
 
                                         return@Button
