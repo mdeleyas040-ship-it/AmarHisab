@@ -169,15 +169,6 @@ fun HomeScreen(
             }
 
             item {
-                MonthlyBalanceForecastCard(
-                    balance = balance,
-                    transactions = transactions,
-                    usdToBdt = usdToBdt,
-                    usdToMvr = usdToMvr
-                )
-            }
-
-            item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -216,6 +207,16 @@ fun HomeScreen(
                         }
                     }
                 }
+            }
+
+
+            item {
+                MonthlyBalanceForecastCard(
+                    balance = balance,
+                    transactions = transactions,
+                    usdToBdt = usdToBdt,
+                    usdToMvr = usdToMvr
+                )
             }
 
             item {
