@@ -3101,7 +3101,8 @@ fun LendingDialog(
         Double,
         String,
         String,
-        String?
+        String?,
+        String
     ) -> Unit
 ) {
     val context = LocalContext.current
@@ -3133,6 +3134,14 @@ fun LendingDialog(
 
     var note by remember {
         mutableStateOf("")
+    }
+
+    var fundSource by remember {
+        mutableStateOf("personal")
+    }
+
+    var fundSourceExpanded by remember {
+        mutableStateOf(false)
     }
 
     fun openDatePicker(
@@ -3613,6 +3622,116 @@ fun LendingDialog(
                 }
 
                 // =========================================================
+                // FUND SOURCE
+                // =========================================================
+
+                item {
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                    ) {
+
+                        OutlinedButton(
+                            onClick = {
+                                fundSourceExpanded = true
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(19.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.4.dp,
+                                lendTeal.copy(alpha = 0.65f)
+                            )
+                        ) {
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+
+                                Icon(
+                                    Icons.Default.AccountBalanceWallet,
+                                    contentDescription = null,
+                                    tint = lendTeal,
+                                    modifier = Modifier.size(21.dp)
+                                )
+
+                                Spacer(Modifier.width(10.dp))
+
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalAlignment = Alignment.Start
+                                ) {
+                                    Text(
+                                        "টাকার উৎস",
+                                        fontSize = 9.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        if (fundSource == "home") "বাড়ির টাকা" else "Personal Money",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+
+                                Text(
+                                    "⌄",
+                                    color = lendTeal,
+                                    fontSize = 20.sp
+                                )
+                            }
+                        }
+
+                        DropdownMenu(
+                            expanded = fundSourceExpanded,
+                            onDismissRequest = {
+                                fundSourceExpanded = false
+                            }
+                        ) {
+                            DropdownMenuItem(
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = null
+                                    )
+                                },
+                                text = {
+                                    Column {
+                                        Text("Personal Money", fontWeight = FontWeight.Bold)
+                                        Text("ব্যক্তিগত টাকা থেকে ধার", fontSize = 10.sp)
+                                    }
+                                },
+                                onClick = {
+                                    fundSource = "personal"
+                                    fundSourceExpanded = false
+                                }
+                            )
+
+                            DropdownMenuItem(
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Home,
+                                        contentDescription = null
+                                    )
+                                },
+                                text = {
+                                    Column {
+                                        Text("বাড়ির টাকা", fontWeight = FontWeight.Bold)
+                                        Text("বাড়ির হিসাব থেকে ধার", fontSize = 10.sp)
+                                    }
+                                },
+                                onClick = {
+                                    fundSource = "home"
+                                    fundSourceExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // =========================================================
                 // NOTE
                 // =========================================================
 
@@ -3720,7 +3839,8 @@ fun LendingDialog(
                                     note.trim(),
                                     dueDate.takeIf {
                                         it.isNotBlank()
-                                    }
+                                    },
+                                    fundSource
                                 )
                             },
                             modifier = Modifier
