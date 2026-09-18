@@ -31,3 +31,4 @@ Changes to persistence, serialization, migration, accounting models or accountin
 For records intended to survive 10+ years, keep periodic exported JSON backups outside the phone in at least two independent storage locations. Code protection cannot protect against lost hardware, deleted accounts or external service failure.
 
 This contract improves long-term safety but cannot guarantee preservation against every future hardware, account or service failure.
+
