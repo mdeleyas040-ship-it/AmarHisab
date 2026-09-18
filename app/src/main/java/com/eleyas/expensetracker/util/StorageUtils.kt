@@ -350,6 +350,9 @@ fun firestoreDocumentToTransaction(
             receiptImage =
                 doc.getString("receiptImage")
                     ?.ifBlank { null },
+            audioMemoPath =
+                doc.getString("audioMemoPath")
+                    ?.ifBlank { null },
             walletId =
                 doc.getString("walletId")
                     ?: "default_cash",
