@@ -1495,7 +1495,8 @@ class MainViewModel : ViewModel() {
             note = note,
             fundSource = "personal"
         )
-        loanPayments = loanPayments + payment        persistLoanData(context)
+        loanPayments = loanPayments + payment
+        persistLoanData(context)
         makeText(context, "✅ পরিশোধের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
