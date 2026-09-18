@@ -103,6 +103,12 @@ class MainViewModel : ViewModel() {
     }
 
     val totalLoanReceived by derivedStateOf { loans.sumOf { it.principal } }
+    val totalPersonalLoanReceived by derivedStateOf {
+        loans.filterNot(FundSource::isHomeLoan).sumOf { it.principal }
+    }
+    val totalHomeLoanReceived by derivedStateOf {
+        loans.filter(FundSource::isHomeLoan).sumOf { it.principal }
+    }
     val totalLoanInterest by derivedStateOf { loans.sumOf { loan -> loanInterestTerms.firstOrNull { it.loanId == loan.id }?.totalInterest ?: 0.0 } }
     val totalLoanPaid by derivedStateOf { loanPayments.sumOf { it.amount } }
     val totalLoanRemaining by derivedStateOf { (totalLoanReceived + totalLoanInterest - totalLoanPaid).coerceAtLeast(0.0) }
