@@ -117,7 +117,9 @@ class MainViewModel : ViewModel() {
             loanPayments = loanPayments,
             lendings = lendings,
             lendingReturns = lendingReturns,
-            amountConverter = { convertToBdt(it.amount, it.currency) }
+            amountConverter = { convertToBdt(it.amount, it.currency) },
+            lendingAmountConverter = { convertToBdt(it.amount, it.currency) },
+            lendingReturnAmountConverter = { convertToBdt(it.amount, it.currency) }
         )
     }
 
@@ -133,7 +135,9 @@ class MainViewModel : ViewModel() {
             loanPayments = loanPayments,
             lendings = lendings,
             lendingReturns = lendingReturns,
-            amountConverter = { convertToBdt(it.amount, it.currency) }
+            amountConverter = { convertToBdt(it.amount, it.currency) },
+            lendingAmountConverter = { convertToBdt(it.amount, it.currency) },
+            lendingReturnAmountConverter = { convertToBdt(it.amount, it.currency) }
         )
     }
 
