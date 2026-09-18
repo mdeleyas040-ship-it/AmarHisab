@@ -1,0 +1,39 @@
+name: Accounting Lock
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  accounting-lock:
+    name: Verify locked accounting engine
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Verify locked accounting files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          declare -A EXPECTED=(
+            ["app/src/main/java/com/eleyas/expensetracker/util/HomeLedgerEngine.kt"]="d2363c6b4177dbb3a6dba4dafe0b101fac0554fe"
+            ["app/src/main/java/com/eleyas/expensetracker/util/BalanceEngine.kt"]="484789fb1e29ae2a47074f3f2f24f7e82e96f5ac"
+            ["app/src/main/java/com/eleyas/expensetracker/model/Models.kt"]="da545896feb73e4855ce1a474e5f806906cf1de2"
+          )
+
+          for file in "${!EXPECTED[@]}"; do
+            actual="$(git ls-tree HEAD -- "$file" | awk '{print $3}')"
+            expected="${EXPECTED[$file]}"
+
+            if [[ "$actual" != "$expected" ]]; then
+              echo "::error file=$file::LOCKED ACCOUNTING FILE CHANGED. Expected $expected but found $actual."
+              echo "Accounting changes require explicit review, regression tests, documentation, and an intentional lock update."
+              exit 1
+            fi
+          done
+
+          echo "Accounting lock verified."
