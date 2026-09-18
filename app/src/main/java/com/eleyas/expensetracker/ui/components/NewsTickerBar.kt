@@ -14,20 +14,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import com.eleyas.expensetracker.ui.theme.AccentGreen
 import com.eleyas.expensetracker.ui.theme.Green
 import com.eleyas.expensetracker.util.FinancialTip
 import kotlinx.coroutines.delay
-
-private const val TICKER_MESSAGE_DISPLAY_MILLIS = 5000L
+import kotlin.math.roundToInt
 
 @Composable
 fun NewsTickerBar(
@@ -41,75 +44,87 @@ fun NewsTickerBar(
 
     val textStyle = TextStyle(
         color = contentColor,
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Medium,
-        lineHeight = 16.sp
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Medium
     )
 
     var messageIndex by remember(messages) { mutableIntStateOf(0) }
-    val currentIndex = messageIndex % messages.size
-    val currentMessage = messages[currentIndex]
-        .trim()
-        .ifBlank { "💡 ট্যাপ করে আজকের টিপস ও ইনসাইট দেখুন" }
+    var tickerWidth by remember { mutableIntStateOf(0) }
+    var textWidth by remember { mutableIntStateOf(0) }
+    val offsetX = remember { Animatable(0f) }
 
-    LaunchedEffect(currentIndex, messages) {
+    val currentIndex = messageIndex % messages.size
+    val currentMessage = messages[currentIndex].trim()
+        .ifBlank { "আজকের টিপস ও ইনসাইট" }
+
+    LaunchedEffect(currentMessage, tickerWidth, textWidth) {
+        if (tickerWidth <= 0 || textWidth <= 0) return@LaunchedEffect
+
+        if (textWidth <= tickerWidth) {
+            offsetX.snapTo(0f)
+            if (messages.size > 1) {
+                delay(5000L)
+                messageIndex = (messageIndex + 1) % messages.size
+            }
+            return@LaunchedEffect
+        }
+
+        // TV-style marquee: enter from the right, move fully across, then show the next headline.
+        offsetX.snapTo(tickerWidth.toFloat())
+        delay(500L)
+
+        val distance = tickerWidth + textWidth
+        val durationMillis = (distance / 45f * 1000f)
+            .roundToInt()
+            .coerceIn(5000, 14000)
+
+        offsetX.animateTo(
+            targetValue = -textWidth.toFloat(),
+            animationSpec = tween(durationMillis = durationMillis)
+        )
+
         if (messages.size > 1) {
-            delay(TICKER_MESSAGE_DISPLAY_MILLIS)
+            delay(500L)
             messageIndex = (messageIndex + 1) % messages.size
         }
     }
 
-    BoxWithConstraints(
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp)
+            .height(40.dp)
             .background(backgroundColor)
             .clickable(onClick = onTickerClick)
+            .padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
+        Text(
+            text = "💡 টিপস ও ইনসাইট",
+            color = contentColor,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            softWrap = false
+        )
+
+        Spacer(Modifier.width(10.dp))
+
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .weight(1f)
                 .fillMaxHeight()
-                .padding(vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .clipToBounds()
+                .onSizeChanged { tickerWidth = it.width },
+            contentAlignment = Alignment.CenterStart
         ) {
-            Surface(
-                color = contentColor.copy(alpha = 0.16f),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.padding(start = 6.dp)
-            ) {
-                Text(
-                    text = "💡 টিপস ও ইনসাইট",
-                    color = contentColor,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
-            }
-
-            Spacer(Modifier.width(4.dp))
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .clipToBounds(),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                Text(
-                    text = currentMessage,
-                    style = textStyle,
-                    maxLines = 2,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
             Text(
-                text = "বিস্তারিত ›",
-                color = contentColor.copy(alpha = 0.85f),
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 8.dp)
+                text = currentMessage,
+                style = textStyle,
+                modifier = Modifier
+                    .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+                    .onSizeChanged { textWidth = it.width },
+                maxLines = 1,
+                softWrap = false
             )
         }
     }
