@@ -239,6 +239,26 @@ class AccountingLogicRegressionTest {
     }
 
     @Test
+    fun homeExtraAdjustmentCanFundHomeLoanPayment() {
+        val entries = HomeLedgerEngine.build(
+            transactions = listOf(
+                tx(1, "home_adjustment", 2_000.0)
+            ),
+            loans = emptyList(),
+            loanPayments = listOf(
+                payment(1, 1, 10_000.0, "home")
+            ),
+            lendings = emptyList(),
+            lendingReturns = emptyList()
+        )
+
+        val summary = HomeLedgerEngine.summarize(entries)
+
+        // Extra/Adjustment 2,000 is a real Home IN; the Home Loan payment is Home OUT.
+        assertEquals(-8_000.0, summary.balance, 0.001)
+    }
+
+    @Test
     fun homeLedgerContainsHomeMovementsButNotPersonalOnes() {
         val entries = HomeLedgerEngine.build(
             transactions = listOf(
