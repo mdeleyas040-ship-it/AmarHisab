@@ -1,7 +1,7 @@
 # Amar Hisab — 10-Year Data Protection Contract
 
 **Baseline:** 2026-09-18
-**Current backup schema:** version 4
+**Current backup schema:** version 5
 
 ## Purpose
 Historical financial records are accounting data. Future app updates must not silently change the meaning of old records.
