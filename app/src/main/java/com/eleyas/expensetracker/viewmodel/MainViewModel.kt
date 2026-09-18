@@ -103,12 +103,6 @@ class MainViewModel : ViewModel() {
     }
 
     val totalLoanReceived by derivedStateOf { loans.sumOf { it.principal } }
-    val totalPersonalLoanReceived by derivedStateOf {
-        loans.filterNot(FundSource::isHomeLoan).sumOf { it.principal }
-    }
-    val totalHomeLoanReceived by derivedStateOf {
-        loans.filter(FundSource::isHomeLoan).sumOf { it.principal }
-    }
     val totalLoanInterest by derivedStateOf { loans.sumOf { loan -> loanInterestTerms.firstOrNull { it.loanId == loan.id }?.totalInterest ?: 0.0 } }
     val totalLoanPaid by derivedStateOf { loanPayments.sumOf { it.amount } }
     val totalLoanRemaining by derivedStateOf { (totalLoanReceived + totalLoanInterest - totalLoanPaid).coerceAtLeast(0.0) }
@@ -1279,12 +1273,8 @@ class MainViewModel : ViewModel() {
         monthly: Double,
         date: String,
         note: String,
-        dueDate: String? = null,
-        fundSource: String = "personal"
+        dueDate: String? = null
     ) {
-        val resolvedFundSource =
-            if (fundSource.equals("home", ignoreCase = true)) "home" else "personal"
-
         val newLoan = LoanAccount(
             id = System.currentTimeMillis(),
             name = name,
@@ -1293,17 +1283,11 @@ class MainViewModel : ViewModel() {
             monthlyInstallment = monthly,
             startDate = date,
             note = note,
-            dueDate = dueDate,
-            fundSource = resolvedFundSource
+            dueDate = dueDate
         )
         loans = loans + newLoan
         persistLoanData(context)
-        makeText(
-            context,
-            if (resolvedFundSource == "home") "✅ Home-এর ঋণ যোগ করা হয়েছে"
-            else "✅ Personal-এর ঋণ যোগ করা হয়েছে",
-            Toast.LENGTH_SHORT
-        ).show()
+        makeText(context, "✅ ঋণের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
     fun updateLoan(
@@ -1315,8 +1299,7 @@ class MainViewModel : ViewModel() {
         monthly: Double,
         date: String,
         note: String,
-        dueDate: String? = null,
-        fundSource: String = loan.fundSource
+        dueDate: String? = null
     ) {
         if (amount <= 0.0) {
             WarningPopupManager.show(
