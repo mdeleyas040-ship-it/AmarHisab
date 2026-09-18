@@ -558,6 +558,10 @@ fun saveLoans(
                     "dueDate",
                     loan.dueDate ?: ""
                 )
+                put(
+                    "fundSource",
+                    loan.fundSource.ifBlank { "personal" }
+                )
 
                 val borrowingArray =
                     JSONArray()
@@ -706,7 +710,12 @@ fun loadLoans(
                         "dueDate"
                     ).takeIf {
                         it.isNotBlank()
-                    }
+                    },
+                fundSource =
+                    o.optString(
+                        "fundSource",
+                        "personal"
+                    )
             )
         }
     } catch (_: Exception) {
@@ -1767,7 +1776,12 @@ fun parseBackupJson(
                                 "dueDate"
                             ).takeIf {
                                 it.isNotBlank()
-                            }
+                            },
+                        fundSource =
+                            o.optString(
+                                "fundSource",
+                                "personal"
+                            )
                     )
                 )
             }
