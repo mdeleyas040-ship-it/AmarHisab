@@ -2846,7 +2846,7 @@ fun AmarHisabApp(
                     }
                     .distinct(),
 
-                { n, s, p, m, d, nt, dd, fs ->
+                { n, s, p, m, d, nt, dd ->
 
                     if (
                         editingLoan != null
@@ -2861,8 +2861,7 @@ fun AmarHisabApp(
                             m,
                             d,
                             nt,
-                            dd,
-                            fs
+                            dd
                         )
 
                     } else {
