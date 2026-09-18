@@ -1,5 +1,4 @@
-﻿
-package com.eleyas.expensetracker.util
+﻿package com.eleyas.expensetracker.util
 
 import android.app.DatePickerDialog
 import android.app.DownloadManager
@@ -93,33 +92,62 @@ fun saveCategoryBudgets(
         .apply()
 }
 
-fun saveSavingsGoals(prefs: SharedPreferences, goals: List<SavingsGoal>) {
+fun saveSavingsGoals(
+    prefs: SharedPreferences,
+    goals: List<SavingsGoal>
+) {
     val array = JSONArray()
+
     goals.forEach { goal ->
-        array.put(JSONObject().apply {
-            put("id", goal.id)
-            put("name", goal.name)
-            put("targetAmount", goal.targetAmount)
-            put("savedAmount", goal.savedAmount)
-            put("targetDate", goal.targetDate)
-            put("frequency", goal.frequency)
-        })
+        array.put(
+            JSONObject().apply {
+                put("id", goal.id)
+                put("name", goal.name)
+                put("targetAmount", goal.targetAmount)
+                put("savedAmount", goal.savedAmount)
+                put("targetDate", goal.targetDate)
+                put("frequency", goal.frequency)
+            }
+        )
     }
-    prefs.edit().putString("savings_goals", array.toString()).apply()
+
+    prefs.edit()
+        .putString("savings_goals", array.toString())
+        .apply()
 }
 
-fun loadSavingsGoals(prefs: SharedPreferences): List<SavingsGoal> {
+fun loadSavingsGoals(
+    prefs: SharedPreferences
+): List<SavingsGoal> {
     return try {
-        val array = JSONArray(prefs.getString("savings_goals", "[]") ?: "[]")
+        val array = JSONArray(
+            prefs.getString(
+                "savings_goals",
+                "[]"
+            ) ?: "[]"
+        )
+
         List(array.length()) { index ->
-            val item = array.getJSONObject(index)
+            val item =
+                array.getJSONObject(index)
+
             SavingsGoal(
                 id = item.getLong("id"),
                 name = item.getString("name"),
-                targetAmount = item.getDouble("targetAmount"),
-                savedAmount = item.optDouble("savedAmount", 0.0),
-                targetDate = item.getString("targetDate"),
-                frequency = item.optString("frequency", "daily")
+                targetAmount =
+                    item.getDouble("targetAmount"),
+                savedAmount =
+                    item.optDouble(
+                        "savedAmount",
+                        0.0
+                    ),
+                targetDate =
+                    item.getString("targetDate"),
+                frequency =
+                    item.optString(
+                        "frequency",
+                        "daily"
+                    )
             )
         }
     } catch (_: Exception) {
@@ -132,6 +160,7 @@ fun saveFinancialMilestones(
     milestones: List<FinancialMilestone>
 ) {
     val array = JSONArray()
+
     milestones.forEach { milestone ->
         array.put(
             JSONObject().apply {
@@ -141,27 +170,60 @@ fun saveFinancialMilestones(
                 put("currency", milestone.currency)
                 put("date", milestone.date)
                 put("note", milestone.note)
-                put("linkedTransactionId", milestone.linkedTransactionId)
+                put(
+                    "linkedTransactionId",
+                    milestone.linkedTransactionId
+                )
             }
         )
     }
-    prefs.edit().putString("financial_milestones", array.toString()).apply()
+
+    prefs.edit()
+        .putString(
+            "financial_milestones",
+            array.toString()
+        )
+        .apply()
 }
 
-fun loadFinancialMilestones(prefs: SharedPreferences): List<FinancialMilestone> {
+fun loadFinancialMilestones(
+    prefs: SharedPreferences
+): List<FinancialMilestone> {
     return try {
-        val array = JSONArray(prefs.getString("financial_milestones", "[]") ?: "[]")
+        val array = JSONArray(
+            prefs.getString(
+                "financial_milestones",
+                "[]"
+            ) ?: "[]"
+        )
+
         List(array.length()) { index ->
-            val item = array.getJSONObject(index)
+            val item =
+                array.getJSONObject(index)
+
             FinancialMilestone(
                 id = item.getLong("id"),
                 title = item.getString("title"),
                 amount = item.getDouble("amount"),
-                currency = item.optString("currency", "BDT"),
+                currency =
+                    item.optString(
+                        "currency",
+                        "BDT"
+                    ),
                 date = item.getString("date"),
-                note = item.optString("note", ""),
-                linkedTransactionId = item.takeIf { !it.isNull("linkedTransactionId") }
-                    ?.getLong("linkedTransactionId")
+                note =
+                    item.optString(
+                        "note",
+                        ""
+                    ),
+                linkedTransactionId =
+                    item.takeIf {
+                        !it.isNull(
+                            "linkedTransactionId"
+                        )
+                    }?.getLong(
+                        "linkedTransactionId"
+                    )
             )
         }
     } catch (_: Exception) {
@@ -174,11 +236,15 @@ fun loadCategoryBudgets(
 ): List<CategoryBudget> {
     return try {
         val array = JSONArray(
-            prefs.getString("category_budgets", "[]") ?: "[]"
+            prefs.getString(
+                "category_budgets",
+                "[]"
+            ) ?: "[]"
         )
 
         List(array.length()) {
-            val o = array.getJSONObject(it)
+            val o =
+                array.getJSONObject(it)
 
             CategoryBudget(
                 o.getString("month"),
@@ -212,18 +278,29 @@ fun saveTransactionToFirestore(
                 "category" to transaction.category,
                 "reason" to transaction.reason,
                 "date" to transaction.date,
-                "receiptImage" to (transaction.receiptImage ?: ""),
+                "receiptImage" to (
+                        transaction.receiptImage ?: ""
+                        ),
                 "walletId" to transaction.walletId,
-                "addedByUid" to (transaction.addedByUid ?: ""),
-                "addedByName" to (transaction.addedByName ?: ""),
-                "exchangeRateUsed" to (transaction.exchangeRateUsed ?: -1.0)
+                "addedByUid" to (
+                        transaction.addedByUid ?: ""
+                        ),
+                "addedByName" to (
+                        transaction.addedByName ?: ""
+                        ),
+                "exchangeRateUsed" to (
+                        transaction.exchangeRateUsed
+                            ?: -1.0
+                        )
             )
         )
         .addOnSuccessListener {
             onSuccess()
         }
         .addOnFailureListener {
-            onError(it.message ?: "Error")
+            onError(
+                it.message ?: "Error"
+            )
         }
 }
 
@@ -244,7 +321,9 @@ fun deleteTransactionFromFirestore(
             onSuccess()
         }
         .addOnFailureListener {
-            onError(it.message ?: "Error")
+            onError(
+                it.message ?: "Error"
+            )
         }
 }
 
@@ -255,21 +334,32 @@ fun firestoreDocumentToTransaction(
         Transaction(
             id = doc.getLong("id") ?: 0L,
             type = doc.getString("type") ?: "",
-            amount = doc.getDouble("amount") ?: 0.0,
-            currency = doc.getString("currency") ?: "BDT",
-            category = doc.getString("category") ?: "Other",
-            reason = doc.getString("reason") ?: "",
-            date = doc.getString("date") ?: "",
-            receiptImage = doc.getString("receiptImage")
-                ?.ifBlank { null },
-            walletId = doc.getString("walletId")
-                ?: "default_cash",
-            addedByUid = doc.getString("addedByUid")
-                ?.ifBlank { null },
-            addedByName = doc.getString("addedByName")
-                ?.ifBlank { null },
-            exchangeRateUsed = doc.getDouble("exchangeRateUsed")
-                ?.takeIf { it > 0.0 }
+            amount =
+                doc.getDouble("amount") ?: 0.0,
+            currency =
+                doc.getString("currency") ?: "BDT",
+            category =
+                doc.getString("category")
+                    ?: "Other",
+            reason =
+                doc.getString("reason") ?: "",
+            date =
+                doc.getString("date") ?: "",
+            receiptImage =
+                doc.getString("receiptImage")
+                    ?.ifBlank { null },
+            walletId =
+                doc.getString("walletId")
+                    ?: "default_cash",
+            addedByUid =
+                doc.getString("addedByUid")
+                    ?.ifBlank { null },
+            addedByName =
+                doc.getString("addedByName")
+                    ?.ifBlank { null },
+            exchangeRateUsed =
+                doc.getDouble("exchangeRateUsed")
+                    ?.takeIf { it > 0.0 }
         )
     } catch (_: Exception) {
         null
@@ -280,15 +370,20 @@ suspend fun getLiveRates(): Pair<Double, Double>? =
     withContext(Dispatchers.IO) {
         try {
             val json = JSONObject(
-                URL("https://open.er-api.com/v6/latest/USD").readText()
+                URL(
+                    "https://open.er-api.com/v6/latest/USD"
+                ).readText()
             )
 
             if (
-                json.getString("result") == "success"
+                json.getString("result") ==
+                "success"
             ) {
                 Pair(
-                    json.getJSONObject("rates").getDouble("BDT"),
-                    json.getJSONObject("rates").getDouble("MVR")
+                    json.getJSONObject("rates")
+                        .getDouble("BDT"),
+                    json.getJSONObject("rates")
+                        .getDouble("MVR")
                 )
             } else {
                 null
@@ -314,18 +409,39 @@ fun saveTransactions(
                 put("category", it.category)
                 put("reason", it.reason)
                 put("date", it.date)
-                put("receiptImage", it.receiptImage ?: "")
-                put("audioMemoPath", it.audioMemoPath ?: "")
-                put("walletId", it.walletId)
-                put("addedByUid", it.addedByUid ?: "")
-                put("addedByName", it.addedByName ?: "")
-                put("exchangeRateUsed", it.exchangeRateUsed ?: -1.0)
+                put(
+                    "receiptImage",
+                    it.receiptImage ?: ""
+                )
+                put(
+                    "audioMemoPath",
+                    it.audioMemoPath ?: ""
+                )
+                put(
+                    "walletId",
+                    it.walletId
+                )
+                put(
+                    "addedByUid",
+                    it.addedByUid ?: ""
+                )
+                put(
+                    "addedByName",
+                    it.addedByName ?: ""
+                )
+                put(
+                    "exchangeRateUsed",
+                    it.exchangeRateUsed ?: -1.0
+                )
             }
         )
     }
 
     prefs.edit()
-        .putString("transactions", array.toString())
+        .putString(
+            "transactions",
+            array.toString()
+        )
         .apply()
 }
 
@@ -334,34 +450,64 @@ fun loadTransactions(
 ): List<Transaction> {
     return try {
         val array = JSONArray(
-            prefs.getString("transactions", null) ?: "[]"
+            prefs.getString(
+                "transactions",
+                null
+            ) ?: "[]"
         )
 
         List(array.length()) { i ->
-            val o = array.getJSONObject(i)
+            val o =
+                array.getJSONObject(i)
 
             Transaction(
                 id = o.getLong("id"),
                 type = o.getString("type"),
                 amount = o.getDouble("amount"),
-                currency = o.getString("currency"),
-                category = o.getString("category"),
-                reason = o.getString("reason"),
-                date = o.getString("date"),
-                receiptImage = o.optString("receiptImage")
-                    .takeIf { it.isNotBlank() },
-                audioMemoPath = o.optString("audioMemoPath")
-                    .takeIf { it.isNotBlank() },
-                walletId = o.optString(
-                    "walletId",
-                    "default_cash"
-                ),
-                addedByUid = o.optString("addedByUid")
-                    .takeIf { it.isNotBlank() },
-                addedByName = o.optString("addedByName")
-                    .takeIf { it.isNotBlank() },
-                exchangeRateUsed = o.optDouble("exchangeRateUsed", -1.0)
-                    .takeIf { it > 0.0 }
+                currency =
+                    o.getString("currency"),
+                category =
+                    o.getString("category"),
+                reason =
+                    o.getString("reason"),
+                date =
+                    o.getString("date"),
+                receiptImage =
+                    o.optString(
+                        "receiptImage"
+                    ).takeIf {
+                        it.isNotBlank()
+                    },
+                audioMemoPath =
+                    o.optString(
+                        "audioMemoPath"
+                    ).takeIf {
+                        it.isNotBlank()
+                    },
+                walletId =
+                    o.optString(
+                        "walletId",
+                        "default_cash"
+                    ),
+                addedByUid =
+                    o.optString(
+                        "addedByUid"
+                    ).takeIf {
+                        it.isNotBlank()
+                    },
+                addedByName =
+                    o.optString(
+                        "addedByName"
+                    ).takeIf {
+                        it.isNotBlank()
+                    },
+                exchangeRateUsed =
+                    o.optDouble(
+                        "exchangeRateUsed",
+                        -1.0
+                    ).takeIf {
+                        it > 0.0
+                    }
             )
         }
     } catch (_: Exception) {
@@ -380,12 +526,30 @@ fun saveLoans(
             JSONObject().apply {
                 put("id", loan.id)
                 put("name", loan.name)
-                put("sourceType", loan.sourceType)
-                put("principal", loan.principal)
-                put("monthlyInstallment", loan.monthlyInstallment)
-                put("startDate", loan.startDate)
-                put("note", loan.note)
-                put("lastEditedDate", loan.lastEditedDate)
+                put(
+                    "sourceType",
+                    loan.sourceType
+                )
+                put(
+                    "principal",
+                    loan.principal
+                )
+                put(
+                    "monthlyInstallment",
+                    loan.monthlyInstallment
+                )
+                put(
+                    "startDate",
+                    loan.startDate
+                )
+                put(
+                    "note",
+                    loan.note
+                )
+                put(
+                    "lastEditedDate",
+                    loan.lastEditedDate
+                )
                 put(
                     "editHistory",
                     JSONArray(loan.editHistory)
@@ -395,16 +559,32 @@ fun saveLoans(
                     loan.dueDate ?: ""
                 )
 
-                val borrowingArray = JSONArray()
+                val borrowingArray =
+                    JSONArray()
 
-                loan.borrowings.forEach { borrowing ->
+                loan.borrowings.forEach {
                     borrowingArray.put(
                         JSONObject().apply {
-                            put("id", borrowing.id)
-                            put("loanId", borrowing.loanId)
-                            put("amount", borrowing.amount)
-                            put("date", borrowing.date)
-                            put("note", borrowing.note)
+                            put(
+                                "id",
+                                it.id
+                            )
+                            put(
+                                "loanId",
+                                it.loanId
+                            )
+                            put(
+                                "amount",
+                                it.amount
+                            )
+                            put(
+                                "date",
+                                it.date
+                            )
+                            put(
+                                "note",
+                                it.note
+                            )
                         }
                     )
                 }
@@ -418,7 +598,10 @@ fun saveLoans(
     }
 
     prefs.edit()
-        .putString("loans", array.toString())
+        .putString(
+            "loans",
+            array.toString()
+        )
         .apply()
 }
 
@@ -427,19 +610,28 @@ fun loadLoans(
 ): List<LoanAccount> {
     return try {
         val array = JSONArray(
-            prefs.getString("loans", null) ?: "[]"
+            prefs.getString(
+                "loans",
+                null
+            ) ?: "[]"
         )
 
         List(array.length()) { i ->
-            val o = array.getJSONObject(i)
+            val o =
+                array.getJSONObject(i)
 
             val historyArray =
-                o.optJSONArray("editHistory")
+                o.optJSONArray(
+                    "editHistory"
+                )
 
-            val history = mutableListOf<String>()
+            val history =
+                mutableListOf<String>()
 
             if (historyArray != null) {
-                for (j in 0 until historyArray.length()) {
+                for (
+                j in 0 until historyArray.length()
+                ) {
                     history.add(
                         historyArray.getString(j)
                     )
@@ -447,23 +639,39 @@ fun loadLoans(
             }
 
             val borrowingArray =
-                o.optJSONArray("borrowings")
+                o.optJSONArray(
+                    "borrowings"
+                )
 
             val borrowings =
                 mutableListOf<LoanBorrowing>()
 
             if (borrowingArray != null) {
-                for (j in 0 until borrowingArray.length()) {
+                for (
+                j in 0 until borrowingArray.length()
+                ) {
                     val b =
-                        borrowingArray.getJSONObject(j)
+                        borrowingArray
+                            .getJSONObject(j)
 
                     borrowings.add(
                         LoanBorrowing(
-                            id = b.getLong("id"),
-                            loanId = b.getLong("loanId"),
-                            amount = b.getDouble("amount"),
-                            date = b.getString("date"),
-                            note = b.getString("note")
+                            id =
+                                b.getLong("id"),
+                            loanId =
+                                b.getLong("loanId"),
+                            amount =
+                                b.getDouble(
+                                    "amount"
+                                ),
+                            date =
+                                b.getString(
+                                    "date"
+                                ),
+                            note =
+                                b.getString(
+                                    "note"
+                                )
                         )
                     )
                 }
@@ -472,22 +680,33 @@ fun loadLoans(
             LoanAccount(
                 id = o.getLong("id"),
                 name = o.getString("name"),
-                sourceType = o.getString("sourceType"),
-                principal = o.getDouble("principal"),
+                sourceType =
+                    o.getString("sourceType"),
+                principal =
+                    o.getDouble("principal"),
                 monthlyInstallment =
-                    o.getDouble("monthlyInstallment"),
-                startDate = o.getString("startDate"),
-                note = o.getString("note"),
+                    o.getDouble(
+                        "monthlyInstallment"
+                    ),
+                startDate =
+                    o.getString("startDate"),
+                note =
+                    o.getString("note"),
                 lastEditedDate =
                     o.optString(
                         "lastEditedDate",
                         ""
                     ),
-                editHistory = history,
-                borrowings = borrowings,
+                editHistory =
+                    history,
+                borrowings =
+                    borrowings,
                 dueDate =
-                    o.optString("dueDate")
-                        .takeIf { it.isNotBlank() }
+                    o.optString(
+                        "dueDate"
+                    ).takeIf {
+                        it.isNotBlank()
+                    }
             )
         }
     } catch (_: Exception) {
@@ -505,13 +724,23 @@ fun saveLoanPayments(
         array.put(
             JSONObject().apply {
                 put("id", payment.id)
-                put("loanId", payment.loanId)
-                put("amount", payment.amount)
-                put("date", payment.date)
-                put("note", payment.note)
+                put(
+                    "loanId",
+                    payment.loanId
+                )
+                put(
+                    "amount",
+                    payment.amount
+                )
+                put(
+                    "date",
+                    payment.date
+                )
+                put(
+                    "note",
+                    payment.note
+                )
 
-                // New accounting field.
-                // Old records remain compatible.
                 put(
                     "fundSource",
                     payment.fundSource
@@ -519,14 +748,18 @@ fun saveLoanPayments(
 
                 put(
                     "sourceTransactionId",
-                    payment.sourceTransactionId ?: 0L
+                    payment.sourceTransactionId
+                        ?: 0L
                 )
             }
         )
     }
 
     prefs.edit()
-        .putString("loanPayments", array.toString())
+        .putString(
+            "loanPayments",
+            array.toString()
+        )
         .apply()
 }
 
@@ -542,26 +775,31 @@ fun loadLoanPayments(
         )
 
         List(array.length()) { i ->
-            val o = array.getJSONObject(i)
+            val o =
+                array.getJSONObject(i)
 
             LoanPayment(
                 id = o.getLong("id"),
-                loanId = o.getLong("loanId"),
-                amount = o.getDouble("amount"),
-                date = o.getString("date"),
-                note = o.getString("note"),
-
-                // Missing in old data = personal.
-                fundSource = o.optString(
-                    "fundSource",
-                    "personal"
-                ),
-
+                loanId =
+                    o.getLong("loanId"),
+                amount =
+                    o.getDouble("amount"),
+                date =
+                    o.getString("date"),
+                note =
+                    o.getString("note"),
+                fundSource =
+                    o.optString(
+                        "fundSource",
+                        "personal"
+                    ),
                 sourceTransactionId =
                     o.optLong(
                         "sourceTransactionId",
                         0L
-                    ).takeIf { it != 0L }
+                    ).takeIf {
+                        it != 0L
+                    }
             )
         }
     } catch (_: Exception) {
@@ -579,18 +817,33 @@ fun saveLendings(
         array.put(
             JSONObject().apply {
                 put("id", lending.id)
-                put("person", lending.person)
-                put("amount", lending.amount)
-                put("date", lending.date)
-                put("note", lending.note)
-                put("walletId", lending.walletId)
-                put("currency", lending.currency.ifBlank { "BDT" })
+                put(
+                    "person",
+                    lending.person
+                )
+                put(
+                    "amount",
+                    lending.amount
+                )
+                put(
+                    "date",
+                    lending.date
+                )
+                put(
+                    "note",
+                    lending.note
+                )
+                put(
+                    "currency",
+                    lending.currency.ifBlank {
+                        "BDT"
+                    }
+                )
                 put(
                     "dueDate",
                     lending.dueDate ?: ""
                 )
 
-                // New accounting field.
                 put(
                     "fundSource",
                     lending.fundSource
@@ -600,7 +853,10 @@ fun saveLendings(
     }
 
     prefs.edit()
-        .putString("lendings", array.toString())
+        .putString(
+            "lendings",
+            array.toString()
+        )
         .apply()
 }
 
@@ -616,20 +872,35 @@ fun loadLendings(
         )
 
         List(array.length()) { i ->
-            val o = array.getJSONObject(i)
+            val o =
+                array.getJSONObject(i)
 
             LendingAccount(
                 id = o.getLong("id"),
-                person = o.getString("person"),
-                amount = o.getDouble("amount"),
-                date = o.getString("date"),
-                note = o.getString("note"),
-                dueDate = o.optString("dueDate")
-                    .takeIf { it.isNotBlank() },
-                fundSource = o.optString(
-                    "fundSource",
-                    "personal"
-                )
+                person =
+                    o.getString("person"),
+                amount =
+                    o.getDouble("amount"),
+                date =
+                    o.getString("date"),
+                note =
+                    o.getString("note"),
+                dueDate =
+                    o.optString(
+                        "dueDate"
+                    ).takeIf {
+                        it.isNotBlank()
+                    },
+                fundSource =
+                    o.optString(
+                        "fundSource",
+                        "personal"
+                    ),
+                currency =
+                    o.optString(
+                        "currency",
+                        "BDT"
+                    )
             )
         }
     } catch (_: Exception) {
@@ -646,13 +917,33 @@ fun saveLendingReturns(
     list.forEach { item ->
         array.put(
             JSONObject().apply {
-                put("id", item.id)
-                put("lendingId", item.lendingId)
-                put("amount", item.amount)
-                put("date", item.date)
-                put("note", item.note)
+                put(
+                    "id",
+                    item.id
+                )
+                put(
+                    "lendingId",
+                    item.lendingId
+                )
+                put(
+                    "amount",
+                    item.amount
+                )
+                put(
+                    "date",
+                    item.date
+                )
+                put(
+                    "note",
+                    item.note
+                )
+                put(
+                    "currency",
+                    item.currency.ifBlank {
+                        "BDT"
+                    }
+                )
 
-                // New accounting field.
                 put(
                     "fundSource",
                     item.fundSource
@@ -681,18 +972,29 @@ fun loadLendingReturns(
         )
 
         List(array.length()) { i ->
-            val o = array.getJSONObject(i)
+            val o =
+                array.getJSONObject(i)
 
             LendingReturn(
                 id = o.getLong("id"),
-                lendingId = o.getLong("lendingId"),
-                amount = o.getDouble("amount"),
-                date = o.getString("date"),
-                note = o.getString("note"),
-                fundSource = o.optString(
-                    "fundSource",
-                    "personal"
-                )
+                lendingId =
+                    o.getLong("lendingId"),
+                amount =
+                    o.getDouble("amount"),
+                date =
+                    o.getString("date"),
+                note =
+                    o.getString("note"),
+                fundSource =
+                    o.optString(
+                        "fundSource",
+                        "personal"
+                    ),
+                currency =
+                    o.optString(
+                        "currency",
+                        "BDT"
+                    )
             )
         }
     } catch (_: Exception) {
@@ -716,14 +1018,23 @@ fun saveWallets(
                     "initialBalance",
                     it.initialBalance
                 )
-                put("currency", it.currency)
-                put("color", it.color)
+                put(
+                    "currency",
+                    it.currency
+                )
+                put(
+                    "color",
+                    it.color
+                )
             }
         )
     }
 
     prefs.edit()
-        .putString("wallets", array.toString())
+        .putString(
+            "wallets",
+            array.toString()
+        )
         .apply()
 }
 
@@ -732,7 +1043,10 @@ fun loadWallets(
 ): List<Wallet> {
     return try {
         val raw =
-            prefs.getString("wallets", null)
+            prefs.getString(
+                "wallets",
+                null
+            )
 
         if (raw == null) {
             listOf(
@@ -746,29 +1060,35 @@ fun loadWallets(
                 )
             )
         } else {
-            val array = JSONArray(raw)
+            val array =
+                JSONArray(raw)
 
             List(array.length()) { i ->
                 val o =
                     array.getJSONObject(i)
 
                 Wallet(
-                    id = o.getString("id"),
-                    name = o.getString("name"),
-                    type = o.getString("type"),
+                    id =
+                        o.getString("id"),
+                    name =
+                        o.getString("name"),
+                    type =
+                        o.getString("type"),
                     initialBalance =
                         o.optDouble(
                             "initialBalance",
                             0.0
                         ),
-                    currency = o.optString(
-                        "currency",
-                        "BDT"
-                    ),
-                    color = o.optInt(
-                        "color",
-                        0xFF4CAF50.toInt()
-                    )
+                    currency =
+                        o.optString(
+                            "currency",
+                            "BDT"
+                        ),
+                    color =
+                        o.optInt(
+                            "color",
+                            0xFF4CAF50.toInt()
+                        )
                 )
             }
         }
@@ -829,7 +1149,8 @@ fun loadCustomCategories(
                 null
             ) ?: return emptyList()
 
-        val array = JSONArray(raw)
+        val array =
+            JSONArray(raw)
 
         List(array.length()) { index ->
             array
@@ -873,7 +1194,8 @@ fun buildBackupJson(
     wallets: List<Wallet>
 ): String {
 
-    val root = JSONObject()
+    val root =
+        JSONObject()
 
     root.put(
         "backupVersion",
@@ -894,21 +1216,44 @@ fun buildBackupJson(
     // TRANSACTIONS
     // -------------------------------------------------
 
-    val transactionArray = JSONArray()
+    val transactionArray =
+        JSONArray()
 
     transactions.forEach { transaction ->
         transactionArray.put(
             JSONObject().apply {
-                put("id", transaction.id)
-                put("type", transaction.type)
-                put("amount", transaction.amount)
-                put("currency", transaction.currency)
-                put("category", transaction.category)
-                put("reason", transaction.reason)
-                put("date", transaction.date)
+                put(
+                    "id",
+                    transaction.id
+                )
+                put(
+                    "type",
+                    transaction.type
+                )
+                put(
+                    "amount",
+                    transaction.amount
+                )
+                put(
+                    "currency",
+                    transaction.currency
+                )
+                put(
+                    "category",
+                    transaction.category
+                )
+                put(
+                    "reason",
+                    transaction.reason
+                )
+                put(
+                    "date",
+                    transaction.date
+                )
                 put(
                     "receiptImage",
-                    transaction.receiptImage ?: ""
+                    transaction.receiptImage
+                        ?: ""
                 )
                 put(
                     "walletId",
@@ -916,11 +1261,13 @@ fun buildBackupJson(
                 )
                 put(
                     "addedByUid",
-                    transaction.addedByUid ?: ""
+                    transaction.addedByUid
+                        ?: ""
                 )
                 put(
                     "addedByName",
-                    transaction.addedByName ?: ""
+                    transaction.addedByName
+                        ?: ""
                 )
             }
         )
@@ -935,13 +1282,20 @@ fun buildBackupJson(
     // LOANS
     // -------------------------------------------------
 
-    val loanArray = JSONArray()
+    val loanArray =
+        JSONArray()
 
     loans.forEach { loan ->
         loanArray.put(
             JSONObject().apply {
-                put("id", loan.id)
-                put("name", loan.name)
+                put(
+                    "id",
+                    loan.id
+                )
+                put(
+                    "name",
+                    loan.name
+                )
                 put(
                     "sourceType",
                     loan.sourceType
@@ -968,7 +1322,9 @@ fun buildBackupJson(
                 )
                 put(
                     "editHistory",
-                    JSONArray(loan.editHistory)
+                    JSONArray(
+                        loan.editHistory
+                    )
                 )
                 put(
                     "dueDate",
@@ -981,7 +1337,10 @@ fun buildBackupJson(
                 loan.borrowings.forEach {
                     borrowingArray.put(
                         JSONObject().apply {
-                            put("id", it.id)
+                            put(
+                                "id",
+                                it.id
+                            )
                             put(
                                 "loanId",
                                 it.loanId
@@ -1025,7 +1384,10 @@ fun buildBackupJson(
     loanPayments.forEach { payment ->
         loanPaymentArray.put(
             JSONObject().apply {
-                put("id", payment.id)
+                put(
+                    "id",
+                    payment.id
+                )
                 put(
                     "loanId",
                     payment.loanId
@@ -1046,10 +1408,10 @@ fun buildBackupJson(
                     "fundSource",
                     payment.fundSource
                 )
-
                 put(
                     "sourceTransactionId",
-                    payment.sourceTransactionId ?: 0L
+                    payment.sourceTransactionId
+                        ?: 0L
                 )
             }
         )
@@ -1070,7 +1432,10 @@ fun buildBackupJson(
     lendings.forEach { lending ->
         lendingArray.put(
             JSONObject().apply {
-                put("id", lending.id)
+                put(
+                    "id",
+                    lending.id
+                )
                 put(
                     "person",
                     lending.person
@@ -1095,6 +1460,12 @@ fun buildBackupJson(
                     "fundSource",
                     lending.fundSource
                 )
+                put(
+                    "currency",
+                    lending.currency.ifBlank {
+                        "BDT"
+                    }
+                )
             }
         )
     }
@@ -1114,7 +1485,10 @@ fun buildBackupJson(
     lendingReturns.forEach { item ->
         lendingReturnArray.put(
             JSONObject().apply {
-                put("id", item.id)
+                put(
+                    "id",
+                    item.id
+                )
                 put(
                     "lendingId",
                     item.lendingId
@@ -1135,6 +1509,12 @@ fun buildBackupJson(
                     "fundSource",
                     item.fundSource
                 )
+                put(
+                    "currency",
+                    item.currency.ifBlank {
+                        "BDT"
+                    }
+                )
             }
         )
     }
@@ -1154,7 +1534,10 @@ fun buildBackupJson(
     wallets.forEach { wallet ->
         walletArray.put(
             JSONObject().apply {
-                put("id", wallet.id)
+                put(
+                    "id",
+                    wallet.id
+                )
                 put(
                     "name",
                     wallet.name
@@ -1223,25 +1606,20 @@ fun parseBackupJson(
 
                 transactions.add(
                     Transaction(
-                        id = o.getLong("id"),
-                        type = o.getString(
-                            "type"
-                        ),
-                        amount = o.getDouble(
-                            "amount"
-                        ),
-                        currency = o.getString(
-                            "currency"
-                        ),
-                        category = o.getString(
-                            "category"
-                        ),
-                        reason = o.getString(
-                            "reason"
-                        ),
-                        date = o.getString(
-                            "date"
-                        ),
+                        id =
+                            o.getLong("id"),
+                        type =
+                            o.getString("type"),
+                        amount =
+                            o.getDouble("amount"),
+                        currency =
+                            o.getString("currency"),
+                        category =
+                            o.getString("category"),
+                        reason =
+                            o.getString("reason"),
+                        date =
+                            o.getString("date"),
                         receiptImage =
                             o.optString(
                                 "receiptImage"
@@ -1325,22 +1703,27 @@ fun parseBackupJson(
 
                         borrowings.add(
                             LoanBorrowing(
-                                id = b.getLong(
-                                    "id"
-                                ),
-                                loanId = b.getLong(
-                                    "loanId"
-                                ),
-                                amount = b.getDouble(
-                                    "amount"
-                                ),
-                                date = b.getString(
-                                    "date"
-                                ),
-                                note = b.optString(
-                                    "note",
-                                    ""
-                                )
+                                id =
+                                    b.getLong(
+                                        "id"
+                                    ),
+                                loanId =
+                                    b.getLong(
+                                        "loanId"
+                                    ),
+                                amount =
+                                    b.getDouble(
+                                        "amount"
+                                    ),
+                                date =
+                                    b.getString(
+                                        "date"
+                                    ),
+                                note =
+                                    b.optString(
+                                        "note",
+                                        ""
+                                    )
                             )
                         )
                     }
@@ -1348,12 +1731,10 @@ fun parseBackupJson(
 
                 loans.add(
                     LoanAccount(
-                        id = o.getLong(
-                            "id"
-                        ),
-                        name = o.getString(
-                            "name"
-                        ),
+                        id =
+                            o.getLong("id"),
+                        name =
+                            o.getString("name"),
                         sourceType =
                             o.getString(
                                 "sourceType"
@@ -1371,9 +1752,7 @@ fun parseBackupJson(
                                 "startDate"
                             ),
                         note =
-                            o.getString(
-                                "note"
-                            ),
+                            o.getString("note"),
                         lastEditedDate =
                             o.optString(
                                 "lastEditedDate",
@@ -1416,13 +1795,10 @@ fun parseBackupJson(
 
                 loanPayments.add(
                     LoanPayment(
-                        id = o.getLong(
-                            "id"
-                        ),
+                        id =
+                            o.getLong("id"),
                         loanId =
-                            o.getLong(
-                                "loanId"
-                            ),
+                            o.getLong("loanId"),
                         amount =
                             o.getDouble(
                                 "amount"
@@ -1440,7 +1816,6 @@ fun parseBackupJson(
                                 "fundSource",
                                 "personal"
                             ),
-
                         sourceTransactionId =
                             o.optLong(
                                 "sourceTransactionId",
@@ -1475,13 +1850,10 @@ fun parseBackupJson(
 
                 lendings.add(
                     LendingAccount(
-                        id = o.getLong(
-                            "id"
-                        ),
+                        id =
+                            o.getLong("id"),
                         person =
-                            o.getString(
-                                "person"
-                            ),
+                            o.getString("person"),
                         amount =
                             o.getDouble(
                                 "amount"
@@ -1491,9 +1863,7 @@ fun parseBackupJson(
                                 "date"
                             ),
                         note =
-                            o.getString(
-                                "note"
-                            ),
+                            o.getString("note"),
                         dueDate =
                             o.optString(
                                 "dueDate"
@@ -1504,6 +1874,11 @@ fun parseBackupJson(
                             o.optString(
                                 "fundSource",
                                 "personal"
+                            ),
+                        currency =
+                            o.optString(
+                                "currency",
+                                "BDT"
                             )
                     )
                 )
@@ -1532,9 +1907,8 @@ fun parseBackupJson(
 
                 lendingReturns.add(
                     LendingReturn(
-                        id = o.getLong(
-                            "id"
-                        ),
+                        id =
+                            o.getLong("id"),
                         lendingId =
                             o.getLong(
                                 "lendingId"
@@ -1555,6 +1929,11 @@ fun parseBackupJson(
                             o.optString(
                                 "fundSource",
                                 "personal"
+                            ),
+                        currency =
+                            o.optString(
+                                "currency",
+                                "BDT"
                             )
                     )
                 )
@@ -1583,15 +1962,12 @@ fun parseBackupJson(
 
                 wallets.add(
                     Wallet(
-                        id = o.getString(
-                            "id"
-                        ),
-                        name = o.getString(
-                            "name"
-                        ),
-                        type = o.getString(
-                            "type"
-                        ),
+                        id =
+                            o.getString("id"),
+                        name =
+                            o.getString("name"),
+                        type =
+                            o.getString("type"),
                         initialBalance =
                             o.optDouble(
                                 "initialBalance",
@@ -1682,6 +2058,7 @@ fun saveAutoBackup(
                     ).toByteArray()
                 )
             }
+
         return true
     } catch (_: Exception) {
         return false
@@ -1761,7 +2138,9 @@ fun importBackupFromUri(
             context.contentResolver
                 .openInputStream(uri)
                 ?.bufferedReader()
-                ?.use { it.readText() }
+                ?.use {
+                    it.readText()
+                }
                 ?: return null
 
         parseBackupJson(json)
@@ -1781,15 +2160,28 @@ fun saveLoanInterestTerms(
     prefs: SharedPreferences,
     terms: List<LoanInterestTerms>
 ) {
-    val array = JSONArray()
+    val array =
+        JSONArray()
 
     terms.forEach { item ->
         array.put(
             JSONObject().apply {
-                put("loanId", item.loanId)
-                put("interestRate", item.interestRate)
-                put("totalInterest", item.totalInterest)
-                put("interestType", item.interestType)
+                put(
+                    "loanId",
+                    item.loanId
+                )
+                put(
+                    "interestRate",
+                    item.interestRate
+                )
+                put(
+                    "totalInterest",
+                    item.totalInterest
+                )
+                put(
+                    "interestType",
+                    item.interestType
+                )
             }
         )
     }
@@ -1814,7 +2206,8 @@ fun loadLoanInterestTerms(
 
     return try {
 
-        val array = JSONArray(raw)
+        val array =
+            JSONArray(raw)
 
         List(array.length()) { index ->
 
@@ -1826,19 +2219,16 @@ fun loadLoanInterestTerms(
                     item.optLong(
                         "loanId"
                     ),
-
                 interestRate =
                     item.optDouble(
                         "interestRate",
                         0.0
                     ),
-
                 totalInterest =
                     item.optDouble(
                         "totalInterest",
                         0.0
                     ),
-
                 interestType =
                     item.optString(
                         "interestType",
@@ -1851,7 +2241,6 @@ fun loadLoanInterestTerms(
         emptyList()
     }
 }
-
 
 // =====================================================
 // BIRTHDAY
@@ -1868,8 +2257,12 @@ fun getBirthday(
 ): Pair<Int, Int>? {
 
     if (
-        !prefs.contains(BIRTHDAY_MONTH_KEY) ||
-        !prefs.contains(BIRTHDAY_DAY_KEY)
+        !prefs.contains(
+            BIRTHDAY_MONTH_KEY
+        ) ||
+        !prefs.contains(
+            BIRTHDAY_DAY_KEY
+        )
     ) {
         return null
     }

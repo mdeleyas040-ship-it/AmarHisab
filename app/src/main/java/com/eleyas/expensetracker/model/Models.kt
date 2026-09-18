@@ -113,7 +113,6 @@ data class LendingAccount(
     val note: String,
     val dueDate: String? = null,
     val fundSource: String = "personal",
-    val walletId: String = "default_cash",
     val currency: String = "BDT"
 )
 
@@ -124,7 +123,6 @@ data class LendingReturn(
     val date: String,
     val note: String,
     val fundSource: String = "personal",
-    val walletId: String = "default_cash",
     val currency: String = "BDT"
 )
 
