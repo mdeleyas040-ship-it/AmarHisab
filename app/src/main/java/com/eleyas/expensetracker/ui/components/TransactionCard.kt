@@ -1,5 +1,6 @@
 package com.eleyas.expensetracker.ui.components
 
+import android.media.MediaPlayer
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -15,8 +16,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.rounded.*
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.eleyas.expensetracker.model.Transaction
 import com.eleyas.expensetracker.util.AnomalyDetector
 import com.eleyas.expensetracker.util.displayTransactionDate
@@ -38,6 +37,61 @@ fun TransactionCard(
     val blue = Color(0xFF1976D2)
     val warning = Color(0xFFE65100)
     val cardRadius = 18.dp
+
+    var mediaPlayer by remember(transaction.id, transaction.audioMemoPath) {
+        mutableStateOf<MediaPlayer?>(null)
+    }
+    var isPlaying by remember(transaction.id, transaction.audioMemoPath) {
+        mutableStateOf(false)
+    }
+
+    DisposableEffect(transaction.id, transaction.audioMemoPath) {
+        onDispose {
+            mediaPlayer?.release()
+        }
+    }
+
+    fun stopVoiceNote() {
+        mediaPlayer?.let {
+            runCatching { it.stop() }
+            it.release()
+        }
+        mediaPlayer = null
+        isPlaying = false
+    }
+
+    fun playVoiceNote() {
+        val path = transaction.audioMemoPath
+        if (path.isNullOrBlank()) return
+
+        stopVoiceNote()
+
+        try {
+            val player = MediaPlayer().apply {
+                setDataSource(context, Uri.parse(path))
+                setOnCompletionListener {
+                    release()
+                    mediaPlayer = null
+                    isPlaying = false
+                }
+                setOnErrorListener { _, _, _ ->
+                    release()
+                    mediaPlayer = null
+                    isPlaying = false
+                    Toast.makeText(context, "ভয়েস নোট চালানো যায়নি।", Toast.LENGTH_SHORT).show()
+                    true
+                }
+                prepare()
+                start()
+            }
+            mediaPlayer = player
+            isPlaying = true
+        } catch (exception: Exception) {
+            mediaPlayer = null
+            isPlaying = false
+            Toast.makeText(context, "ভয়েস নোট চালানো যায়নি।", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     val icon = when (transaction.type) {
         "income" -> Icons.Default.AddCircle
@@ -189,6 +243,22 @@ fun TransactionCard(
                 )
 
                 Row {
+                    if (transaction.audioMemoPath != null) {
+                        IconButton(
+                            onClick = {
+                                if (isPlaying) stopVoiceNote() else playVoiceNote()
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                if (isPlaying) Icons.Default.Stop else Icons.Default.Mic,
+                                contentDescription = if (isPlaying) "ভয়েস নোট বন্ধ করুন" else "ভয়েস নোট শুনুন",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
                     if (transaction.receiptImage != null) {
                         IconButton(
                             onClick = {
