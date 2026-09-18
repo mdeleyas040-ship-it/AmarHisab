@@ -1221,15 +1221,15 @@ class MainViewModel : ViewModel() {
         saveAutoBackup(context)
     }
 
-    fun addLoan(context: Context, name: String, type: String, amount: Double, monthly: Double, date: String, note: String, dueDate: String? = null, fundSource: String = "personal") {
-        val resolvedFundSource = if (fundSource.equals("home", ignoreCase = true)) "home" else "personal"
-        val newLoan = LoanAccount(System.currentTimeMillis(), name, type, amount, monthly, date, note, dueDate = dueDate, fundSource = resolvedFundSource)
+    fun addLoan(context: Context, name: String, type: String, amount: Double, monthly: Double, date: String, note: String, dueDate: String? = null) {
+        // A loan is money received by the user. It always enters Personal Money first.
+        val newLoan = LoanAccount(System.currentTimeMillis(), name, type, amount, monthly, date, note, dueDate = dueDate, fundSource = "personal")
         loans = loans + newLoan
         persistLoanData(context)
         makeText(context, "✅ নতুন ঋণ যোগ করা হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
-    fun updateLoan(context: Context, loan: LoanAccount, name: String, type: String, amount: Double, monthly: Double, date: String, note: String, dueDate: String? = null, fundSource: String = loan.fundSource) {
+    fun updateLoan(context: Context, loan: LoanAccount, name: String, type: String, amount: Double, monthly: Double, date: String, note: String, dueDate: String? = null) {
         if (amount <= 0.0) {
             WarningPopupManager.show(
                 title = "ঋণের পরিমাণ সঠিক নয়",
@@ -1282,7 +1282,7 @@ class MainViewModel : ViewModel() {
                             Locale.getDefault()
                         ).format(Date()),
             dueDate = dueDate,
-            fundSource = if (fundSource.equals("home", ignoreCase = true)) "home" else "personal"
+            fundSource = "personal"
         )
 
         loans =
