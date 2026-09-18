@@ -1339,6 +1339,10 @@ fun buildBackupJson(
                     "dueDate",
                     loan.dueDate ?: ""
                 )
+                put(
+                    "fundSource",
+                    loan.fundSource.ifBlank { "personal" }
+                )
 
                 val borrowingArray =
                     JSONArray()
