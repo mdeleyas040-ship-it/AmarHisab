@@ -449,7 +449,7 @@ object ReportExporter {
 
                 val amountText =
                     fitText(
-                        money(trans.amount),
+                        "${displayCurrency(trans.currency)} ${money(trans.amount)}",
                         85f
                     )
 
@@ -612,7 +612,8 @@ object ReportExporter {
         initialAmount: Double,
         transactions: List<Pair<String, Double>>,
         isLending: Boolean,
-        transactionDate: String = ""
+        transactionDate: String = "",
+        currency: String = "BDT"
     ) {
 
         val pdfDocument =
@@ -811,7 +812,7 @@ object ReportExporter {
                 true
 
             canvas.drawText(
-                "BDT ${money(initialAmount)}",
+                "${displayCurrency(currency)} ${money(initialAmount)}",
                 365f,
                 y + 45f,
                 paint
@@ -941,7 +942,7 @@ object ReportExporter {
                 )
 
                 canvas.drawText(
-                    "BDT ${money(amount)}",
+                    "${displayCurrency(currency)} ${money(amount)}",
                     240f,
                     y,
                     paint
@@ -1018,7 +1019,7 @@ object ReportExporter {
             )
 
             canvas.drawText(
-                "BDT ${money(totalHistory)}",
+                "${displayCurrency(currency)} ${money(totalHistory)}",
                 240f,
                 y,
                 paint
@@ -1052,7 +1053,7 @@ object ReportExporter {
             )
 
             canvas.drawText(
-                "BDT ${money(remaining)}",
+                "${displayCurrency(currency)} ${money(remaining)}",
                 300f,
                 y,
                 paint
@@ -1121,6 +1122,15 @@ object ReportExporter {
     // =========================================================
     // MONEY FORMAT
     // =========================================================
+
+    private fun displayCurrency(currency: String): String {
+        return when (currency.trim().uppercase(Locale.getDefault())) {
+            "BDT", "৳", "TK", "TAKA", "" -> "BDT"
+            "USD", "$" -> "USD"
+            "MVR", "RF", "RUFIYAA" -> "MVR"
+            else -> currency.trim().ifBlank { "BDT" }
+        }
+    }
 
     private fun money(
         value: Double
