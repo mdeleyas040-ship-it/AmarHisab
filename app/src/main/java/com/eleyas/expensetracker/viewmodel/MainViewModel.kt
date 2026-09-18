@@ -1005,6 +1005,52 @@ class MainViewModel : ViewModel() {
         transactionId: Long? = null,
         onComplete: () -> Unit
     ) {
+        // Outgoing transactions must never make a fund balance negative.
+        // Incoming transactions (income/loan received/lending return) are not blocked here.
+        val normalizedType = type.trim().lowercase(Locale.getDefault())
+        val amountBdt = convertToBdt(amount, currency)
+
+        if (amount <= 0.0 || amountBdt <= 0.0) {
+            WarningPopupManager.show(
+                title = "সঠিক টাকার পরিমাণ দিন",
+                message = "টাকার পরিমাণ ০-এর বেশি হতে হবে।"
+            )
+            return
+        }
+
+        when (normalizedType) {
+            "expense" -> {
+                val available = balance
+                if (amountBdt > available + 0.000001) {
+                    WarningPopupManager.show(
+                        title = "পর্যাপ্ত Personal Money নেই",
+                        message = "এই খরচের জন্য পর্যাপ্ত ব্যক্তিগত টাকা নেই।\n\nঅবশিষ্ট: ৳" + formatMoney(available.coerceAtLeast(0.0))
+                    )
+                    return
+                }
+            }
+            "home_expense" -> {
+                val available = homeBalance
+                if (amountBdt > available + 0.000001) {
+                    WarningPopupManager.show(
+                        title = "পর্যাপ্ত Home Money নেই",
+                        message = "এই বাড়ির খরচের জন্য পর্যাপ্ত টাকা নেই।\n\nঅবশিষ্ট: ৳" + formatMoney(available.coerceAtLeast(0.0))
+                    )
+                    return
+                }
+            }
+            "home" -> {
+                val available = balance
+                if (amountBdt > available + 0.000001) {
+                    WarningPopupManager.show(
+                        title = "পর্যাপ্ত Personal Money নেই",
+                        message = "বাড়িতে পাঠানোর জন্য পর্যাপ্ত ব্যক্তিগত টাকা নেই।\n\nঅবশিষ্ট: ৳" + formatMoney(available.coerceAtLeast(0.0))
+                    )
+                    return
+                }
+            }
+        }
+
         // "home" (প্রবাস থেকে দেশে রেমিট্যান্স) লেনদেনের জন্য তখনকার exchange rate সংরক্ষণ করা হয়,
         // যাতে পরে মাস অনুযায়ী rate change ট্র্যাক করা যায়।
         val exchangeRateUsed = if (type == "home" && usdToBdt > 0.0) usdToBdt else null
