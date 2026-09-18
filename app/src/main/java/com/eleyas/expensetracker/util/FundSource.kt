@@ -1,6 +1,7 @@
 package com.eleyas.expensetracker.util
 
 import com.eleyas.expensetracker.model.LendingAccount
+import com.eleyas.expensetracker.model.LoanAccount
 import com.eleyas.expensetracker.model.LendingReturn
 import com.eleyas.expensetracker.model.LoanPayment
 import java.util.Locale
