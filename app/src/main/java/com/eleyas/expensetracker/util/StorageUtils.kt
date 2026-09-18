@@ -281,6 +281,7 @@ fun saveTransactionToFirestore(
                 "receiptImage" to (
                         transaction.receiptImage ?: ""
                         ),
+                "audioMemoPath" to (transaction.audioMemoPath ?: ""),
                 "walletId" to transaction.walletId,
                 "addedByUid" to (
                         transaction.addedByUid ?: ""
@@ -291,7 +292,8 @@ fun saveTransactionToFirestore(
                 "exchangeRateUsed" to (
                         transaction.exchangeRateUsed
                             ?: -1.0
-                        )
+                        ),
+                "audioMemoPath" to (transaction.audioMemoPath ?: "")
             )
         )
         .addOnSuccessListener {
@@ -1267,6 +1269,14 @@ fun buildBackupJson(
                 put(
                     "walletId",
                     transaction.walletId
+                )
+                put(
+                    "exchangeRateUsed",
+                    transaction.exchangeRateUsed ?: -1.0
+                )
+                put(
+                    "audioMemoPath",
+                    transaction.audioMemoPath ?: ""
                 )
                 put(
                     "addedByUid",
