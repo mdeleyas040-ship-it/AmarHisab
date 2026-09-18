@@ -1,0 +1,6 @@
+# Amar Hisab accounting protection
+# Changes to the accounting contract require explicit owner review.
+app/src/main/java/com/eleyas/expensetracker/util/HomeLedgerEngine.kt @mdeleyas040-ship-it
+app/src/main/java/com/eleyas/expensetracker/util/BalanceEngine.kt @mdeleyas040-ship-it
+app/src/main/java/com/eleyas040-ship-it/Models.kt @mdeleyas040-ship-it
+app/src/main/java/com/eleyas040/expensetracker/model/Models.kt @mdeleyas040-ship-it
