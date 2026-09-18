@@ -40,7 +40,7 @@ fun PremiumLoanDialog(
     onDismiss: () -> Unit,
     existingLoan: LoanAccount? = null,
     existingNames: List<String> = emptyList(),
-    onSave: (String, String, Double, Double, String, String, String?) -> Unit
+    onSave: (String, String, Double, Double, String, String, String?, String) -> Unit
 ) {
     val context = LocalContext.current
     val scheme = MaterialTheme.colorScheme
@@ -53,7 +53,13 @@ fun PremiumLoanDialog(
     var date by remember { mutableStateOf(existingLoan?.startDate ?: SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())) }
     var dueDate by remember { mutableStateOf(existingLoan?.dueDate ?: "") }
     var note by remember { mutableStateOf(existingLoan?.note ?: "") }
+    var fundSource by remember {
+        mutableStateOf(
+            if (existingLoan?.fundSource.equals("home", ignoreCase = true)) "home" else "personal"
+        )
+    }
     var sourceMenu by remember { mutableStateOf(false) }
+    var fundMenu by remember { mutableStateOf(false) }
     var nameMenu by remember { mutableStateOf(false) }
 
     Dialog(
@@ -155,6 +161,46 @@ fun PremiumLoanDialog(
                 }
 
                 item {
+                    Box(Modifier.fillMaxWidth()) {
+                        OutlinedButton(
+                            onClick = { fundMenu = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(17.dp)
+                        ) {
+                            Icon(
+                                if (fundSource == "home") Icons.Default.AccountBalance else Icons.Default.Person,
+                                null,
+                                tint = accent
+                            )
+                            Spacer(Modifier.width(9.dp))
+                            Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+                                Text("টাকার উৎস", fontSize = 10.sp, color = scheme.onSurfaceVariant)
+                                Text(
+                                    if (fundSource == "home") "Home Money" else "Personal Money",
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Text("⌄", fontSize = 20.sp, color = accent)
+                        }
+                        DropdownMenu(
+                            expanded = fundMenu,
+                            onDismissRequest = { fundMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Personal Money") },
+                                leadingIcon = { Icon(Icons.Default.Person, null) },
+                                onClick = { fundSource = "personal"; fundMenu = false }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Home Money") },
+                                leadingIcon = { Icon(Icons.Default.AccountBalance, null) },
+                                onClick = { fundSource = "home"; fundMenu = false }
+                            )
+                        }
+                    }
+                }
+
+                item {
                     Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = accent.copy(alpha = .08f))) {
                         Column(Modifier.padding(15.dp)) {
                             Text("ঋণের পরিমাণ", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = accent)
@@ -222,7 +268,16 @@ fun PremiumLoanDialog(
                                 } else if (amount == null || amount <= 0.0 || monthly < 0.0) {
                                     Toast.makeText(context, "সঠিক ঋণের টাকা দিন।", Toast.LENGTH_SHORT).show()
                                 } else {
-                                    onSave(name.trim(), sourceType, amount, monthly, date, note.trim(), dueDate.takeIf { it.isNotBlank() })
+                                    onSave(
+                                        name.trim(),
+                                        sourceType,
+                                        amount,
+                                        monthly,
+                                        date,
+                                        note.trim(),
+                                        dueDate.takeIf { it.isNotBlank() },
+                                        fundSource
+                                    )
                                 }
                             },
                             modifier = Modifier.weight(1f),
