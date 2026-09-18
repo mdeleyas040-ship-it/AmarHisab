@@ -45,8 +45,8 @@ jobs:
           done
 
           storage="app/src/main/java/com/eleyas/expensetracker/util/StorageUtils.kt"
-          if ! grep -q 'root.put("backupVersion", 5)' "$storage"; then
-            echo "::error file=$storage::Canonical backup schema changed from version 4 without an explicit protection update."
+          if ! awk '/"backupVersion"/ { getline; getline; if ($0 ~ /5/) found=1 } END { exit(found ? 0 : 1) }' "$storage"; then
+            echo "::error file=$storage::Canonical backup schema is not version 5; update protection intentionally if the schema changes."
             exit 1
           fi
 
