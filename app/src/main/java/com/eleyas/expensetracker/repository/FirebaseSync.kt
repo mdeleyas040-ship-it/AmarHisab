@@ -48,6 +48,7 @@ fun syncLoansToFirestore(
 
             // Previously missing from Cloud.
             "dueDate" to (loan.dueDate ?: ""),
+            "fundSource" to loan.fundSource,
 
             "borrowings" to loan.borrowings.map { borrowing ->
                 mapOf(
