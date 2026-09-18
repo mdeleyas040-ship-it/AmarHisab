@@ -198,10 +198,10 @@ class AccountingLogicRegressionTest {
     }
 
     @Test
-    fun personalLendingReturnIncreasesPersonal() {
+    fun personalLendingAndFullReturnNetToOriginalBalance() {
         val personalLending = lending(1, 3_000.0, "personal")
         assertEquals(
-            13_000.0,
+            10_000.0,
             personalBalance(
                 initial = 10_000.0,
                 lendings = listOf(personalLending),
@@ -262,17 +262,22 @@ class AccountingLogicRegressionTest {
         )
 
         assertEquals(5, entries.size)
-        assertEquals(4_000.0 + 1_000.0, entries.filter { it.direction.name == "IN" }.sumOf { it.amount })
-        assertEquals(1_000.0 + 1_500.0 + 1_000.0, entries.filter { it.direction.name == "OUT" }.sumOf { it.amount })
-        assertEquals(
-            setOf(
-                "tx_home_1",
-                "tx_home_expense_2",
-                "loan_payment_home_1",
-                "lending_home_1",
-                "lending_return_home_1"
-            ),
-            entries.map { it.id }.toSet()
-        )
+
+        val byId = entries.associateBy { it.id }
+
+        assertEquals(HomeLedgerDirection.IN, byId["tx_home_1"]?.direction)
+        assertEquals(4_000.0, byId["tx_home_1"]?.amount ?: 0.0, 0.001)
+
+        assertEquals(HomeLedgerDirection.OUT, byId["tx_home_expense_2"]?.direction)
+        assertEquals(1_000.0, byId["tx_home_expense_2"]?.amount ?: 0.0, 0.001)
+
+        assertEquals(HomeLedgerDirection.OUT, byId["loan_payment_home_1"]?.direction)
+        assertEquals(1_500.0, byId["loan_payment_home_1"]?.amount ?: 0.0, 0.001)
+
+        assertEquals(HomeLedgerDirection.OUT, byId["lending_home_1"]?.direction)
+        assertEquals(1_000.0, byId["lending_home_1"]?.amount ?: 0.0, 0.001)
+
+        assertEquals(HomeLedgerDirection.IN, byId["lending_return_home_1"]?.direction)
+        assertEquals(1_000.0, byId["lending_return_home_1"]?.amount ?: 0.0, 0.001)
     }
 }
