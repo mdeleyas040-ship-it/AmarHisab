@@ -1352,8 +1352,7 @@ class MainViewModel : ViewModel() {
                             "dd/MM/yyyy HH:mm",
                             Locale.getDefault()
                         ).format(Date()),
-            dueDate = dueDate,
-            fundSource = if (fundSource.equals("home", ignoreCase = true)) "home" else "personal"
+            dueDate = dueDate
         )
 
         loans =
