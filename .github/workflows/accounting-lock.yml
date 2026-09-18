@@ -1,3 +1,4 @@
+# Accounting lock verification intentionally triggers on every branch update.
 name: Accounting Lock
 
 on:
