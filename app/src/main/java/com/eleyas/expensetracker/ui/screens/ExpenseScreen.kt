@@ -100,8 +100,11 @@ fun ExpenseScreen(
         return
     }
 
+    // সাধারণ খরচ tab-এ শুধু Personal Expense দেখাবে।
+    // Home Expense-এর আলাদা "বাড়ির হিসাব" tab আছে, তাই একই entry এখানে
+    // দ্বিতীয়বার দেখানো যাবে না।
     val expenseTransactions = remember(transactions) {
-        transactions.filter { it.type == "expense" || it.type == "home_expense" }
+        transactions.filter { it.type == "expense" }
     }
     val filteredTransactions = expenseTransactions.filter {
         it.reason.contains(searchQuery, ignoreCase = true) || it.category.contains(searchQuery, ignoreCase = true)
