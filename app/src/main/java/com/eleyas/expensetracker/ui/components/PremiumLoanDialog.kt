@@ -29,6 +29,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.eleyas.expensetracker.model.LoanAccount
 import com.eleyas.expensetracker.ui.theme.Green
+import com.eleyas.expensetracker.util.formatMoney
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
