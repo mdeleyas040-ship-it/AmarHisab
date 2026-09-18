@@ -28,6 +28,7 @@ object HomeMoneyFlow {
         com.eleyas.expensetracker.model.HomeLedgerSourceType.HOME_ADJUSTMENT -> "বাড়ির সমন্বয়"
         com.eleyas.expensetracker.model.HomeLedgerSourceType.HOME_LOAN_RECEIVED -> "Home Loan Received"
         com.eleyas.expensetracker.model.HomeLedgerSourceType.HOME_LOAN_PAYMENT -> "ঋণ পরিশোধ"
+        com.eleyas.expensetracker.model.HomeLedgerSourceType.LOAN_REPAYMENT_RECEIVED -> "ঋণ পরিশোধ ফেরত"
         com.eleyas.expensetracker.model.HomeLedgerSourceType.LOAN_GIVEN -> "ঋণ দেওয়া"
         com.eleyas.expensetracker.model.HomeLedgerSourceType.LENDING_GIVEN -> "ধার দেওয়া"
         com.eleyas.expensetracker.model.HomeLedgerSourceType.LENDING_RETURN_RECEIVED -> "ধার ফেরত"
