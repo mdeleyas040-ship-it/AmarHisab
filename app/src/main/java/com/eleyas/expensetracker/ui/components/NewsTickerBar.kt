@@ -14,20 +14,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import com.eleyas.expensetracker.ui.theme.AccentGreen
 import com.eleyas.expensetracker.ui.theme.Green
 import com.eleyas.expensetracker.util.FinancialTip
 import kotlinx.coroutines.delay
-
-private const val TICKER_MESSAGE_DISPLAY_MILLIS = 5000L
+import kotlin.math.roundToInt
 
 @Composable
 fun NewsTickerBar(
@@ -46,13 +49,42 @@ fun NewsTickerBar(
     )
 
     var messageIndex by remember(messages) { mutableIntStateOf(0) }
+    var tickerWidth by remember { mutableIntStateOf(0) }
+    var textWidth by remember { mutableIntStateOf(0) }
+    val offsetX = remember { Animatable(0f) }
+
     val currentIndex = messageIndex % messages.size
     val currentMessage = messages[currentIndex].trim()
         .ifBlank { "আজকের টিপস ও ইনসাইট" }
 
-    LaunchedEffect(currentIndex, messages) {
+    LaunchedEffect(currentMessage, tickerWidth, textWidth) {
+        if (tickerWidth <= 0 || textWidth <= 0) return@LaunchedEffect
+
+        if (textWidth <= tickerWidth) {
+            offsetX.snapTo(0f)
+            if (messages.size > 1) {
+                delay(5000L)
+                messageIndex = (messageIndex + 1) % messages.size
+            }
+            return@LaunchedEffect
+        }
+
+        // TV-style marquee: enter from the right, move fully across, then show the next headline.
+        offsetX.snapTo(tickerWidth.toFloat())
+        delay(500L)
+
+        val distance = tickerWidth + textWidth
+        val durationMillis = (distance / 45f * 1000f)
+            .roundToInt()
+            .coerceIn(5000, 14000)
+
+        offsetX.animateTo(
+            targetValue = -textWidth.toFloat(),
+            animationSpec = tween(durationMillis = durationMillis)
+        )
+
         if (messages.size > 1) {
-            delay(TICKER_MESSAGE_DISPLAY_MILLIS)
+            delay(500L)
             messageIndex = (messageIndex + 1) % messages.size
         }
     }
@@ -77,16 +109,24 @@ fun NewsTickerBar(
 
         Spacer(Modifier.width(10.dp))
 
-        Text(
-            text = currentMessage,
-            style = textStyle,
+        Box(
             modifier = Modifier
                 .weight(1f)
-                .clipToBounds(),
-            maxLines = 1,
-            softWrap = false,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-        )
+                .fillMaxHeight()
+                .clipToBounds()
+                .onSizeChanged { tickerWidth = it.width },
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Text(
+                text = currentMessage,
+                style = textStyle,
+                modifier = Modifier
+                    .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+                    .onSizeChanged { textWidth = it.width },
+                maxLines = 1,
+                softWrap = false
+            )
+        }
     }
 }
 
