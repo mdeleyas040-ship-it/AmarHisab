@@ -2040,9 +2040,18 @@ class MainViewModel : ViewModel() {
         personName: String,
         initialAmount: Double,
         history: List<Pair<String, Double>>,
-        isLending: Boolean
+        isLending: Boolean,
+        currency: String = "BDT"
     ) {
-        ReportExporter.exportPersonStatement(context, uri, personName, initialAmount, history, isLending)
+        ReportExporter.exportPersonStatement(
+            context,
+            uri,
+            personName,
+            initialAmount,
+            history,
+            isLending,
+            currency = currency
+        )
     }
 
     fun exportSearchResultsPdf(context: Context, uri: Uri, query: String) {
