@@ -68,7 +68,7 @@ object HomeLedgerEngine {
             }
         }
 
-        // Home loan principal is Home IN; personal loans never enter this ledger.
+        // A Home-funded loan is money given out from Home, so its principal is Home OUT; personal loans never enter this ledger.
         loans.filter(FundSource::isHomeLoan).forEach { loan ->
             entries += HomeLedgerEntry(
                 id = "loan_received_home_${loan.id}",
@@ -76,7 +76,7 @@ object HomeLedgerEngine {
                 title = "Home Loan Received — ${loan.name}",
                 category = "Home Loan Received",
                 amount = loan.principal,
-                direction = HomeLedgerDirection.IN,
+                direction = HomeLedgerDirection.OUT,
                 sourceType = HomeLedgerSourceType.HOME_LOAN_RECEIVED,
                 sourceId = loan.id.toString(),
                 note = loan.note
