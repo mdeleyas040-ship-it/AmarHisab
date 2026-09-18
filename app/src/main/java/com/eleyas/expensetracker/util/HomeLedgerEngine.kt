@@ -68,22 +68,6 @@ object HomeLedgerEngine {
             }
         }
 
-        // A loan funded directly by Home is Home Money IN.
-        // Personal-funded loans are intentionally excluded from the Home ledger.
-        loans.filter(FundSource::isHomeLoan).forEach { loan ->
-            entries += HomeLedgerEntry(
-                id = "loan_received_home_" + loan.id,
-                date = loan.startDate,
-                title = "Home ঋণ পাওয়া — " + loan.name,
-                category = "ঋণ গ্রহণ",
-                amount = loan.principal,
-                direction = HomeLedgerDirection.IN,
-                sourceType = HomeLedgerSourceType.HOME_TRANSFER,
-                sourceId = loan.id.toString(),
-                note = loan.note
-            )
-        }
-
         val loanNames = loans.associateBy { it.id }
         loanPayments.filter(FundSource::isHomeLoanPayment).forEach { payment ->
             val loan = loanNames[payment.loanId]
