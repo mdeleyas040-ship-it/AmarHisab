@@ -164,53 +164,47 @@ fun PremiumHomeHeader(
                     )
                 }
 
-                if (birthday != null && birthdayDays != null) {
+                // Home-এর নিজস্ব Birthday card — Settings-এর BirthdayStorage-এর সাথে যুক্ত নয়।
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
 
-                    Spacer(
-                        modifier = Modifier.height(8.dp)
-                    )
-
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp),
-                        color = Color(0xFF292B30)
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFF292B30)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                horizontal = 12.dp,
+                                vertical = 7.dp
+                            ),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
+                        Column {
+                            Text(
+                                text = "🎂 জন্মদিন",
+                                color = Color.White,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(
-                                    horizontal = 12.dp,
-                                    vertical = 7.dp
-                                ),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-
-                            Column {
-
-                                Text(
-                                    text = "🎂 জন্মদিন",
-                                    color = Color.White,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-
+                            if (birthdayDays != null) {
                                 Row(
                                     verticalAlignment = Alignment.Bottom
                                 ) {
-
                                     Text(
                                         text = "$birthdayDays দিন",
                                         color = Color(0xFF00E878),
                                         fontSize = 19.sp,
                                         fontWeight = FontWeight.ExtraBold
                                     )
-
                                     Spacer(
                                         modifier = Modifier.width(4.dp)
                                     )
-
                                     Text(
                                         text = "বাকি",
                                         color = Color.White.copy(alpha = 0.72f),
@@ -218,37 +212,42 @@ fun PremiumHomeHeader(
                                         modifier = Modifier.padding(bottom = 2.dp)
                                     )
                                 }
-                            }
-
-                            IconButton(
-                                onClick = {
-                                    val today = Calendar.getInstance()
-
-                                    DatePickerDialog(
-                                        context,
-                                        { _, _, month, dayOfMonth ->
-                                            onBirthdayChange(
-                                                Pair(
-                                                    month,
-                                                    dayOfMonth
-                                                )
-                                            )
-                                        },
-                                        today.get(Calendar.YEAR),
-                                        birthday.first,
-                                        birthday.second
-                                    ).show()
-                                },
-                                modifier = Modifier.size(38.dp)
-                            ) {
-
-                                Icon(
-                                    imageVector = Icons.Default.Redeem,
-                                    contentDescription = "জন্মদিন পরিবর্তন করুন",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(24.dp)
+                            } else {
+                                Text(
+                                    text = "জন্মদিন সেট করুন",
+                                    color = Color.White.copy(alpha = 0.72f),
+                                    fontSize = 11.sp
                                 )
                             }
+                        }
+
+                        IconButton(
+                            onClick = {
+                                val today = Calendar.getInstance()
+                                DatePickerDialog(
+                                    context,
+                                    { _, _, month, dayOfMonth ->
+                                        onBirthdayChange(
+                                            Pair(month, dayOfMonth)
+                                        )
+                                    },
+                                    today.get(Calendar.YEAR),
+                                    birthday?.first ?: today.get(Calendar.MONTH),
+                                    birthday?.second ?: today.get(Calendar.DAY_OF_MONTH)
+                                ).show()
+                            },
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Redeem,
+                                contentDescription = if (birthday == null) {
+                                    "জন্মদিন সেট করুন"
+                                } else {
+                                    "জন্মদিন পরিবর্তন করুন"
+                                },
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
                     }
                 }
