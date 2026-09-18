@@ -497,8 +497,7 @@ class MainViewModel : ViewModel() {
                             try {
 
                                 LoanPayment(
-                                    id =
-                                        doc.getLong("id")
+                                    id =                                        doc.getLong("id")
                                             ?: 0L,
 
                                     loanId =
@@ -997,8 +996,7 @@ class MainViewModel : ViewModel() {
         context: Context,
         amount: Double,
         currency: String,
-        category: String,
-        reason: String,
+        category: String,        reason: String,
         date: String,
         type: String,
         walletId: String,
@@ -1497,8 +1495,7 @@ class MainViewModel : ViewModel() {
             note = note,
             fundSource = "personal"
         )
-        loanPayments = loanPayments + payment
-        persistLoanData(context)
+        loanPayments = loanPayments + payment        persistLoanData(context)
         makeText(context, "✅ পরিশোধের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
@@ -1826,25 +1823,67 @@ class MainViewModel : ViewModel() {
     }
 
     fun resetCurrentAccountData(context: Context, onComplete: () -> Unit) {
+        // Clear in-memory state first so the UI immediately becomes empty.
         personalTransactions = emptyList()
         sharedHomeTransactions = emptyList()
         loans = emptyList()
         loanPayments = emptyList()
+        loanInterestTerms = emptyList()
         lendings = emptyList()
         lendingReturns = emptyList()
         categoryBudgets = emptyList()
-        notifications = emptyList()
+        wallets = emptyList()
+        savingsGoals = emptyList()
         financialMilestones = emptyList()
+        shoppingItems = emptyList()
+        wishlistItems = emptyList()
+        notifications = emptyList()
+        birthday = null
 
         prefs.edit().clear().apply()
         NotificationStorage.save(context, emptyList(), currentUserId)
 
-        if (currentUserId != "guest") {
-            // Delete from Firestore logic can be added here
+        if (currentUserId == "guest") {
+            onComplete()
+            return
         }
-        onComplete()
-    }
 
+        // Detach cloud listeners before deleting cloud records. Otherwise an
+        // old snapshot can repopulate the local state after the reset.
+        registrations.forEach { it.remove() }
+        registrations.clear()
+        detachHouseholdListeners()
+
+        val userRef = firestore.collection("users").document(currentUserId)
+        val collections = listOf(
+            "transactions",
+            "loans",
+            "loanPayments",
+            "loanInterestTerms",
+            "lendings",
+            "lendingReturns",
+            "wallets"
+        )
+
+        fun deleteCollectionAt(index: Int) {
+            if (index >= collections.size) {
+                onComplete()
+                return
+            }
+
+            userRef.collection(collections[index]).get()
+                .addOnSuccessListener { snapshot ->
+                    val batch = firestore.batch()
+                    snapshot.documents.forEach { batch.delete(it.reference) }
+                    batch.commit()
+                        .addOnSuccessListener { deleteCollectionAt(index + 1) }
+                        .addOnFailureListener { deleteCollectionAt(index + 1) }
+                }
+                .addOnFailureListener { deleteCollectionAt(index + 1) }
+        }
+
+        deleteCollectionAt(0)
+    }
     fun updateBirthday(context: Context, newBirthday: Pair<Int, Int>?) {
         birthday = newBirthday
         if (newBirthday != null) {
@@ -1997,8 +2036,7 @@ class MainViewModel : ViewModel() {
         saveTransactions(prefs, transactions)
         saveLoans(prefs, loans)
         saveLoanPayments(prefs, loanPayments)
-        saveLendings(prefs, lendings)
-        saveLendingReturns(prefs, lendingReturns)
+        saveLendings(prefs, lendings)        saveLendingReturns(prefs, lendingReturns)
         if (cloudWallets.isNotEmpty()) saveWallets(prefs, wallets)
     }
 
