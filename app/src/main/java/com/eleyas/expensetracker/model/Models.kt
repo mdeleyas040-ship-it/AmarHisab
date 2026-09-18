@@ -89,7 +89,9 @@ data class LoanAccount(
     val lastEditedDate: String = "",
     val editHistory: List<String> = emptyList(),
     val borrowings: List<LoanBorrowing> = emptyList(),
-    val dueDate: String? = null
+    val dueDate: String? = null,
+    // Fund that actually received the loan principal. Old records default to personal.
+    val fundSource: String = "personal"
 )
 
 data class LoanPayment(
