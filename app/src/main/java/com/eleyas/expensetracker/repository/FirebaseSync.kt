@@ -24,50 +24,55 @@ fun syncLoansToFirestore(
     userId: String,
     loans: List<LoanAccount>
 ) {
-    if (loans.isEmpty()) return
-
-    val batch = firestore.batch()
-
     val collection = firestore
         .collection("users")
         .document(userId)
         .collection("loans")
 
-    loans.forEach { loan ->
+    // Reconcile the whole collection instead of only writing current items.
+    // Otherwise a deleted local loan can remain in Firestore and reappear
+    // when the next loan is added.
+    collection.get()
+        .addOnSuccessListener { snapshot ->
+            val currentIds = loans.map { it.id.toString() }.toSet()
+            val batch = firestore.batch()
 
-        val loanData = mapOf(
-            "id" to loan.id,
-            "name" to loan.name,
-            "sourceType" to loan.sourceType,
-            "principal" to loan.principal,
-            "monthlyInstallment" to loan.monthlyInstallment,
-            "startDate" to loan.startDate,
-            "note" to loan.note,
-            "lastEditedDate" to loan.lastEditedDate,
-            "editHistory" to loan.editHistory,
+            snapshot.documents
+                .filter { it.id !in currentIds }
+                .forEach { batch.delete(it.reference) }
 
-            // Previously missing from Cloud.
-            "dueDate" to (loan.dueDate ?: ""),
-            "fundSource" to loan.fundSource,
+            loans.forEach { loan ->
+                val loanData = mapOf(
+                    "id" to loan.id,
+                    "name" to loan.name,
+                    "sourceType" to loan.sourceType,
+                    "principal" to loan.principal,
+                    "monthlyInstallment" to loan.monthlyInstallment,
+                    "startDate" to loan.startDate,
+                    "note" to loan.note,
+                    "lastEditedDate" to loan.lastEditedDate,
+                    "editHistory" to loan.editHistory,
+                    "dueDate" to (loan.dueDate ?: ""),
+                    "fundSource" to loan.fundSource,
+                    "borrowings" to loan.borrowings.map { borrowing ->
+                        mapOf(
+                            "id" to borrowing.id,
+                            "loanId" to borrowing.loanId,
+                            "amount" to borrowing.amount,
+                            "date" to borrowing.date,
+                            "note" to borrowing.note
+                        )
+                    }
+                )
 
-            "borrowings" to loan.borrowings.map { borrowing ->
-                mapOf(
-                    "id" to borrowing.id,
-                    "loanId" to borrowing.loanId,
-                    "amount" to borrowing.amount,
-                    "date" to borrowing.date,
-                    "note" to borrowing.note
+                batch.set(
+                    collection.document(loan.id.toString()),
+                    loanData
                 )
             }
-        )
 
-        val document = collection
-            .document(loan.id.toString())
-
-        batch.set(document, loanData)
-    }
-
-    batch.commit()
+            batch.commit()
+        }
 }
 
 
