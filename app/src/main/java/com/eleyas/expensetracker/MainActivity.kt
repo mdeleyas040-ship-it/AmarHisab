@@ -888,7 +888,8 @@ fun AmarHisabApp(
                         lending.amount,
                         history,
                         true,
-                        lending.date
+                        lending.date,
+                        lending.currency
                     )
 
                     // =================================================
