@@ -151,7 +151,8 @@ fun syncLendingsToFirestore(
                     "date" to lending.date,
                     "note" to lending.note,
                     "dueDate" to (lending.dueDate ?: ""),
-                    "fundSource" to lending.fundSource
+                    "fundSource" to lending.fundSource,
+                    "currency" to lending.currency
                 )
                 batch.set(
                     collection.document(lending.id.toString()),
@@ -195,7 +196,8 @@ fun syncLendingReturnsToFirestore(
                     "amount" to item.amount,
                     "date" to item.date,
                     "note" to item.note,
-                    "fundSource" to item.fundSource
+                    "fundSource" to item.fundSource,
+                    "currency" to item.currency
                 )
                 batch.set(
                     collection.document(item.id.toString()),
