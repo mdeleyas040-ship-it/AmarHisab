@@ -237,4 +237,42 @@ class AccountingLogicRegressionTest {
         // Personal: 10,000 - 4,000 - 500 - 1,000 - 500 + 200 = 4,200.
         assertEquals(4_200.0, result, 0.001)
     }
+
+    @Test
+    fun homeLedgerContainsHomeMovementsButNotPersonalOnes() {
+        val entries = HomeLedgerEngine.build(
+            transactions = listOf(
+                tx(1, "home", 4_000.0),
+                tx(2, "home_expense", 1_000.0),
+                tx(3, "expense", 500.0)
+            ),
+            loans = emptyList(),
+            loanPayments = listOf(
+                payment(1, 1, 1_500.0, "home"),
+                payment(2, 1, 700.0, "personal")
+            ),
+            lendings = listOf(
+                lending(1, 1_000.0, "home"),
+                lending(2, 500.0, "personal")
+            ),
+            lendingReturns = listOf(
+                lendingReturn(1, 1, 1_000.0, "home"),
+                lendingReturn(2, 2, 500.0, "personal")
+            )
+        )
+
+        assertEquals(5, entries.size)
+        assertEquals(4_000.0 + 1_000.0, entries.filter { it.direction.name == "IN" }.sumOf { it.amount })
+        assertEquals(1_000.0 + 1_500.0 + 1_000.0, entries.filter { it.direction.name == "OUT" }.sumOf { it.amount })
+        assertEquals(
+            setOf(
+                "tx_home_1",
+                "tx_home_expense_2",
+                "loan_payment_home_1",
+                "lending_home_1",
+                "lending_return_home_1"
+            ),
+            entries.map { it.id }.toSet()
+        )
+    }
 }
