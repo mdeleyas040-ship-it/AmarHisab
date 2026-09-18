@@ -2326,3 +2326,118 @@ fun saveBirthday(
         )
         .apply()
 }
+
+private fun daysUntilBirthday(birthday: Pair<Int, Int>): Int {
+    val today = Calendar.getInstance()
+    val target = Calendar.getInstance().apply {
+        set(Calendar.MONTH, birthday.first)
+        set(Calendar.DAY_OF_MONTH, birthday.second)
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+
+    if (!target.after(today)) target.add(Calendar.YEAR, 1)
+
+    val todayStart = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+
+    return ((target.timeInMillis - todayStart.timeInMillis) / (24L * 60L * 60L * 1000L)).toInt()
+}
+
+@Composable
+fun BirthdayCountdownCard(
+    userId: String,
+    currentBirthday: Pair<Int, Int>?,
+    onBirthdaySet: (Pair<Int, Int>) -> Unit,
+    modifier: Modifier = Modifier,
+    isCompact: Boolean = false
+) {
+    val context = LocalContext.current
+    val prefs = remember(userId) { AccountStorage.getPrefs(context, userId) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    if (showDatePicker) {
+        val today = Calendar.getInstance()
+        DatePickerDialog(
+            context,
+            { _, _, month, dayOfMonth ->
+                saveBirthday(prefs, month, dayOfMonth)
+                onBirthdaySet(Pair(month, dayOfMonth))
+                showDatePicker = false
+            },
+            today.get(Calendar.YEAR),
+            currentBirthday?.first ?: today.get(Calendar.MONTH),
+            currentBirthday?.second ?: today.get(Calendar.DAY_OF_MONTH)
+        ).apply {
+            setOnCancelListener { showDatePicker = false }
+            show()
+        }
+    }
+
+    if (currentBirthday == null) {
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .background(Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                .padding(if (isCompact) 12.dp else 20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("🎂 Birthday", color = Color.White, fontSize = if (isCompact) 14.sp else 19.sp, fontWeight = FontWeight.Bold)
+                    Text("সেট করুন", color = Color.White.copy(alpha = 0.75f), fontSize = if (isCompact) 11.sp else 14.sp)
+                }
+                Button(
+                    onClick = { showDatePicker = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E676)),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("সেট করুন", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+        return
+    }
+
+    val days = daysUntilBirthday(currentBirthday)
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+            .padding(if (isCompact) 12.dp else 20.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("🎂 Birthday", color = Color.White, fontSize = if (isCompact) 14.sp else 19.sp, fontWeight = FontWeight.Bold)
+                if (days == 0) {
+                    Text("🎉 আজ তোমার জন্মদিন!", color = Color(0xFF00E676), fontSize = if (isCompact) 13.sp else 17.sp, fontWeight = FontWeight.Bold)
+                } else {
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text("$days দিন ", color = Color(0xFF00E676), fontSize = if (isCompact) 20.sp else 30.sp, fontWeight = FontWeight.Bold)
+                        Text("বাকি", color = Color.White.copy(alpha = 0.8f), fontSize = if (isCompact) 11.sp else 14.sp, modifier = Modifier.padding(bottom = 3.dp))
+                    }
+                }
+            }
+
+            IconButton(
+                onClick = { showDatePicker = true },
+                modifier = Modifier.size(if (isCompact) 40.dp else 52.dp)
+            ) {
+                Text(if (days == 0) "🎉" else "🎁", fontSize = if (isCompact) 24.sp else 40.sp)
+            }
+        }
+    }
+}

@@ -106,8 +106,10 @@ fun HomeScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
             contentPadding = PaddingValues(
-                horizontal = ScreenHorizontalPadding,
-                vertical = 16.dp
+                start = ScreenHorizontalPadding,
+                end = ScreenHorizontalPadding,
+                top = 12.dp,
+                bottom = 96.dp
             ),
             verticalArrangement = Arrangement.spacedBy(SectionSpacing)
         ) {
@@ -118,10 +120,10 @@ fun HomeScreen(
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = Blue.copy(alpha = 0.1f))
                     ) {
-                        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Campaign, contentDescription = null, tint = Blue, modifier = Modifier.size(24.dp))
-                            Spacer(Modifier.width(10.dp))
-                            Text(serverNotice!!, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Blue)
+                        Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Campaign, contentDescription = null, tint = Blue, modifier = Modifier.size(20.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(serverNotice!!, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Blue)
                         }
                     }
                 }
