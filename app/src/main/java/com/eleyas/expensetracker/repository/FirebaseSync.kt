@@ -127,40 +127,41 @@ fun syncLendingsToFirestore(
     userId: String,
     lendings: List<LendingAccount>
 ) {
-    if (lendings.isEmpty()) return
-
-    val batch = firestore.batch()
-
     val collection = firestore
         .collection("users")
         .document(userId)
         .collection("lendings")
 
-    lendings.forEach { lending ->
+    // Reconcile the whole collection so deleted local records are also
+    // removed from Firestore and cannot reappear on the next sync.
+    collection.get()
+        .addOnSuccessListener { snapshot ->
+            val currentIds = lendings.map { it.id.toString() }.toSet()
+            val batch = firestore.batch()
 
-        val lendingData = mapOf(
-            "id" to lending.id,
-            "person" to lending.person,
-            "amount" to lending.amount,
-            "date" to lending.date,
-            "note" to lending.note,
+            snapshot.documents
+                .filter { it.id !in currentIds }
+                .forEach { batch.delete(it.reference) }
 
-            // Previously missing from Cloud.
-            "dueDate" to (lending.dueDate ?: ""),
+            lendings.forEach { lending ->
+                val data = mapOf(
+                    "id" to lending.id,
+                    "person" to lending.person,
+                    "amount" to lending.amount,
+                    "date" to lending.date,
+                    "note" to lending.note,
+                    "dueDate" to (lending.dueDate ?: ""),
+                    "fundSource" to lending.fundSource
+                )
+                batch.set(
+                    collection.document(lending.id.toString()),
+                    data
+                )
+            }
 
-            // Critical for Personal/Home accounting.
-            "fundSource" to lending.fundSource
-        )
-
-        val document = collection
-            .document(lending.id.toString())
-
-        batch.set(document, lendingData)
-    }
-
-    batch.commit()
+            batch.commit()
+        }
 }
-
 
 /* =========================================================
    LENDING RETURNS
@@ -171,37 +172,40 @@ fun syncLendingReturnsToFirestore(
     userId: String,
     returns: List<LendingReturn>
 ) {
-    if (returns.isEmpty()) return
-
-    val batch = firestore.batch()
-
     val collection = firestore
         .collection("users")
         .document(userId)
         .collection("lendingReturns")
 
-    returns.forEach { item ->
+    // Reconcile the whole collection so deleted local records are also
+    // removed from Firestore and cannot reappear on the next sync.
+    collection.get()
+        .addOnSuccessListener { snapshot ->
+            val currentIds = returns.map { it.id.toString() }.toSet()
+            val batch = firestore.batch()
 
-        val returnData = mapOf(
-            "id" to item.id,
-            "lendingId" to item.lendingId,
-            "amount" to item.amount,
-            "date" to item.date,
-            "note" to item.note,
+            snapshot.documents
+                .filter { it.id !in currentIds }
+                .forEach { batch.delete(it.reference) }
 
-            // Critical for Personal/Home accounting.
-            "fundSource" to item.fundSource
-        )
+            returns.forEach { item ->
+                val data = mapOf(
+                    "id" to item.id,
+                    "lendingId" to item.lendingId,
+                    "amount" to item.amount,
+                    "date" to item.date,
+                    "note" to item.note,
+                    "fundSource" to item.fundSource
+                )
+                batch.set(
+                    collection.document(item.id.toString()),
+                    data
+                )
+            }
 
-        val document = collection
-            .document(item.id.toString())
-
-        batch.set(document, returnData)
-    }
-
-    batch.commit()
+            batch.commit()
+        }
 }
-
 
 /* =========================================================
    LOAN INTEREST TERMS
