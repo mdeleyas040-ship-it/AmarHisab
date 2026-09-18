@@ -36,6 +36,14 @@ fun VoiceInputDialog(
     val activity = context as Activity
     val parser = remember { VoiceToTextParser(activity.application) }
     val state = parser.state
+    var parseError by remember { mutableStateOf<String?>(null) }
+
+    DisposableEffect(parser) {
+        onDispose {
+            parser.stopListening()
+            parser.destroy()
+        }
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -64,8 +72,13 @@ fun VoiceInputDialog(
     if (state.spokenText.isNotEmpty()) {
         val result = VoiceCommandProcessor.processCommand(state.spokenText)
         LaunchedEffect(state.spokenText) {
-            onResult(result)
-            onDismiss()
+            if (result.amount != null) {
+                parseError = null
+                onResult(result)
+                onDismiss()
+            } else {
+                parseError = "টাকার পরিমাণ বুঝতে পারিনি। আবার স্পষ্ট করে টাকার পরিমাণ বলুন।"
+            }
         }
     }
 
@@ -123,9 +136,9 @@ fun VoiceInputDialog(
 
                 Spacer(Modifier.height(32.dp))
 
-                if (state.error != null) {
+                if (state.error != null || parseError != null) {
                     Text(
-                        text = state.error!!,
+                        text = state.error ?: parseError!!,
                         color = MaterialTheme.colorScheme.error,
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center

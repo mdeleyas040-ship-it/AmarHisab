@@ -1,7 +1,6 @@
 package com.eleyas.expensetracker.util
 
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.speech.RecognitionListener
@@ -41,6 +40,10 @@ class VoiceToTextParser(
     fun stopListening() {
         state = state.copy(isSpeaking = false)
         recognizer.stopListening()
+    }
+
+    fun destroy() {
+        recognizer.destroy()
     }
 
     override fun onReadyForSpeech(params: Bundle?) {
