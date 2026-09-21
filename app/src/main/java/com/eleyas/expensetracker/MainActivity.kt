@@ -501,6 +501,15 @@ fun AmarHisabApp(
         mutableStateOf(false)
     }
 
+    // Payment message share state
+    var paymentMessage by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var paymentMessageTitle by remember {
+        mutableStateOf("")
+    }
+
     var showFamilyDialog by remember {
         mutableStateOf(false)
     }
@@ -2936,13 +2945,36 @@ fun AmarHisabApp(
 
                     onSavePayment = { amount, date, note ->
 
+                        val loan = selectedLoan!!
+                        val previousPaid = loanPayments
+                            .filter { it.loanId == loan.id }
+                            .sumOf { it.amount }
+                        val interest = loanInterestTerms
+                            .firstOrNull { it.loanId == loan.id }
+                            ?.totalInterest
+                            ?: 0.0
+                        val totalDue = loan.principal + interest
+                        val paidAfter = previousPaid + amount
+                        val remainingAfter = (totalDue - paidAfter).coerceAtLeast(0.0)
+
                         viewModel.addLoanPayment(
                             context,
-                            selectedLoan!!,
+                            loan,
                             amount,
                             date,
                             note,
                             false
+                        )
+
+                        paymentMessageTitle = "পেমেন্টের মেসেজ প্রস্তুত"
+                        paymentMessage = MessageShareUtils.buildLoanPaymentMessage(
+                            personName = loan.name,
+                            totalDue = totalDue,
+                            previousPaid = previousPaid,
+                            paymentAmount = amount,
+                            paidAfter = paidAfter,
+                            remainingAfter = remainingAfter,
+                            date = date
                         )
 
                         selectedLoan = null
@@ -3148,6 +3180,13 @@ fun AmarHisabApp(
                         )
                     } else {
 
+                        val previousReturned = lendingReturns
+                            .filter { it.lendingId == currentLending.id }
+                            .sumOf { it.amount }
+                        val returnedAfter = previousReturned + amount
+                        val remainingAfter =
+                            (currentLending.amount - returnedAfter).coerceAtLeast(0.0)
+
                         viewModel.addLendingReturn(
                             context,
                             currentLending,
@@ -3156,9 +3195,96 @@ fun AmarHisabApp(
                             note
                         )
 
+                        paymentMessageTitle = "ফেরতের মেসেজ প্রস্তুত"
+                        paymentMessage = MessageShareUtils.buildLendingReturnMessage(
+                            personName = currentLending.person,
+                            totalLent = currentLending.amount,
+                            previousReturned = previousReturned,
+                            returnAmount = amount,
+                            returnedAfter = returnedAfter,
+                            remainingAfter = remainingAfter,
+                            date = date
+                        )
+
                         selectedLending = null
                         showLendingReturnDialog =
                             false
+                    }
+                }
+            )
+        }
+
+
+        if (paymentMessage != null) {
+            AlertDialog(
+                onDismissRequest = {
+                    paymentMessage = null
+                },
+                title = {
+                    Text(paymentMessageTitle)
+                },
+                text = {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            "মেসেজটি নিচে দেওয়া হলো। চাইলে WhatsApp/SMS-এ পাঠাতে পারেন বা কপি করতে পারেন।",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.medium,
+                            tonalElevation = 2.dp
+                        ) {
+                            Text(
+                                text = paymentMessage.orEmpty(),
+                                modifier = Modifier.padding(14.dp),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            MessageShareUtils.shareToWhatsApp(
+                                context,
+                                paymentMessage.orEmpty()
+                            )
+                        }
+                    ) {
+                        Text("WhatsApp")
+                    }
+                },
+                dismissButton = {
+                    Row {
+                        TextButton(
+                            onClick = {
+                                MessageShareUtils.shareToSms(
+                                    context,
+                                    paymentMessage.orEmpty()
+                                )
+                            }
+                        ) {
+                            Text("SMS")
+                        }
+
+                        TextButton(
+                            onClick = {
+                                MessageShareUtils.copyToClipboard(
+                                    context,
+                                    paymentMessage.orEmpty()
+                                )
+                                Toast.makeText(
+                                    context,
+                                    "মেসেজ কপি হয়েছে",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        ) {
+                            Text("কপি")
+                        }
                     }
                 }
             )
