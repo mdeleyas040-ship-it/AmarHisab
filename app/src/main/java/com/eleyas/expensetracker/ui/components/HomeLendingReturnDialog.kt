@@ -73,7 +73,8 @@ fun HomeLendingReturnDialog(
                     }
                 }
                 MoneyShortLabel(amount)
-                                    OutlinedTextField(\n                    value = amount, 
+                                    OutlinedTextField(
+                    value = amount, 
                     
                     onValueChange = { amount = it },
                     modifier = Modifier.fillMaxWidth(),
