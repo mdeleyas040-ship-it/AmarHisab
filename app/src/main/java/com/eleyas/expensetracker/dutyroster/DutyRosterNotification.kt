@@ -253,8 +253,14 @@ object DutyRosterNotification {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val detail = "আজকে দুই দিনের প্রয়োজনীয় কাজ করে রাখুন.\\n" +
-                "🧃 Juice / প্রয়োজনীয় preparation আগে করে রাখুন।"
+        val tasks = DutyRosterStorage.preparationTasks(context)
+        val detail = buildString {
+            append("আজকে দুই দিনের প্রয়োজনীয় কাজ করে রাখুন।")
+            if (tasks.isNotEmpty()) {
+                append("\n\nPreparation tasks:")
+                tasks.forEach { append("\n• ").append(it) }
+            }
+        }
 
         val notification = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification_calendar)
