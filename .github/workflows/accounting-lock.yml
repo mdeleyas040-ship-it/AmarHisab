@@ -31,8 +31,8 @@ jobs:
             ["app/src/main/java/com/eleyas/expensetracker/util/HomeLedgerEngine.kt"]="d2363c6b4177dbb3a6dba4dafe0b101fac0554fe"
             ["app/src/main/java/com/eleyas/expensetracker/util/BalanceEngine.kt"]="484789fb1e29ae2a47074f3f2f24f7e82e96f5ac"
             ["app/src/main/java/com/eleyas/expensetracker/model/Models.kt"]="da545896feb73e4855ce1a474e5f806906cf1de2"
-            # Intentional baseline update for PR #9: approved MainViewModel accounting/data-integrity changes.
-            ["app/src/main/java/com/eleyas/expensetracker/viewmodel/MainViewModel.kt"]="1c58d136d4ad6886bc9174b3d5fcc01ecc9989c4"
+            # Intentional baseline update for shortage-source Loan flow: approved MainViewModel accounting changes.
+            ["app/src/main/java/com/eleyas/expensetracker/viewmodel/MainViewModel.kt"]="4d3ba4e068c2b656b3e783fba3512eb0e0006d07"
           )
 
           for file in "${!EXPECTED[@]}"; do

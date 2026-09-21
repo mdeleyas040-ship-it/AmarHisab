@@ -70,8 +70,10 @@ fun HomeMoneyFlowScreen(
             it.sourceType == HomeLedgerSourceType.LENDING_RETURN_RECEIVED
         },
         "📥 বাড়িতে টাকা পাঠানো" to ordered.filter {
-            it.sourceType == HomeLedgerSourceType.HOME_TRANSFER ||
-                it.sourceType == HomeLedgerSourceType.HOME_ADJUSTMENT
+            it.sourceType == HomeLedgerSourceType.HOME_TRANSFER
+        },
+        "🧾 সমন্বয় / অন্যান্য" to ordered.filter {
+            it.sourceType == HomeLedgerSourceType.HOME_ADJUSTMENT
         }
     ).filter { it.second.isNotEmpty() }
 
