@@ -1289,7 +1289,7 @@ class MainViewModel : ViewModel() {
         date: String,
         note: String,
         dueDate: String? = null
-    ) {
+    ): LoanAccount {
         val newLoan = LoanAccount(
             id = System.currentTimeMillis(),
             name = name,
@@ -1303,6 +1303,7 @@ class MainViewModel : ViewModel() {
         loans = loans + newLoan
         persistLoanData(context)
         makeText(context, "✅ ঋণের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
+        return newLoan
     }
 
     fun updateLoan(
