@@ -2005,7 +2005,7 @@ fun AddTransactionDialog(
                                         )
 
                                         Text(
-                                            "ঘাটতি পূরণে নতুন Loan entry হবে। Loan-এর পুরো টাকা Personal-এ যোগ হয়ে তারপর Home-এ auto-transfer হবে।",
+                                            "এই ঘাটতি কোথা থেকে পূরণ করেছেন তা নির্বাচন করুন।",
                                             fontSize = 11.sp,
                                             color = Color(0xFF92400E)
                                         )
@@ -2014,64 +2014,217 @@ fun AddTransactionDialog(
                                             Modifier.height(10.dp)
                                         )
 
-                                        OutlinedTextField(
-                                            value = shortageLoanName,
-                                            onValueChange = {
-                                                shortageLoanName = it
-                                            },
-                                            modifier = Modifier.fillMaxWidth(),
-                                            shape = RoundedCornerShape(15.dp),
-                                            label = {
-                                                Text("Loan কোথা থেকে নিয়েছেন?")
-                                            },
-                                            placeholder = {
-                                                Text("যেমন: Jakir Mama")
-                                            },
-                                            leadingIcon = {
-                                                Icon(
-                                                    Icons.Default.Person,
-                                                    contentDescription = null,
-                                                    tint = Color(0xFFD97706)
+                                        var shortageSourceExpanded by remember {
+                                            mutableStateOf(false)
+                                        }
+
+                                        Box(
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            OutlinedButton(
+                                                onClick = {
+                                                    shortageSourceExpanded = true
+                                                },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                shape = RoundedCornerShape(15.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.AccountBalanceWallet,
+                                                        contentDescription = null,
+                                                        tint = Color(0xFFD97706),
+                                                        modifier = Modifier.size(19.dp)
+                                                    )
+
+                                                    Spacer(Modifier.width(10.dp))
+
+                                                    Column(
+                                                        modifier = Modifier.weight(1f),
+                                                        horizontalAlignment = Alignment.Start
+                                                    ) {
+                                                        Text(
+                                                            "Shortage Source",
+                                                            fontSize = 10.sp,
+                                                            color = Color(0xFF92400E)
+                                                        )
+
+                                                        Text(
+                                                            when (shortageSourceType) {
+                                                                "loan" -> "ঋণ (Loan)"
+                                                                "personal" -> "নিজের Personal Money"
+                                                                "other" -> "অন্যান্য Source"
+                                                                else -> "Source নির্বাচন করুন"
+                                                            },
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = Color(0xFF92400E)
+                                                        )
+                                                    }
+
+                                                    Text(
+                                                        "⌄",
+                                                        fontSize = 20.sp,
+                                                        color = Color(0xFFD97706)
+                                                    )
+                                                }
+                                            }
+
+                                            DropdownMenu(
+                                                expanded = shortageSourceExpanded,
+                                                onDismissRequest = {
+                                                    shortageSourceExpanded = false
+                                                }
+                                            ) {
+                                                DropdownMenuItem(
+                                                    text = {
+                                                        Text("💳 ঋণ (Loan)")
+                                                    },
+                                                    onClick = {
+                                                        shortageSourceType = "loan"
+                                                        shortageSourceExpanded = false
+                                                        onRequestShortageLoan()
+                                                    }
                                                 )
-                                            },
-                                            singleLine = true
-                                        )
+
+                                                DropdownMenuItem(
+                                                    text = {
+                                                        Text("💰 নিজের Personal Money")
+                                                    },
+                                                    onClick = {
+                                                        shortageSourceType = "personal"
+                                                        shortageSourceNote = ""
+                                                        shortageSourceExpanded = false
+                                                    }
+                                                )
+
+                                                DropdownMenuItem(
+                                                    text = {
+                                                        Text("📌 অন্যান্য Source")
+                                                    },
+                                                    onClick = {
+                                                        shortageSourceType = "other"
+                                                        shortageSourceExpanded = false
+                                                    }
+                                                )
+                                            }
+                                        }
 
                                         Spacer(
                                             Modifier.height(8.dp)
                                         )
 
-                                        OutlinedTextField(
-                                            value = shortageLoanAmount,
-                                            onValueChange = {
-                                                shortageLoanAmount = it
-                                            },
-                                            modifier = Modifier.fillMaxWidth(),
-                                            shape = RoundedCornerShape(15.dp),
-                                            label = {
-                                                Text("নতুন Loan amount")
-                                            },
-                                            placeholder = {
-                                                Text("Shortage-এর কম নয়")
-                                            },
-                                            leadingIcon = {
-                                                Text(
-                                                    "৳",
-                                                    color = Color(0xFFD97706),
-                                                    fontSize = 20.sp,
-                                                    fontWeight = FontWeight.Bold
+                                        when (shortageSourceType) {
+                                            "loan" -> {
+                                                if (selectedShortageLoan != null) {
+                                                    Surface(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        shape = RoundedCornerShape(15.dp),
+                                                        color = Color(0xFFF0FDF4),
+                                                        border = androidx.compose.foundation.BorderStroke(
+                                                            1.dp,
+                                                            Color(0xFF16A34A).copy(alpha = 0.35f)
+                                                        )
+                                                    ) {
+                                                        Column(
+                                                            modifier = Modifier.padding(12.dp)
+                                                        ) {
+                                                            Text(
+                                                                "Selected Loan",
+                                                                fontSize = 10.sp,
+                                                                color = Color(0xFF166534)
+                                                            )
+                                                            Text(
+                                                                selectedShortageLoan.name,
+                                                                fontWeight = FontWeight.ExtraBold,
+                                                                color = Color(0xFF166534)
+                                                            )
+                                                            Text(
+                                                                "Loan amount: ৳" +
+                                                                        formatMoney(selectedShortageLoan.principal),
+                                                                fontSize = 11.sp,
+                                                                color = Color(0xFF166534)
+                                                            )
+                                                            Text(
+                                                                if (selectedShortageLoan.principal + 0.000001 >= homeShortage)
+                                                                    "✓ এই Loan shortage পূরণ করতে পারবে"
+                                                                else
+                                                                    "⚠️ এই Loan amount shortage-এর চেয়ে কম",
+                                                                fontSize = 10.sp,
+                                                                color =
+                                                                    if (selectedShortageLoan.principal + 0.000001 >= homeShortage)
+                                                                        Color(0xFF166534)
+                                                                    else
+                                                                        Color(0xFFB91C1C)
+                                                            )
+                                                        }
+                                                    }
+                                                } else {
+                                                    OutlinedButton(
+                                                        onClick = onRequestShortageLoan,
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        shape = RoundedCornerShape(15.dp)
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.Add,
+                                                            contentDescription = null
+                                                        )
+                                                        Spacer(Modifier.width(7.dp))
+                                                        Text("নতুন Loan Entry তৈরি করুন")
+                                                    }
+                                                }
+                                            }
+
+                                            "personal" -> {
+                                                Surface(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    shape = RoundedCornerShape(15.dp),
+                                                    color = Color(0xFFEFF6FF)
+                                                ) {
+                                                    Text(
+                                                        "Shortage ৳" + formatMoney(homeShortage) +
+                                                                " Personal Money থেকে Home-এ transfer হবে।",
+                                                        modifier = Modifier.padding(12.dp),
+                                                        fontSize = 11.sp,
+                                                        color = Color(0xFF1D4ED8)
+                                                    )
+                                                }
+                                            }
+
+                                            "other" -> {
+                                                OutlinedTextField(
+                                                    value = shortageSourceNote,
+                                                    onValueChange = {
+                                                        shortageSourceNote = it
+                                                    },
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    shape = RoundedCornerShape(15.dp),
+                                                    label = {
+                                                        Text("Source details")
+                                                    },
+                                                    placeholder = {
+                                                        Text("যেমন: পরিবারের কাছ থেকে পাওয়া")
+                                                    },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            Icons.Default.Description,
+                                                            contentDescription = null,
+                                                            tint = Color(0xFFD97706)
+                                                        )
+                                                    },
+                                                    singleLine = true
                                                 )
-                                            },
-                                            supportingText = {
+                                            }
+
+                                            else -> {
                                                 Text(
-                                                    "Shortage-এর চেয়ে বেশি Loan নিলে অতিরিক্ত টাকাও Home-এ থাকবে।"
+                                                    "একটি source নির্বাচন করুন।",
+                                                    fontSize = 10.sp,
+                                                    color = Color(0xFF92400E)
                                                 )
-                                            },
-                                            singleLine = true,
-                                            keyboardOptions = KeyboardOptions(
-                                                keyboardType = KeyboardType.Number
-                                            )
-                                        )                                    }
+                                            }
+                                        }                                    }
                                 }
                             }
                         }
