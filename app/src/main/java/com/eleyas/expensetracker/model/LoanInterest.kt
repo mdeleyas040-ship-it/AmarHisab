@@ -1,6 +1,7 @@
 package com.eleyas.expensetracker.model
 
 import android.content.SharedPreferences
+import com.eleyas.expensetracker.ui.components.MoneyShortLabel
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -140,8 +141,10 @@ fun LoanInterestDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
+                MoneyShortLabel(amountText)
                 OutlinedTextField(
-                    value = amountText,
+                    value = amountText, 
+                    
                     onValueChange = { amountText = it },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     label = { Text("সুদের টাকা") },

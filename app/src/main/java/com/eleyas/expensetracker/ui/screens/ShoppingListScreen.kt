@@ -1,6 +1,7 @@
 package com.eleyas.expensetracker.ui.screens
 
 import androidx.compose.foundation.background
+import com.eleyas.expensetracker.ui.components.MoneyShortLabel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -324,8 +325,10 @@ fun ShoppingItemDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
+                MoneyShortLabel(amountText)
+                                    OutlinedTextField(
                     value = amountText,
+                    
                     onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
                     label = { Text("আনুমানিক দাম") },
                     singleLine = true,

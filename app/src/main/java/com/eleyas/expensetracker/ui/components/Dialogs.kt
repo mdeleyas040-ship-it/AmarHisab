@@ -264,8 +264,10 @@ fun CategoryBudgetDialog(
                     Modifier.height(12.dp)
                 )
 
-                OutlinedTextField(
-                    value = limit,
+                MoneyShortLabel(limit)
+                                    OutlinedTextField(
+                    value = limit, 
+                    
                     onValueChange = {
                         limit = it
                     },
@@ -459,8 +461,10 @@ fun BorrowingDialog(
                     Modifier.height(14.dp)
                 )
 
-                OutlinedTextField(
-                    value = amount,
+                MoneyShortLabel(amount)
+                                    OutlinedTextField(
+                    value = amount, 
+                    
                     onValueChange = {
                         amount = it
                     },
@@ -1236,6 +1240,7 @@ fun AddTransactionDialog(
 
                     OutlinedTextField(
                         value = amount,
+                    
                         onValueChange = {
                             amount = it
                         },
@@ -3228,6 +3233,7 @@ fun LoanPaymentDialog(
 
                 OutlinedTextField(
                     value = amount,
+                    
                     onValueChange = {
                         amount = it
                     },
@@ -3706,6 +3712,7 @@ fun LendingDialog(
 
                     OutlinedTextField(
                         value = amount,
+                    
                         onValueChange = {
                             amount = it
                         },
@@ -4433,6 +4440,7 @@ fun LendingReturnDialog(
 
                 OutlinedTextField(
                     value = amount,
+                    
                     onValueChange = {
                         amount = it
                     },

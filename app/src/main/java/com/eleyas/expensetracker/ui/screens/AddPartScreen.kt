@@ -1,6 +1,7 @@
 package com.eleyas.expensetracker.ui.screens
 
 import androidx.compose.foundation.background
+import com.eleyas.expensetracker.ui.components.MoneyShortLabel
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -251,8 +252,10 @@ fun AddPartScreen(
                             shape = RoundedCornerShape(14.dp)
                         )
 
-                        OutlinedTextField(
-                            value = cost,
+                        MoneyShortLabel(cost)
+                                                    OutlinedTextField(
+                            value = cost, 
+                            
                             onValueChange = {
                                 if (
                                     it.isEmpty() ||
