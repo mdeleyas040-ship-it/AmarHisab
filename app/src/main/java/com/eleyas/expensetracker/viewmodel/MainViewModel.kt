@@ -1467,7 +1467,9 @@ class MainViewModel : ViewModel() {
         note: String,
         extraHomeAmount: Double,
         additionalHomeAmount: Double = 0.0,
-        sourceTransactionId: Long? = null
+        sourceTransactionId: Long? = null,
+        shortageLoanName: String = "",
+        shortageLoanAmount: Double = 0.0
     ): Boolean {
         if (amount <= 0.0) {
             WarningPopupManager.show(
@@ -1508,23 +1510,63 @@ class MainViewModel : ViewModel() {
             amount = amount,
             additionalHomeAmount = additionalHomeAmount
         )
+
         if (shortage > 0.000001) {
-            if (extraHomeAmount + 0.000001 < shortage) {
+            val normalizedLoanName = shortageLoanName.trim()
+            val sourceLoanAmount = shortageLoanAmount.coerceAtLeast(0.0)
+
+            if (normalizedLoanName.isBlank()) {
                 WarningPopupManager.show(
-                    title = "Home balance কম পড়ছে",
-                    message = "এই Loan payment-এর জন্য আরও ৳" + formatMoney(shortage) +
-                            " Home fund প্রয়োজন।\n\n" +
-                            "কমপক্ষে ৳" + formatMoney(shortage) +
-                            " Extra / Adjustment দিন।"
+                    title = "Loan source দিন",
+                    message = "Home shortage পূরণ করতে নতুন Loan-এর source/person-এর নাম দিন।"
                 )
                 return false
             }
 
-            addHomeAdjustment(
+            if (sourceLoanAmount + 0.000001 < shortage) {
+                WarningPopupManager.show(
+                    title = "Loan amount কম",
+                    message = "Shortage ৳" + formatMoney(shortage) + "। নতুন Loan কমপক্ষে এই পরিমাণ হতে হবে।"
+                )
+                return false
+            }
+
+            // Shortage-এর টাকা সত্যিই নতুন Loan হলে সেটি আগে Personal fund-এ
+            // Loan হিসেবে ঢুকবে। তারপর একই পুরো Loan amount Personal → Home
+            // transfer হবে। তাই shortage-এর চেয়ে বেশি Loan নিলে extra অংশও
+            // Home-এ থেকে যাবে।
+            val shortageLoanId = System.currentTimeMillis()
+            val shortageTransferId = shortageLoanId + 1L
+
+            val shortageLoan = LoanAccount(
+                id = shortageLoanId,
+                name = normalizedLoanName,
+                sourceType = "person",
+                principal = sourceLoanAmount,
+                monthlyInstallment = 0.0,
+                startDate = date,
+                note = "[SHORTAGE_LOAN] Home Loan payment-এর shortage পূরণের জন্য",
+                dueDate = null,
+                fundSource = "personal"
+            )
+
+            loans = (loans + shortageLoan).distinctBy { it.id }
+            persistLoanData(context)
+
+            // Loan proceeds-এর পুরো amount Personal → Home যাবে।
+            // এই transaction-টি আলাদা ID-তে রাখা হচ্ছে যাতে মূল Home transfer
+            // এবং shortage-funded transfer কখনো একে অপরকে overwrite না করে।
+            saveTransaction(
                 context = context,
-                amount = extraHomeAmount,
+                amount = sourceLoanAmount,
+                currency = "BDT",
+                category = "Shortage Loan Transfer",
+                reason = "Shortage পূরণ: " + normalizedLoanName + "-এর Loan → Home",
                 date = date,
-                reason = "Home Loan payment-এর জন্য Extra / Adjustment"
+                type = "home",
+                walletId = "default_cash",
+                transactionId = shortageTransferId,
+                onComplete = {}
             )
         }
 
