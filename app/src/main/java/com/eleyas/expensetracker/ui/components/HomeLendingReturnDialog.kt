@@ -72,9 +72,9 @@ fun HomeLendingReturnDialog(
                         }
                     }
                 }
-                OutlinedTextField(
-                    value = amount,
-                    trailingIcon = { MoneyShortLabel(amount) },
+                MoneyShortLabel(amount)
+                                    OutlinedTextField(\n                    value = amount, 
+                    
                     onValueChange = { amount = it },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("ফেরত পাওয়া টাকা") },
