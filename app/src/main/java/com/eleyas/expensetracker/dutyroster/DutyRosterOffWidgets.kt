@@ -39,8 +39,10 @@ internal fun NextOffCountdownCard(
     nowMillis: Long
 ) {
     val todayIso = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(nowMillis)
+    // "Next OFF" means the next upcoming OFF after today.
+    // If today is already OFF, skip today so the countdown does not show 00:00:00.
     val nextOff = roster.days
-        .filter { it.dateIso >= todayIso }
+        .filter { it.dateIso > todayIso }
         .sortedBy { it.dateIso }
         .firstOrNull { day ->
             day.duties.firstOrNull {
@@ -77,7 +79,7 @@ internal fun NextOffCountdownCard(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    if (nextOff.dateIso == todayIso) "আজ আপনার OFF day" else nextOff.displayDate,
+                    "Next OFF • " + nextOff.displayDate,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f)
                 )
