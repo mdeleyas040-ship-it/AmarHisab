@@ -173,7 +173,8 @@ fun PersonalLoanPaymentDialog(
                                 Text("এই ব্যক্তিগত ঋণের পেমেন্ট রেকর্ড করুন", fontSize = 11.sp, color = scheme.onSurfaceVariant)
                                 Spacer(Modifier.height(13.dp))
                                 MoneyShortLabel(amount)
-                                                                    OutlinedTextField(\n                                    value = amount, 
+                                                                    OutlinedTextField(
+                                    value = amount, 
                                     
                                     onValueChange = { amount = it },
                                     modifier = Modifier.fillMaxWidth(),
