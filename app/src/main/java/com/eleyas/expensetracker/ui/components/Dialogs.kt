@@ -266,6 +266,7 @@ fun CategoryBudgetDialog(
 
                 OutlinedTextField(
                     value = limit,
+                    trailingContent = { MoneyShortLabel(limit) },
                     onValueChange = {
                         limit = it
                     },
@@ -461,6 +462,7 @@ fun BorrowingDialog(
 
                 OutlinedTextField(
                     value = amount,
+                    trailingContent = { MoneyShortLabel(amount) },
                     onValueChange = {
                         amount = it
                     },
@@ -1236,6 +1238,7 @@ fun AddTransactionDialog(
 
                     OutlinedTextField(
                         value = amount,
+                    trailingContent = { MoneyShortLabel(amount) },
                         onValueChange = {
                             amount = it
                         },
@@ -3228,6 +3231,7 @@ fun LoanPaymentDialog(
 
                 OutlinedTextField(
                     value = amount,
+                    trailingContent = { MoneyShortLabel(amount) },
                     onValueChange = {
                         amount = it
                     },
@@ -3706,6 +3710,7 @@ fun LendingDialog(
 
                     OutlinedTextField(
                         value = amount,
+                    trailingContent = { MoneyShortLabel(amount) },
                         onValueChange = {
                             amount = it
                         },
@@ -4433,6 +4438,7 @@ fun LendingReturnDialog(
 
                 OutlinedTextField(
                     value = amount,
+                    trailingContent = { MoneyShortLabel(amount) },
                     onValueChange = {
                         amount = it
                     },
