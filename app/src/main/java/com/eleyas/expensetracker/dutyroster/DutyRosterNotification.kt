@@ -22,6 +22,10 @@ object DutyRosterNotification {
     private const val REQUEST_CODE = 74021
     private const val LAST_DAY_REQUEST_CODE = 74022
     private const val LAST_DAY_NOTIFICATION_ID = 74022
+    private const val OFF_EVE_REQUEST_CODE = 74023
+    private const val OFF_EVE_NOTIFICATION_ID = 74023
+    private const val OFF_EVE_HOUR = 16
+    private const val OFF_EVE_MINUTE = 0
     private const val LAST_DAY_HOUR = 21
     private const val LAST_DAY_MINUTE = 0
     const val EXTRA_OPEN_DUTY_ROSTER = "open_duty_roster"
@@ -81,6 +85,63 @@ object DutyRosterNotification {
         )
 
         scheduleLastDayReminder(context, roster)
+        scheduleNextOffReminder(context, roster)
+    }
+
+    private fun scheduleNextOffReminder(
+        context: Context,
+        roster: DutyRoster
+    ) {
+        val alarm = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, DutyRosterReceiver::class.java)
+            .setAction(ACTION)
+            .putExtra("off_eve_reminder", true)
+        val pending = PendingIntent.getBroadcast(
+            context,
+            OFF_EVE_REQUEST_CODE,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarm.cancel(pending)
+
+        val now = Calendar.getInstance()
+        val todayIso = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(now.time)
+        val tomorrow = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }
+        val tomorrowIso = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(tomorrow.time)
+        val tomorrowEntry = roster.days.firstOrNull { it.dateIso == tomorrowIso }
+        val tomorrowIsOff = tomorrowEntry?.duties?.firstOrNull {
+            it.person.equals(roster.myName, ignoreCase = true)
+        }?.duty?.let(DutyRosterParser::isOff) == true
+
+        val targetDay = if (tomorrowIsOff) {
+            tomorrowIso
+        } else {
+            roster.days
+                .filter { it.dateIso > todayIso }
+                .sortedBy { it.dateIso }
+                .firstOrNull { day ->
+                    day.duties.firstOrNull {
+                        it.person.equals(roster.myName, ignoreCase = true)
+                    }?.duty?.let(DutyRosterParser::isOff) == true
+                }?.dateIso ?: return
+        }
+
+        val offDate = runCatching {
+            SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(targetDay)
+        }.getOrNull() ?: return
+
+        val trigger = Calendar.getInstance().apply {
+            time = offDate
+            add(Calendar.DAY_OF_YEAR, -1)
+            set(Calendar.HOUR_OF_DAY, OFF_EVE_HOUR)
+            set(Calendar.MINUTE, OFF_EVE_MINUTE)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        if (trigger.timeInMillis > System.currentTimeMillis()) {
+            alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger.timeInMillis, pending)
+        }
     }
 
     private fun scheduleLastDayReminder(
@@ -168,6 +229,44 @@ object DutyRosterNotification {
         context
             .getSystemService(NotificationManager::class.java)
             .notify(LAST_DAY_NOTIFICATION_ID, notification)
+    }
+
+    fun notifyOffEve(context: Context) {
+        val roster = DutyRosterStorage.load(context) ?: return
+        val tomorrow = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }
+        val tomorrowIso = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(tomorrow.time)
+        val tomorrowDay = roster.days.firstOrNull { it.dateIso == tomorrowIso } ?: return
+        val mine = tomorrowDay.duties.firstOrNull {
+            it.person.equals(roster.myName, ignoreCase = true)
+        } ?: return
+        if (!DutyRosterParser.isOff(mine.duty)) return
+
+        createChannel(context)
+        val openIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_OPEN_DUTY_ROSTER, true)
+        }
+        val contentIntent = PendingIntent.getActivity(
+            context,
+            OFF_EVE_REQUEST_CODE + 1,
+            openIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val detail = "আজকে দুই দিনের প্রয়োজনীয় কাজ করে রাখুন.\\n" +
+                "🧃 Juice / প্রয়োজনীয় preparation আগে করে রাখুন।"
+
+        val notification = NotificationCompat.Builder(context, CHANNEL)
+            .setSmallIcon(R.drawable.ic_notification_calendar)
+            .setContentTitle("Tomorrow is Your OFF 🛌")
+            .setContentText("আগামীকাল আপনার OFF day")
+            .setStyle(NotificationCompat.BigTextStyle().bigText(detail))
+            .setContentIntent(contentIntent)
+            .setAutoCancel(true)
+            .build()
+
+        context.getSystemService(NotificationManager::class.java)
+            .notify(OFF_EVE_NOTIFICATION_ID, notification)
     }
 
     fun notifyNow(context: Context) {
@@ -272,10 +371,13 @@ class DutyRosterReceiver : BroadcastReceiver() {
 
         when (intent?.action) {
             DutyRosterNotification.ACTION -> {
-                if (intent?.getBooleanExtra("last_day_reminder", false) == true) {
-                    DutyRosterNotification.notifyLastDay(context)
-                } else {
-                    DutyRosterNotification.notifyNow(context)
+                when {
+                    intent?.getBooleanExtra("last_day_reminder", false) == true ->
+                        DutyRosterNotification.notifyLastDay(context)
+                    intent?.getBooleanExtra("off_eve_reminder", false) == true ->
+                        DutyRosterNotification.notifyOffEve(context)
+                    else ->
+                        DutyRosterNotification.notifyNow(context)
                 }
                 DutyRosterNotification.schedule(context)
             }
