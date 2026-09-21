@@ -44,6 +44,8 @@ import java.util.*
 import com.eleyas.expensetracker.ui.vehicle.VehicleModule
 import com.eleyas.expensetracker.ui.birthday.BirthdayScreen
 import com.eleyas.expensetracker.ui.screens.ZakatCharityScreen
+import com.eleyas.expensetracker.dutyroster.DutyRosterNotification
+import com.eleyas.expensetracker.dutyroster.DutyRosterScreen
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
@@ -255,6 +257,9 @@ fun AmarHisabApp(
             context
         )
 
+        DutyRosterNotification.createChannel(context)
+        DutyRosterNotification.schedule(context)
+
         SmartReminderScheduler.scheduleNext(
             context
         )
@@ -385,6 +390,10 @@ fun AmarHisabApp(
     }
 
     var showRemittanceHistoryScreen by remember {
+        mutableStateOf(false)
+    }
+
+    var showDutyRosterScreen by remember {
         mutableStateOf(false)
     }
 
@@ -1198,6 +1207,10 @@ fun AmarHisabApp(
                                         showRemittanceHistoryScreen = true
                                     },
 
+                                    onDutyRoster = {
+                                        showDutyRosterScreen = true
+                                    },
+
                                     onSettings = {
                                         showSettingsScreen = true
                                     }
@@ -1671,6 +1684,15 @@ fun AmarHisabApp(
                     usdToMvr = usdToMvr,
                     onBack = {
                         showRemittanceHistoryScreen = false
+                    }
+                )
+            }
+
+            if (showDutyRosterScreen) {
+                DutyRosterScreen(
+                    context = context,
+                    onBack = {
+                        showDutyRosterScreen = false
                     }
                 )
             }
