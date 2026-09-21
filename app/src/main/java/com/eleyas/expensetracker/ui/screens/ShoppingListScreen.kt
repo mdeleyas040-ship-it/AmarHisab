@@ -325,9 +325,9 @@ fun ShoppingItemDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = amountText,
-                    trailingIcon = { MoneyShortLabel(amountText) },
+                MoneyShortLabel(amountText)
+                                    OutlinedTextField(\n                    value = amountText,
+                    
                     onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
                     label = { Text("আনুমানিক দাম") },
                     singleLine = true,
