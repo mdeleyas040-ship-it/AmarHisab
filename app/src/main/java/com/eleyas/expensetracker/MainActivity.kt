@@ -60,11 +60,18 @@ class MainActivity : FragmentActivity() {
     var quickEntryType by mutableStateOf<String?>(null)
         private set
 
+    var openDutyRoster by mutableStateOf(false)
+        private set
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         openOnThisDay = shouldOpenOnThisDay(intent)
         quickEntryType = QuickEntryManager.entryTypeFrom(intent)
+        openDutyRoster = intent?.getBooleanExtra(
+            DutyRosterNotification.EXTRA_OPEN_DUTY_ROSTER,
+            false
+        ) == true
 
         createNotificationChannel()
         SmartReminderScheduler.createNotificationChannel(this)
@@ -86,6 +93,10 @@ class MainActivity : FragmentActivity() {
                 AuthGate(
                     openOnThisDay = openOnThisDay,
                     quickEntryType = quickEntryType,
+                    openDutyRoster = openDutyRoster,
+                    onDutyRosterHandled = {
+                        openDutyRoster = false
+                    },
                     onQuickEntryHandled = {
                         quickEntryType = null
                     }
@@ -105,6 +116,14 @@ class MainActivity : FragmentActivity() {
             openOnThisDay = true
         }
         quickEntryType = QuickEntryManager.entryTypeFrom(intent)
+
+        if (intent?.getBooleanExtra(
+                DutyRosterNotification.EXTRA_OPEN_DUTY_ROSTER,
+                false
+            ) == true
+        ) {
+            openDutyRoster = true
+        }
     }
 
     private fun shouldOpenOnThisDay(
@@ -149,6 +168,8 @@ class MainActivity : FragmentActivity() {
 fun AuthGate(
     openOnThisDay: Boolean = false,
     quickEntryType: String? = null,
+    openDutyRoster: Boolean = false,
+    onDutyRosterHandled: () -> Unit = {},
     onQuickEntryHandled: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -185,6 +206,8 @@ fun AuthGate(
             currentUserId = uid,
             openOnThisDay = openOnThisDay,
             quickEntryType = quickEntryType,
+            openDutyRoster = openDutyRoster,
+            onDutyRosterHandled = onDutyRosterHandled,
             onQuickEntryHandled = onQuickEntryHandled,
             onLogout = {
                 FirebaseAuth.getInstance().signOut()
@@ -222,6 +245,8 @@ fun AmarHisabApp(
     currentUserId: String,
     openOnThisDay: Boolean = false,
     quickEntryType: String? = null,
+    openDutyRoster: Boolean = false,
+    onDutyRosterHandled: () -> Unit = {},
     onQuickEntryHandled: () -> Unit = {},
     onLogout: () -> Unit
 ) {
@@ -347,6 +372,13 @@ fun AmarHisabApp(
 
             showNotificationScreen = false
             showOnThisDayScreen = true
+        }
+    }
+
+    LaunchedEffect(openDutyRoster) {
+        if (openDutyRoster) {
+            showDutyRosterScreen = true
+            onDutyRosterHandled()
         }
     }
 
