@@ -159,9 +159,9 @@ fun PremiumLoanDialog(
                         Column(Modifier.padding(15.dp)) {
                             Text("ঋণের পরিমাণ", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = accent)
                             Spacer(Modifier.height(7.dp))
-                            OutlinedTextField(
-                                value = principal,
-                                trailingIcon = { MoneyShortLabel(principal) },
+                            MoneyShortLabel(principal)
+                                                            OutlinedTextField(\n                                value = principal, 
+                                
                                 onValueChange = { principal = it },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
@@ -171,9 +171,9 @@ fun PremiumLoanDialog(
                                 shape = RoundedCornerShape(16.dp)
                             )
                             Spacer(Modifier.height(9.dp))
-                            OutlinedTextField(
-                                value = installment,
-                                trailingIcon = { MoneyShortLabel(installment) },
+                            MoneyShortLabel(installment)
+                                                            OutlinedTextField(\n                                value = installment, 
+                                
                                 onValueChange = { installment = it },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
