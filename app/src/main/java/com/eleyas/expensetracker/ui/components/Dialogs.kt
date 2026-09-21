@@ -761,8 +761,11 @@ fun AddTransactionDialog(
         String,
         Double,
         Long,
+        Double,
+        String,
+        String,
         Double
-    ) -> Boolean = { _, _, _, _, _, _ -> true }
+    ) -> Boolean = { _, _, _, _, _, _, _, _, _ -> true }
 ) {
     val context = LocalContext.current
     val scheme = MaterialTheme.colorScheme
@@ -820,6 +823,14 @@ fun AddTransactionDialog(
     }
 
     var extraHomeAmount by remember {
+        mutableStateOf("")
+    }
+
+    var shortageLoanName by remember {
+        mutableStateOf("")
+    }
+
+    var shortageLoanAmount by remember {
         mutableStateOf("")
     }
 
@@ -1984,20 +1995,55 @@ fun AddTransactionDialog(
                                             Modifier.height(10.dp)
                                         )
 
+                                        Text(
+                                            "ঘাটতি পূরণে নতুন Loan entry হবে। Loan-এর পুরো টাকা Personal-এ যোগ হয়ে তারপর Home-এ auto-transfer হবে।",
+                                            fontSize = 11.sp,
+                                            color = Color(0xFF92400E)
+                                        )
+
+                                        Spacer(
+                                            Modifier.height(10.dp)
+                                        )
+
                                         OutlinedTextField(
-                                            value = extraHomeAmount,
+                                            value = shortageLoanName,
                                             onValueChange = {
-                                                extraHomeAmount = it
+                                                shortageLoanName = it
                                             },
                                             modifier = Modifier.fillMaxWidth(),
                                             shape = RoundedCornerShape(15.dp),
                                             label = {
-                                                Text("Extra / Adjustment")
+                                                Text("Loan কোথা থেকে নিয়েছেন?")
                                             },
                                             placeholder = {
-                                                Text(
-                                                    "কমপক্ষে ৳${formatMoney(homeShortage)}"
+                                                Text("যেমন: Jakir Mama")
+                                            },
+                                            leadingIcon = {
+                                                Icon(
+                                                    Icons.Default.Person,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFFD97706)
                                                 )
+                                            },
+                                            singleLine = true
+                                        )
+
+                                        Spacer(
+                                            Modifier.height(8.dp)
+                                        )
+
+                                        OutlinedTextField(
+                                            value = shortageLoanAmount,
+                                            onValueChange = {
+                                                shortageLoanAmount = it
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(15.dp),
+                                            label = {
+                                                Text("নতুন Loan amount")
+                                            },
+                                            placeholder = {
+                                                Text("Shortage-এর কম নয়")
                                             },
                                             leadingIcon = {
                                                 Text(
@@ -2007,22 +2053,16 @@ fun AddTransactionDialog(
                                                     fontWeight = FontWeight.Bold
                                                 )
                                             },
+                                            supportingText = {
+                                                Text(
+                                                    "Shortage-এর চেয়ে বেশি Loan নিলে অতিরিক্ত টাকাও Home-এ থাকবে।"
+                                                )
+                                            },
                                             singleLine = true,
                                             keyboardOptions = KeyboardOptions(
                                                 keyboardType = KeyboardType.Number
                                             )
-                                        )
-
-                                        Spacer(
-                                            Modifier.height(5.dp)
-                                        )
-
-                                        Text(
-                                            "Extra টাকা প্রয়োজনের চেয়ে বেশি হলেও দিতে পারবেন।",
-                                            fontSize = 10.sp,
-                                            color = Color(0xFF92400E)
-                                        )
-                                    }
+                                        )                                    }
                                 }
                             }
                         }
@@ -2088,8 +2128,10 @@ fun AddTransactionDialog(
                                         null
                                     }
 
-                                val extraAmount =
-                                    extraHomeAmount
+                                val extraAmount = 0.0
+
+                                val enteredShortageLoanAmount =
+                                    shortageLoanAmount
                                         .replace(",", "")
                                         .trim()
                                         .toDoubleOrNull()
@@ -2133,17 +2175,22 @@ fun AddTransactionDialog(
                                         return@Button
                                     }
 
-                                    if (shortage > 0.0 &&
-                                        extraAmount + 0.000001 < shortage
-                                    ) {
-                                        WarningPopupManager.show(
-                                            title = "Extra / Adjustment কম",
-                                            message = "Home balance কম পড়ছে ৳" + formatMoney(shortage) +
-                                                    "। কমপক্ষে ৳" + formatMoney(shortage) +
-                                                    " Extra / Adjustment দিন।"
-                                        )
+                                    if (shortage > 0.0) {
+                                        if (shortageLoanName.trim().isBlank()) {
+                                            WarningPopupManager.show(
+                                                title = "Loan source দিন",
+                                                message = "Shortage পূরণ করতে কার কাছ থেকে Loan নিয়েছেন তার নাম দিন।"
+                                            )
+                                            return@Button
+                                        }
 
-                                        return@Button
+                                        if (enteredShortageLoanAmount + 0.000001 < shortage) {
+                                            WarningPopupManager.show(
+                                                title = "Loan amount কম",
+                                                message = "Shortage ৳" + formatMoney(shortage) + "। নতুন Loan কমপক্ষে এই পরিমাণ হতে হবে।"
+                                            )
+                                            return@Button
+                                        }
                                     }
                                 }
 
@@ -2174,7 +2221,9 @@ fun AddTransactionDialog(
                                             date,
                                             extraAmount,
                                             transactionId,
-                                            value
+                                            value,
+                                            shortageLoanName.trim(),
+                                            enteredShortageLoanAmount
                                         )
 
                                     if (!paymentSaved) {
