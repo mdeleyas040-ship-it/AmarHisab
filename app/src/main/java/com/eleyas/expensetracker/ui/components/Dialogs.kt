@@ -266,7 +266,7 @@ fun CategoryBudgetDialog(
 
                 OutlinedTextField(
                     value = limit,
-                    trailingContent = { MoneyShortLabel(limit) },
+                    trailingIcon = { MoneyShortLabel(limit) },
                     onValueChange = {
                         limit = it
                     },
@@ -462,7 +462,7 @@ fun BorrowingDialog(
 
                 OutlinedTextField(
                     value = amount,
-                    trailingContent = { MoneyShortLabel(amount) },
+                    trailingIcon = { MoneyShortLabel(amount) },
                     onValueChange = {
                         amount = it
                     },
@@ -1238,7 +1238,7 @@ fun AddTransactionDialog(
 
                     OutlinedTextField(
                         value = amount,
-                    trailingContent = { MoneyShortLabel(amount) },
+                    trailingIcon = { MoneyShortLabel(amount) },
                         onValueChange = {
                             amount = it
                         },
@@ -3231,7 +3231,7 @@ fun LoanPaymentDialog(
 
                 OutlinedTextField(
                     value = amount,
-                    trailingContent = { MoneyShortLabel(amount) },
+                    trailingIcon = { MoneyShortLabel(amount) },
                     onValueChange = {
                         amount = it
                     },
@@ -3710,7 +3710,7 @@ fun LendingDialog(
 
                     OutlinedTextField(
                         value = amount,
-                    trailingContent = { MoneyShortLabel(amount) },
+                    trailingIcon = { MoneyShortLabel(amount) },
                         onValueChange = {
                             amount = it
                         },
@@ -4438,7 +4438,7 @@ fun LendingReturnDialog(
 
                 OutlinedTextField(
                     value = amount,
-                    trailingContent = { MoneyShortLabel(amount) },
+                    trailingIcon = { MoneyShortLabel(amount) },
                     onValueChange = {
                         amount = it
                     },
