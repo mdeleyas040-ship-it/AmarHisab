@@ -89,7 +89,7 @@ fun CalculatorScreen(
                         
                         OutlinedTextField(
                             value = principalText,
-                            trailingContent = { MoneyShortLabel(principalText) },
+                            trailingIcon = { MoneyShortLabel(principalText) },
                             onValueChange = { principalText = it },
                             label = { Text("লোনের পরিমাণ (Principal)") },
                             placeholder = { Text("যেমন: 1,00,000") },
