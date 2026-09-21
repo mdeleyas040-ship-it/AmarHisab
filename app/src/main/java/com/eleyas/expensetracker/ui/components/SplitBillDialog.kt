@@ -56,9 +56,9 @@ fun SplitBillDialog(
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                OutlinedTextField(
-                    value = totalAmountStr,
-                    trailingIcon = { MoneyShortLabel(totalAmountStr) },
+                MoneyShortLabel(totalAmountStr)
+                                    OutlinedTextField(\n                    value = totalAmountStr, 
+                    
                     onValueChange = { totalAmountStr = it },
                     label = { Text("মোট খরচ (৳)") },
                     modifier = Modifier.fillMaxWidth(),
