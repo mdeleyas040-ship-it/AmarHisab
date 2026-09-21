@@ -13,30 +13,41 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.EventNote
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -57,13 +68,12 @@ fun DutyRosterScreen(
     }
 
     var draftName by remember {
-        mutableStateOf(DutyRosterStorage.myName(context))
+        mutableStateOf("")
     }
 
-    val notificationTime =
-        remember {
-            DutyRosterStorage.notificationTime(context)
-        }
+    val notificationTime = remember {
+        DutyRosterStorage.notificationTime(context)
+    }
 
     var hourText by remember {
         mutableStateOf(
@@ -89,20 +99,13 @@ fun DutyRosterScreen(
 
             scanning = true
             error = null
+            draftName = ""
 
             DutyRosterManager.scan(
-                context,
-                uri,
+                context = context,
+                uri = uri,
                 onSuccess = {
                     draftDays = it
-                    if (draftName.isBlank()) {
-                        draftName =
-                            it.firstOrNull()
-                                ?.duties
-                                ?.firstOrNull()
-                                ?.person
-                                .orEmpty()
-                    }
                     scanning = false
                 },
                 onError = {
@@ -130,9 +133,25 @@ fun DutyRosterScreen(
         activeDays.firstOrNull { it.dateIso == todayIso }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBar(
-                title = { Text("Duty Roster") },
+                title = {
+                    Column {
+                        Text(
+                            "Duty Roster",
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "Kitchen • Fish Fire",
+                            style =
+                                MaterialTheme.typography.labelSmall,
+                            color =
+                                MaterialTheme.colorScheme
+                                    .onSurfaceVariant
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -145,14 +164,20 @@ fun DutyRosterScreen(
                     IconButton(
                         onClick = {
                             launcher.launch("image/*")
-                        }
+                        },
+                        enabled = !scanning
                     ) {
                         Icon(
-                            Icons.Default.Refresh,
-                            contentDescription = "Upload new roster"
+                            Icons.Default.CloudUpload,
+                            contentDescription = "Upload roster"
                         )
                     }
-                }
+                },
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor =
+                            MaterialTheme.colorScheme.surface
+                    )
             )
         }
     ) { padding ->
@@ -162,30 +187,100 @@ fun DutyRosterScreen(
                 Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp),
             verticalArrangement =
-                Arrangement.spacedBy(12.dp)
+                Arrangement.spacedBy(14.dp)
         ) {
 
             item {
-                Card(Modifier.fillMaxWidth()) {
+                Spacer(Modifier.padding(top = 2.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor =
+                                MaterialTheme.colorScheme
+                                    .primaryContainer
+                        )
+                ) {
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(18.dp),
+                        verticalAlignment =
+                            Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color =
+                                MaterialTheme.colorScheme
+                                    .primary
+                        ) {
+                            Icon(
+                                Icons.Default.EventNote,
+                                contentDescription = null,
+                                modifier =
+                                    Modifier.padding(12.dp),
+                                tint =
+                                    MaterialTheme.colorScheme
+                                        .onPrimary
+                            )
+                        }
+
+                        Spacer(Modifier.width(14.dp))
+
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                "Smart Duty Roster",
+                                style =
+                                    MaterialTheme.typography
+                                        .titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                if (savedRoster != null) {
+                                    "Roster is ready for daily reminders."
+                                } else {
+                                    "Upload your roster to get daily reminders."
+                                },
+                                style =
+                                    MaterialTheme.typography.bodySmall,
+                                color =
+                                    MaterialTheme.colorScheme
+                                        .onPrimaryContainer
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
                     Column(
-                        Modifier.padding(16.dp),
+                        modifier = Modifier.padding(18.dp),
                         verticalArrangement =
-                            Arrangement.spacedBy(10.dp)
+                            Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            "Roster",
+                            "Roster Source",
                             style =
-                                MaterialTheme.typography.titleLarge
+                                MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
                         )
 
                         Text(
-                            if (savedRoster != null) {
-                                "Saved roster available"
-                            } else {
-                                "কোনো roster save করা নেই।"
-                            },
+                            "Upload a clear roster image. The app will read the dates, staff and duty cells.",
+                            style =
+                                MaterialTheme.typography.bodySmall,
                             color =
                                 MaterialTheme.colorScheme
                                     .onSurfaceVariant
@@ -195,8 +290,9 @@ fun DutyRosterScreen(
                             onClick = {
                                 launcher.launch("image/*")
                             },
-                            modifier =
-                                Modifier.fillMaxWidth()
+                            enabled = !scanning,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp)
                         ) {
                             Icon(
                                 Icons.Default.CloudUpload,
@@ -205,19 +301,58 @@ fun DutyRosterScreen(
                             Spacer(Modifier.width(8.dp))
                             Text(
                                 if (scanning) {
-                                    "Scanning..."
+                                    "Reading roster..."
                                 } else {
                                     "Upload Roster Image"
                                 }
                             )
                         }
 
-                        error?.let {
+                        if (scanning) {
                             Text(
-                                it,
+                                "Please wait while the roster is being analysed.",
+                                style =
+                                    MaterialTheme.typography.labelMedium,
                                 color =
-                                    MaterialTheme.colorScheme.error
+                                    MaterialTheme.colorScheme
+                                        .primary
                             )
+                        }
+
+                        error?.let {
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color =
+                                    MaterialTheme.colorScheme
+                                        .errorContainer
+                            ) {
+                                Row(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                    verticalAlignment =
+                                        Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.ErrorOutline,
+                                        contentDescription = null,
+                                        tint =
+                                            MaterialTheme.colorScheme
+                                                .onErrorContainer
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        it,
+                                        style =
+                                            MaterialTheme.typography
+                                                .bodySmall,
+                                        color =
+                                            MaterialTheme.colorScheme
+                                                .onErrorContainer
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -225,21 +360,43 @@ fun DutyRosterScreen(
 
             if (draftDays != null) {
                 item {
-                    Card(Modifier.fillMaxWidth()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp)
+                    ) {
                         Column(
-                            Modifier.padding(16.dp),
+                            modifier = Modifier.padding(18.dp),
                             verticalArrangement =
-                                Arrangement.spacedBy(10.dp)
+                                Arrangement.spacedBy(12.dp)
                         ) {
-                            Text(
-                                "Review before saving",
-                                style =
-                                    MaterialTheme.typography
-                                        .titleMedium
-                            )
+                            Row(
+                                verticalAlignment =
+                                    Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint =
+                                        MaterialTheme.colorScheme
+                                            .primary
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    "Review & Confirm",
+                                    style =
+                                        MaterialTheme.typography
+                                            .titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
 
                             Text(
-                                "OCR থেকে পাওয়া তথ্য save করার আগে নিজের নাম ও notification time ঠিক করুন।"
+                                "Choose your name manually. The app will never guess your identity from OCR.",
+                                style =
+                                    MaterialTheme.typography.bodySmall,
+                                color =
+                                    MaterialTheme.colorScheme
+                                        .onSurfaceVariant
                             )
 
                             OutlinedButton(
@@ -247,13 +404,13 @@ fun DutyRosterScreen(
                                     showNameMenu = true
                                 },
                                 modifier =
-                                    Modifier.fillMaxWidth()
+                                    Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp)
                             ) {
                                 Text(
-                                    "My name: " +
-                                            draftName.ifBlank {
-                                                "Select name"
-                                            }
+                                    draftName.ifBlank {
+                                        "Select your name"
+                                    }
                                 )
                             }
 
@@ -274,11 +431,41 @@ fun DutyRosterScreen(
                                 }
                             }
 
+                            HorizontalDivider()
+
+                            Text(
+                                "Daily notification",
+                                style =
+                                    MaterialTheme.typography
+                                        .titleSmall,
+                                fontWeight = FontWeight.SemiBold
+                            )
+
                             Row(
-                                Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment =
+                                    Alignment.CenterVertically,
                                 horizontalArrangement =
-                                    Arrangement.spacedBy(8.dp)
+                                    Arrangement.spacedBy(10.dp)
                             ) {
+                                Surface(
+                                    shape =
+                                        RoundedCornerShape(12.dp),
+                                    color =
+                                        MaterialTheme.colorScheme
+                                            .secondaryContainer
+                                ) {
+                                    Icon(
+                                        Icons.Default.Notifications,
+                                        contentDescription = null,
+                                        modifier =
+                                            Modifier.padding(10.dp),
+                                        tint =
+                                            MaterialTheme.colorScheme
+                                                .onSecondaryContainer
+                                    )
+                                }
+
                                 OutlinedTextField(
                                     value = hourText,
                                     onValueChange = {
@@ -288,8 +475,14 @@ fun DutyRosterScreen(
                                             ).take(2)
                                     },
                                     label = { Text("Hour") },
+                                    singleLine = true,
                                     modifier =
                                         Modifier.weight(1f)
+                                )
+
+                                Text(
+                                    ":",
+                                    fontWeight = FontWeight.Bold
                                 )
 
                                 OutlinedTextField(
@@ -301,9 +494,38 @@ fun DutyRosterScreen(
                                             ).take(2)
                                     },
                                     label = { Text("Minute") },
+                                    singleLine = true,
                                     modifier =
                                         Modifier.weight(1f)
                                 )
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color =
+                                    MaterialTheme.colorScheme
+                                        .surfaceVariant
+                            ) {
+                                Row(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                    verticalAlignment =
+                                        Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.AccessTime,
+                                        contentDescription = null
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        "Example: 06:30 AM — daily duty reminder",
+                                        style =
+                                            MaterialTheme.typography
+                                                .labelMedium
+                                    )
+                                }
                             }
 
                             Button(
@@ -350,8 +572,10 @@ fun DutyRosterScreen(
 
                                     draftDays = null
                                 },
+                                enabled = draftName.isNotBlank(),
                                 modifier =
-                                    Modifier.fillMaxWidth()
+                                    Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp)
                             ) {
                                 Icon(
                                     Icons.Default.Save,
@@ -360,27 +584,48 @@ fun DutyRosterScreen(
                                 Spacer(Modifier.width(8.dp))
                                 Text("Confirm & Save Roster")
                             }
+
+                            if (draftName.isBlank()) {
+                                Text(
+                                    "Select your name before saving.",
+                                    style =
+                                        MaterialTheme.typography
+                                            .labelSmall,
+                                    color =
+                                        MaterialTheme.colorScheme
+                                            .error
+                                )
+                            }
                         }
                     }
                 }
             }
 
             item {
-                Card(Modifier.fillMaxWidth()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
                     Column(
-                        Modifier.padding(16.dp),
+                        modifier = Modifier.padding(18.dp),
                         verticalArrangement =
-                            Arrangement.spacedBy(8.dp)
+                            Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
                             "Today",
                             style =
-                                MaterialTheme.typography.titleLarge
+                                MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
                         )
 
                         if (today == null) {
                             Text(
-                                "আজকের date roster-এ পাওয়া যায়নি।"
+                                "Today's date was not found in the saved roster.",
+                                style =
+                                    MaterialTheme.typography.bodySmall,
+                                color =
+                                    MaterialTheme.colorScheme
+                                        .onSurfaceVariant
                             )
                         } else {
                             val mine =
@@ -409,21 +654,27 @@ fun DutyRosterScreen(
                                     .map { it.person }
                                     .distinct()
 
-                            Text(
-                                "👤 My duty: " +
-                                        (mine?.duty ?: "Not found")
+                            StatusRow(
+                                icon = Icons.Default.AccessTime,
+                                label = "My duty",
+                                value =
+                                    mine?.duty ?: "Not found"
                             )
 
-                            Text(
-                                "🌅 Morning: " +
-                                        morning.joinToString(", ")
-                                            .ifBlank { "None" }
+                            StatusRow(
+                                icon = Icons.Default.EventNote,
+                                label = "Morning staff",
+                                value =
+                                    morning.joinToString(", ")
+                                        .ifBlank { "None" }
                             )
 
-                            Text(
-                                "🔴 OFF: " +
-                                        off.joinToString(", ")
-                                            .ifBlank { "None" }
+                            StatusRow(
+                                icon = Icons.Default.CheckCircle,
+                                label = "OFF today",
+                                value =
+                                    off.joinToString(", ")
+                                        .ifBlank { "None" }
                             )
                         }
                     }
@@ -435,7 +686,8 @@ fun DutyRosterScreen(
                     Text(
                         "Today's full roster",
                         style =
-                            MaterialTheme.typography.titleMedium
+                            MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
                 }
 
@@ -445,28 +697,86 @@ fun DutyRosterScreen(
                         it.person + "-" + it.duty
                     }
                 ) { entry ->
-                    Card(Modifier.fillMaxWidth()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
                         Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            horizontalArrangement =
-                                Arrangement.SpaceBetween
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                            verticalAlignment =
+                                Alignment.CenterVertically
                         ) {
                             Text(
                                 entry.person,
                                 modifier =
-                                    Modifier.weight(0.42f)
+                                    Modifier.weight(0.40f),
+                                fontWeight = FontWeight.SemiBold
                             )
 
                             Text(
                                 entry.duty,
                                 modifier =
-                                    Modifier.weight(0.58f)
+                                    Modifier.weight(0.60f),
+                                style =
+                                    MaterialTheme.typography.bodySmall
                             )
                         }
                     }
                 }
+            }
+
+            item {
+                Spacer(Modifier.padding(bottom = 12.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant
+    ) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+            verticalAlignment =
+                Alignment.CenterVertically
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(Modifier.width(10.dp))
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    label,
+                    style =
+                        MaterialTheme.typography.labelMedium,
+                    color =
+                        MaterialTheme.colorScheme
+                            .onSurfaceVariant
+                )
+                Text(
+                    value,
+                    style =
+                        MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
