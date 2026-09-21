@@ -265,7 +265,8 @@ fun CategoryBudgetDialog(
                 )
 
                 MoneyShortLabel(limit)
-                                    OutlinedTextField(\n                    value = limit, 
+                                    OutlinedTextField(
+                    value = limit, 
                     
                     onValueChange = {
                         limit = it
@@ -461,7 +462,8 @@ fun BorrowingDialog(
                 )
 
                 MoneyShortLabel(amount)
-                                    OutlinedTextField(\n                    value = amount, 
+                                    OutlinedTextField(
+                    value = amount, 
                     
                     onValueChange = {
                         amount = it
