@@ -10,6 +10,7 @@ object DutyRosterStorage {
     private const val KEY_MY_NAME = "my_name"
     private const val KEY_HOUR = "notification_hour"
     private const val KEY_MINUTE = "notification_minute"
+    private const val KEY_PREPARATION_TASKS = "preparation_tasks"
 
     fun prefs(context: Context) =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -106,6 +107,17 @@ object DutyRosterStorage {
     fun notificationTime(context: Context): Pair<Int, Int> =
         prefs(context).getInt(KEY_HOUR, 6) to
                 prefs(context).getInt(KEY_MINUTE, 30)
+
+    fun preparationTasks(context: Context): List<String> =
+        prefs(context).getStringSet(KEY_PREPARATION_TASKS, emptySet())
+            ?.toList()
+            .orEmpty()
+
+    fun setPreparationTasks(context: Context, tasks: List<String>) {
+        prefs(context).edit()
+            .putStringSet(KEY_PREPARATION_TASKS, tasks.map { it.trim() }.filter { it.isNotBlank() }.toSet())
+            .apply()
+    }
 
     fun setNotificationTime(context: Context, hour: Int, minute: Int) {
         prefs(context).edit()
