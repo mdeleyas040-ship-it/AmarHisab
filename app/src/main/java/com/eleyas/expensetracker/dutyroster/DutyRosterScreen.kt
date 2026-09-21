@@ -378,6 +378,32 @@ fun DutyRosterScreen(
                         myName = savedRoster?.myName.orEmpty()
                     )
                 }
+
+                if (savedRoster != null) {
+                    item {
+                        NextOffCountdownCard(
+                            roster = savedRoster!!,
+                            nowMillis = nowMillis
+                        )
+                    }
+
+                    item {
+                        PreparationTasksCard(
+                            text = preparationText,
+                            onTextChange = { preparationText = it },
+                            onSave = {
+                                DutyRosterStorage.setPreparationTasks(
+                                    context,
+                                    preparationText.lines()
+                                        .map { it.trim() }
+                                        .filter { it.isNotBlank() }
+                                )
+                                preparationText = DutyRosterStorage.preparationTasks(context).joinToString("\n")
+                                DutyRosterNotification.schedule(context)
+                            }
+                        )
+                    }
+                }
             }
 
             item {
