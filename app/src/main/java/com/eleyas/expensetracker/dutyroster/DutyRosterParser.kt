@@ -175,8 +175,12 @@ object DutyRosterParser {
     private fun normalizeName(value: String): String =
         value.trim().replace(Regex("\\s+"), " ")
 
-    private fun normalizeDuty(value: String): String =
-        value
+    private val timePointRegex = Regex(
+        "\\b(\\d{1,2})[:.]?(\\d{2})\\b"
+    )
+
+    private fun normalizeDuty(value: String): String {
+        val cleaned = value
             .replace("—", "-")
             .replace("–", "-")
             .replace(
@@ -186,6 +190,53 @@ object DutyRosterParser {
             }
             .replace(Regex("\\s+"), " ")
             .trim()
+
+        // OCR can scramble a two-shift cell into something like:
+        // "18:00- 07:30-11:30 22:30".
+        // When four time points are present, treat them as two shifts,
+        // sort them by start time, and then pair them. This restores the
+        // intended Morning + Evening duty instead of creating false ranges.
+        val points = timePointRegex.findAll(cleaned)
+            .mapNotNull { match ->
+                val hour = match.groupValues[1].toIntOrNull()
+                val minute = match.groupValues[2].toIntOrNull()
+                if (hour == null || minute == null || hour !in 0..23 || minute !in 0..59) {
+                    null
+                } else {
+                    TimePoint(
+                        hour = hour,
+                        minute = minute,
+                        raw = "${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}"
+                    )
+                }
+            }
+            .toList()
+
+        if (points.size >= 4 && points.size % 2 == 0) {
+            val ordered = points.sortedBy { it.hour * 60 + it.minute }
+            val shifts = ordered.chunked(2).map { pair ->
+                "${pair[0].raw}-${pair[1].raw}"
+            }
+
+            val nonTime = cleaned
+                .replace(timePointRegex, " ")
+                .replace(Regex("\\s+"), " ")
+                .replace(Regex("\\s*[-/]\\s*"), " ")
+                .trim()
+
+            return listOf(nonTime, shifts.joinToString(" • "))
+                .filter { it.isNotBlank() }
+                .joinToString(" ")
+        }
+
+        return cleaned
+    }
+
+    private data class TimePoint(
+        val hour: Int,
+        val minute: Int,
+        val raw: String
+    )
 
     fun isOff(duty: String): Boolean =
         duty.uppercase(Locale.US).contains("OFF")
