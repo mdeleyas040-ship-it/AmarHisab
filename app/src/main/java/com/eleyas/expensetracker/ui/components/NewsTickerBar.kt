@@ -121,6 +121,7 @@ fun NewsTickerBar(
                 text = currentMessage,
                 style = textStyle,
                 modifier = Modifier
+                    .wrapContentWidth(unbounded = true)
                     .offset { IntOffset(offsetX.value.roundToInt(), 0) }
                     .onSizeChanged { textWidth = it.width },
                 maxLines = 1,
