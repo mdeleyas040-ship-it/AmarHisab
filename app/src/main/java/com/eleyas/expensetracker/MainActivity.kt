@@ -375,13 +375,6 @@ fun AmarHisabApp(
         }
     }
 
-    LaunchedEffect(openDutyRoster) {
-        if (openDutyRoster) {
-            showDutyRosterScreen = true
-            onDutyRosterHandled()
-        }
-    }
-
     var showBudgetDialog by remember(currentUserId) {
         mutableStateOf(false)
     }
@@ -427,6 +420,13 @@ fun AmarHisabApp(
 
     var showDutyRosterScreen by remember {
         mutableStateOf(false)
+    }
+
+    LaunchedEffect(openDutyRoster) {
+        if (openDutyRoster) {
+            showDutyRosterScreen = true
+            onDutyRosterHandled()
+        }
     }
 
     var addType by remember(currentUserId) {
@@ -1078,6 +1078,7 @@ fun AmarHisabApp(
                             showSavingsScreen ||
                             showWishlistScreen ||
                             showVehicleModule ||
+                    showDutyRosterScreen ||
                     showOnThisDayScreen ||
                     showNotificationScreen ||
                     showSettingsScreen ||
@@ -1123,6 +1124,9 @@ fun AmarHisabApp(
 
             showVehicleModule ->
                 showVehicleModule = false
+
+            showDutyRosterScreen ->
+                showDutyRosterScreen = false
 
             settingsSubView != null ->
                 settingsSubView = null
