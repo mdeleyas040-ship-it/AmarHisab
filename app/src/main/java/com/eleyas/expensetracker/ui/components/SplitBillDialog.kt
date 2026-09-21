@@ -57,7 +57,8 @@ fun SplitBillDialog(
                 )
 
                 MoneyShortLabel(totalAmountStr)
-                                    OutlinedTextField(\n                    value = totalAmountStr, 
+                                    OutlinedTextField(
+                    value = totalAmountStr, 
                     
                     onValueChange = { totalAmountStr = it },
                     label = { Text("মোট খরচ (৳)") },
