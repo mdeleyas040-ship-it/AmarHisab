@@ -280,6 +280,33 @@ fun DutyRosterScreen(
                                     )
                                 )
                             }
+
+                            if (savedRoster != null) {
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)
+                                )
+                                NextOffCountdownCard(
+                                    roster = savedRoster!!,
+                                    nowMillis = nowMillis
+                                )
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)
+                                )
+                                PreparationTasksCard(
+                                    text = preparationText,
+                                    onTextChange = { preparationText = it },
+                                    onSave = {
+                                        DutyRosterStorage.setPreparationTasks(
+                                            context,
+                                            preparationText.lines()
+                                                .map { it.trim() }
+                                                .filter { it.isNotBlank() }
+                                        )
+                                        preparationText = DutyRosterStorage.preparationTasks(context).joinToString("\n")
+                                        DutyRosterNotification.schedule(context)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -379,32 +406,7 @@ fun DutyRosterScreen(
                     )
                 }
 
-                if (savedRoster != null) {
-                    item {
-                        NextOffCountdownCard(
-                            roster = savedRoster!!,
-                            nowMillis = nowMillis
-                        )
-                    }
-
-                    item {
-                        PreparationTasksCard(
-                            text = preparationText,
-                            onTextChange = { preparationText = it },
-                            onSave = {
-                                DutyRosterStorage.setPreparationTasks(
-                                    context,
-                                    preparationText.lines()
-                                        .map { it.trim() }
-                                        .filter { it.isNotBlank() }
-                                )
-                                preparationText = DutyRosterStorage.preparationTasks(context).joinToString("\n")
-                                DutyRosterNotification.schedule(context)
                             }
-                        )
-                    }
-                }
-            }
 
             item {
                 SectionLabel(
