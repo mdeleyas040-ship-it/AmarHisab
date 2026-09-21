@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.NoteAlt
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.CurrencyExchange
+import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.DropdownMenu
@@ -58,6 +59,7 @@ fun AmarHisabTopMenu(
     onBirthday: () -> Unit,
     onZakatCharity: () -> Unit,
     onRemittanceHistory: () -> Unit,
+    onDutyRoster: () -> Unit,
     onSettings: () -> Unit
 ) {
     var showHelp by remember { mutableStateOf(false) }
@@ -154,6 +156,11 @@ fun AmarHisabTopMenu(
         TopMenuItem(Icons.Default.CurrencyExchange, "রেমিট্যান্স হিস্ট্রি") {
             onDismiss()
             onRemittanceHistory()
+        }
+
+        TopMenuItem(Icons.Default.EventNote, "ডিউটি রোস্টার") {
+            onDismiss()
+            onDutyRoster()
         }
 
         HorizontalDivider(
