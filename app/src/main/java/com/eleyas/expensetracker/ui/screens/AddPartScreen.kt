@@ -253,7 +253,8 @@ fun AddPartScreen(
                         )
 
                         MoneyShortLabel(cost)
-                                                    OutlinedTextField(\n                            value = cost, 
+                                                    OutlinedTextField(
+                            value = cost, 
                             
                             onValueChange = {
                                 if (
