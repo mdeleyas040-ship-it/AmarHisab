@@ -142,6 +142,7 @@ fun LoanInterestDialog(
 
                 OutlinedTextField(
                     value = amountText,
+                    trailingContent = { com.eleyas.expensetracker.ui.components.MoneyShortLabel(amountText) },
                     onValueChange = { amountText = it },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     label = { Text("সুদের টাকা") },
