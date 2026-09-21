@@ -259,6 +259,49 @@ class AccountingLogicRegressionTest {
     }
 
     @Test
+    fun homeTransferCanFundHomeLoanPaymentWithoutExtra() {
+        val entries = HomeLedgerEngine.build(
+            transactions = listOf(
+                tx(1, "home", 25_000.0),
+                tx(2, "home", 10_000.0)
+            ),
+            loans = emptyList(),
+            loanPayments = listOf(
+                payment(1, 1, 20_000.0, "home")
+            ),
+            lendings = emptyList(),
+            lendingReturns = emptyList()
+        )
+
+        val summary = HomeLedgerEngine.summarize(entries)
+
+        // Existing Home 25,000 + new transfer 10,000 - loan payment 20,000 = 15,000.
+        assertEquals(15_000.0, summary.balance, 0.001)
+    }
+
+    @Test
+    fun homeTransferPlusExtraCanCoverHomeLoanShortage() {
+        val entries = HomeLedgerEngine.build(
+            transactions = listOf(
+                tx(1, "home", 5_000.0),
+                tx(2, "home", 10_000.0),
+                tx(3, "home_adjustment", 5_000.0)
+            ),
+            loans = emptyList(),
+            loanPayments = listOf(
+                payment(1, 1, 20_000.0, "home")
+            ),
+            lendings = emptyList(),
+            lendingReturns = emptyList()
+        )
+
+        val summary = HomeLedgerEngine.summarize(entries)
+
+        // Existing 5,000 + transfer 10,000 + extra 5,000 - payment 20,000 = 0.
+        assertEquals(0.0, summary.balance, 0.001)
+    }
+
+    @Test
     fun homeLedgerContainsHomeMovementsButNotPersonalOnes() {
         val entries = HomeLedgerEngine.build(
             transactions = listOf(

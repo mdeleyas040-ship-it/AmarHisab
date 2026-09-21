@@ -760,8 +760,9 @@ fun AddTransactionDialog(
         Double,
         String,
         Double,
-        Long
-    ) -> Boolean = { _, _, _, _, _ -> true }
+        Long,
+        Double
+    ) -> Boolean = { _, _, _, _, _, _ -> true }
 ) {
     val context = LocalContext.current
     val scheme = MaterialTheme.colorScheme
@@ -1895,8 +1896,22 @@ fun AddTransactionDialog(
                                     .toDoubleOrNull()
                                     ?: 0.0
 
+                            val enteredTransferAmount =
+                                amount
+                                    .replace(",", "")
+                                    .trim()
+                                    .toDoubleOrNull()
+                                    ?: 0.0
+
+                            val availableHomeAfterTransfer =
+                                if (type == "home") {
+                                    homeBalance + enteredTransferAmount
+                                } else {
+                                    homeBalance
+                                }
+
                             val homeShortage =
-                                (enteredLoanAmount - homeBalance)
+                                (enteredLoanAmount - availableHomeAfterTransfer)
                                     .coerceAtLeast(0.0)
 
                             if (homeShortage > 0.0) {
@@ -1948,6 +1963,12 @@ fun AddTransactionDialog(
 
                                         Text(
                                             "বর্তমান বাড়ির ব্যালেন্স: ৳${formatMoney(homeBalance)}",
+                                            fontSize = 11.sp,
+                                            color = Color(0xFF92400E)
+                                        )
+
+                                        Text(
+                                            "বাড়িতে পাঠানোর পর available: ৳${formatMoney(availableHomeAfterTransfer)}",
                                             fontSize = 11.sp,
                                             color = Color(0xFF92400E)
                                         )
@@ -2074,13 +2095,20 @@ fun AddTransactionDialog(
                                         .toDoubleOrNull()
                                         ?: 0.0
 
+                                val availableHomeAfterTransfer =
+                                    if (type == "home") {
+                                        homeBalance + value
+                                    } else {
+                                        homeBalance
+                                    }
+
                                 val shortage =
                                     if (
                                         type == "home" &&
                                         selectedLoanId != null &&
                                         loanAmount != null
                                     ) {
-                                        (loanAmount - homeBalance)
+                                        (loanAmount - availableHomeAfterTransfer)
                                             .coerceAtLeast(0.0)
                                     } else {
                                         0.0
@@ -2145,7 +2173,8 @@ fun AddTransactionDialog(
                                             loanAmount,
                                             date,
                                             extraAmount,
-                                            transactionId
+                                            transactionId,
+                                            value
                                         )
 
                                     if (!paymentSaved) {
