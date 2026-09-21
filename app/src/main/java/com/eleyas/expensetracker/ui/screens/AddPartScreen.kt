@@ -252,9 +252,9 @@ fun AddPartScreen(
                             shape = RoundedCornerShape(14.dp)
                         )
 
-                        OutlinedTextField(
-                            value = cost,
-                            trailingIcon = { MoneyShortLabel(cost) },
+                        MoneyShortLabel(cost)
+                                                    OutlinedTextField(\n                            value = cost, 
+                            
                             onValueChange = {
                                 if (
                                     it.isEmpty() ||
