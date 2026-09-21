@@ -1238,6 +1238,8 @@ fun AddTransactionDialog(
                         Modifier.height(20.dp)
                     )
 
+                    MoneyShortLabel(amount)
+
                     OutlinedTextField(
                         value = amount,
                     
