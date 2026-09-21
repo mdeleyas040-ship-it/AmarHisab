@@ -1,6 +1,7 @@
 package com.eleyas.expensetracker.ui.screens
 
 import androidx.activity.compose.BackHandler
+import com.eleyas.expensetracker.ui.components.MoneyShortLabel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -88,6 +89,7 @@ fun CalculatorScreen(
                         
                         OutlinedTextField(
                             value = principalText,
+                            trailingContent = { MoneyShortLabel(principalText) },
                             onValueChange = { principalText = it },
                             label = { Text("লোনের পরিমাণ (Principal)") },
                             placeholder = { Text("যেমন: 1,00,000") },
