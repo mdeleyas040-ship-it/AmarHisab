@@ -742,6 +742,8 @@ fun AddTransactionDialog(
     wallets: List<Wallet> = emptyList(),
     homeBalance: Double = 0.0,
     customCategories: List<String> = emptyList(),
+    selectedShortageLoan: LoanAccount? = null,
+    onRequestShortageLoan: () -> Unit = {},
     onCategoryAdded: (String) -> Unit = {},
     onDismiss: () -> Unit,
     onSave: (
@@ -826,12 +828,19 @@ fun AddTransactionDialog(
         mutableStateOf("")
     }
 
-    var shortageLoanName by remember {
+    var shortageSourceType by remember {
         mutableStateOf("")
     }
 
-    var shortageLoanAmount by remember {
+    var shortageSourceNote by remember {
         mutableStateOf("")
+    }
+
+    LaunchedEffect(selectedShortageLoan?.id) {
+        selectedShortageLoan?.let { loan ->
+            shortageSourceType = "loan"
+            shortageSourceNote = loan.name
+        }
     }
 
     // Only unpaid loans are relevant to the Home Transfer → Loan Repayment flow.
