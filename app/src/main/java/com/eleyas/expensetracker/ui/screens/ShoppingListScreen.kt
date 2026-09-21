@@ -327,7 +327,7 @@ fun ShoppingItemDialog(
                 )
                 OutlinedTextField(
                     value = amountText,
-                    trailingContent = { MoneyShortLabel(amountText) },
+                    trailingIcon = { MoneyShortLabel(amountText) },
                     onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
                     label = { Text("আনুমানিক দাম") },
                     singleLine = true,
