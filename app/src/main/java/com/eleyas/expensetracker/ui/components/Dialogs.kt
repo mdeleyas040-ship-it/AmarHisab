@@ -264,9 +264,9 @@ fun CategoryBudgetDialog(
                     Modifier.height(12.dp)
                 )
 
-                OutlinedTextField(
-                    value = limit,
-                    trailingIcon = { MoneyShortLabel(limit) },
+                MoneyShortLabel(limit)
+                                    OutlinedTextField(\n                    value = limit, 
+                    
                     onValueChange = {
                         limit = it
                     },
@@ -460,9 +460,9 @@ fun BorrowingDialog(
                     Modifier.height(14.dp)
                 )
 
-                OutlinedTextField(
-                    value = amount,
-                    trailingIcon = { MoneyShortLabel(amount) },
+                MoneyShortLabel(amount)
+                                    OutlinedTextField(\n                    value = amount, 
+                    
                     onValueChange = {
                         amount = it
                     },
@@ -1238,7 +1238,7 @@ fun AddTransactionDialog(
 
                     OutlinedTextField(
                         value = amount,
-                    trailingIcon = { MoneyShortLabel(amount) },
+                    
                         onValueChange = {
                             amount = it
                         },
@@ -3231,7 +3231,7 @@ fun LoanPaymentDialog(
 
                 OutlinedTextField(
                     value = amount,
-                    trailingIcon = { MoneyShortLabel(amount) },
+                    
                     onValueChange = {
                         amount = it
                     },
@@ -3710,7 +3710,7 @@ fun LendingDialog(
 
                     OutlinedTextField(
                         value = amount,
-                    trailingIcon = { MoneyShortLabel(amount) },
+                    
                         onValueChange = {
                             amount = it
                         },
@@ -4438,7 +4438,7 @@ fun LendingReturnDialog(
 
                 OutlinedTextField(
                     value = amount,
-                    trailingIcon = { MoneyShortLabel(amount) },
+                    
                     onValueChange = {
                         amount = it
                     },
