@@ -1896,8 +1896,22 @@ fun AddTransactionDialog(
                                     .toDoubleOrNull()
                                     ?: 0.0
 
+                            val enteredTransferAmount =
+                                amount
+                                    .replace(",", "")
+                                    .trim()
+                                    .toDoubleOrNull()
+                                    ?: 0.0
+
+                            val availableHomeAfterTransfer =
+                                if (type == "home") {
+                                    homeBalance + enteredTransferAmount
+                                } else {
+                                    homeBalance
+                                }
+
                             val homeShortage =
-                                (enteredLoanAmount - homeBalance)
+                                (enteredLoanAmount - availableHomeAfterTransfer)
                                     .coerceAtLeast(0.0)
 
                             if (homeShortage > 0.0) {
