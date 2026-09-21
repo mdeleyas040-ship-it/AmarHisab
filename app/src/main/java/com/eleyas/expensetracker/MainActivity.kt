@@ -425,6 +425,14 @@ fun AmarHisabApp(
         mutableStateOf<LoanAccount?>(null)
     }
 
+    var shortageLoanCreationPending by remember(currentUserId) {
+        mutableStateOf(false)
+    }
+
+    var selectedShortageLoan by remember(currentUserId) {
+        mutableStateOf<LoanAccount?>(null)
+    }
+
     var editingLoanPayment by remember(currentUserId) {
         mutableStateOf<LoanPayment?>(null)
     }
@@ -2567,6 +2575,12 @@ fun AmarHisabApp(
                 wallets,
                 viewModel.homeBalance,
                 customCategories,
+                selectedShortageLoan,
+                {
+                    shortageLoanCreationPending = true
+                    editingLoan = null
+                    showLoanDialog = true
+                },
 
                 { newCategory ->
 
@@ -2602,6 +2616,8 @@ fun AmarHisabApp(
                 {
                     showAddDialog = false
                     editingTransaction = null
+                    selectedShortageLoan = null
+                    shortageLoanCreationPending = false
                 },
 
                 { a, c, cat, r, d, w, i, audio, transactionId ->
@@ -2869,16 +2885,22 @@ fun AmarHisabApp(
 
                     } else {
 
-                        viewModel.addLoan(
-                            context,
-                            n,
-                            s,
-                            p,
-                            m,
-                            d,
-                            nt,
-                            dd
-                        )
+                        val createdLoan =
+                            viewModel.addLoan(
+                                context,
+                                n,
+                                s,
+                                p,
+                                m,
+                                d,
+                                nt,
+                                dd
+                            )
+
+                        if (shortageLoanCreationPending) {
+                            selectedShortageLoan = createdLoan
+                            shortageLoanCreationPending = false
+                        }
                     }
 
                     showLoanDialog = false
