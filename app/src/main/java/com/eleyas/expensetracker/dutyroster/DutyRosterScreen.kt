@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,12 +18,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -59,297 +65,272 @@ fun DutyRosterScreen(
     context: Context,
     onBack: () -> Unit
 ) {
-    var savedRoster by remember {
-        mutableStateOf(DutyRosterStorage.load(context))
-    }
+    var savedRoster by remember { mutableStateOf(DutyRosterStorage.load(context)) }
+    var draftDays by remember { mutableStateOf<List<RosterDay>?>(null) }
+    var draftName by remember { mutableStateOf("") }
 
-    var draftDays by remember {
-        mutableStateOf<List<RosterDay>?>(null)
-    }
-
-    var draftName by remember {
-        mutableStateOf("")
-    }
-
-    val notificationTime = remember {
-        DutyRosterStorage.notificationTime(context)
-    }
-
-    var hourText by remember {
-        mutableStateOf(
-            notificationTime.first.toString().padStart(2, '0')
-        )
-    }
-
-    var minuteText by remember {
-        mutableStateOf(
-            notificationTime.second.toString().padStart(2, '0')
-        )
-    }
+    val notificationTime = remember { DutyRosterStorage.notificationTime(context) }
+    var hourText by remember { mutableStateOf(notificationTime.first.toString().padStart(2, '0')) }
+    var minuteText by remember { mutableStateOf(notificationTime.second.toString().padStart(2, '0')) }
 
     var scanning by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var showNameMenu by remember { mutableStateOf(false) }
 
-    val launcher =
-        rememberLauncherForActivityResult(
-            ActivityResultContracts.GetContent()
-        ) { uri ->
-            uri ?: return@rememberLauncherForActivityResult
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        scanning = true
+        error = null
+        draftName = ""
 
-            scanning = true
-            error = null
-            draftName = ""
-
-            DutyRosterManager.scan(
-                context = context,
-                uri = uri,
-                onSuccess = {
-                    draftDays = it
-                    scanning = false
-                },
-                onError = {
-                    error = it
-                    scanning = false
-                }
-            )
-        }
+        DutyRosterManager.scan(
+            context = context,
+            uri = uri,
+            onSuccess = {
+                draftDays = it
+                scanning = false
+            },
+            onError = {
+                error = it
+                scanning = false
+            }
+        )
+    }
 
     val activeDays = draftDays ?: savedRoster?.days.orEmpty()
+    val names = activeDays.flatMap { it.duties.map { duty -> duty.person } }.distinct().sorted()
 
-    val names =
-        activeDays
-            .flatMap { day -> day.duties.map { it.person } }
-            .distinct()
-            .sorted()
-
-    val todayIso =
-        SimpleDateFormat(
-            "yyyy-MM-dd",
-            Locale.US
-        ).format(Calendar.getInstance().time)
-
-    val today =
-        activeDays.firstOrNull { it.dateIso == todayIso }
+    val todayIso = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Calendar.getInstance().time)
+    val today = activeDays.firstOrNull { it.dateIso == todayIso }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
                     Column {
                         Text(
                             "Duty Roster",
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             "Kitchen • Fish Fire",
-                            style =
-                                MaterialTheme.typography.labelSmall,
-                            color =
-                                MaterialTheme.colorScheme
-                                    .onSurfaceVariant
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
                     IconButton(
-                        onClick = {
-                            launcher.launch("image/*")
-                        },
+                        onClick = { launcher.launch("image/*") },
                         enabled = !scanning
                     ) {
-                        Icon(
-                            Icons.Default.CloudUpload,
-                            contentDescription = "Upload roster"
-                        )
+                        Icon(Icons.Default.CloudUpload, contentDescription = "Upload roster")
                     }
                 },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor =
-                            MaterialTheme.colorScheme.surface
-                    )
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         }
     ) { padding ->
-
         LazyColumn(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 16.dp),
-            verticalArrangement =
-                Arrangement.spacedBy(14.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-
             item {
-                Spacer(Modifier.padding(top = 2.dp))
+                Spacer(Modifier.height(2.dp))
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor =
-                                MaterialTheme.colorScheme
-                                    .primaryContainer
-                        )
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
-                    Row(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(18.dp),
-                        verticalAlignment =
-                            Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color =
-                                MaterialTheme.colorScheme
-                                    .primary
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                Icons.Default.EventNote,
-                                contentDescription = null,
-                                modifier =
-                                    Modifier.padding(12.dp),
-                                tint =
-                                    MaterialTheme.colorScheme
-                                        .onPrimary
-                            )
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = MaterialTheme.colorScheme.primary
+                            ) {
+                                Icon(
+                                    Icons.Default.CalendarMonth,
+                                    contentDescription = null,
+                                    modifier = Modifier.padding(13.dp),
+                                    tint = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+
+                            Spacer(Modifier.width(14.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Smart Duty Roster",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    if (savedRoster != null)
+                                        "Your roster is synced and ready."
+                                    else
+                                        "Upload a roster image to get started.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+
+                            if (savedRoster != null) {
+                                Surface(
+                                    shape = RoundedCornerShape(50.dp),
+                                    color = MaterialTheme.colorScheme.primary
+                                ) {
+                                    Text(
+                                        "ACTIVE",
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                }
+                            }
                         }
 
-                        Spacer(Modifier.width(14.dp))
-
-                        Column(
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                "Smart Duty Roster",
-                                style =
-                                    MaterialTheme.typography
-                                        .titleMedium,
-                                fontWeight = FontWeight.Bold
+                        if (savedRoster != null) {
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)
                             )
-
-                            Text(
-                                if (savedRoster != null) {
-                                    "Roster is ready for daily reminders."
-                                } else {
-                                    "Upload your roster to get daily reminders."
-                                },
-                                style =
-                                    MaterialTheme.typography.bodySmall,
-                                color =
-                                    MaterialTheme.colorScheme
-                                        .onPrimaryContainer
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                MiniStat("Your name", savedRoster?.myName.orEmpty())
+                                MiniStat("Days", activeDays.size.toString())
+                                MiniStat(
+                                    "Reminder",
+                                    String.format(
+                                        Locale.US,
+                                        "%02d:%02d",
+                                        savedRoster?.notificationHour ?: 6,
+                                        savedRoster?.notificationMinute ?: 30
+                                    )
+                                )
+                            }
                         }
                     }
                 }
             }
 
+            if (today != null && draftDays == null) {
+                item {
+                    TodayDutyCard(
+                        today = today,
+                        myName = savedRoster?.myName.orEmpty()
+                    )
+                }
+            }
+
+            item {
+                SectionLabel(
+                    icon = Icons.Default.CloudUpload,
+                    title = if (draftDays != null) "New Roster" else "Roster Source",
+                    subtitle = if (draftDays != null)
+                        "Review the scanned roster before saving."
+                    else
+                        "Keep your roster image clear and readable."
+                )
+            }
+
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp)
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
                 ) {
                     Column(
                         modifier = Modifier.padding(18.dp),
-                        verticalArrangement =
-                            Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            "Roster Source",
-                            style =
-                                MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            "Upload a roster image",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
                         )
-
                         Text(
-                            "Upload a clear roster image. The app will read the dates, staff and duty cells.",
-                            style =
-                                MaterialTheme.typography.bodySmall,
-                            color =
-                                MaterialTheme.colorScheme
-                                    .onSurfaceVariant
+                            "The app reads dates, staff names and duty times automatically.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
                         Button(
-                            onClick = {
-                                launcher.launch("image/*")
-                            },
+                            onClick = { launcher.launch("image/*") },
                             enabled = !scanning,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(14.dp)
                         ) {
                             Icon(
-                                Icons.Default.CloudUpload,
+                                if (scanning) Icons.Default.Refresh else Icons.Default.CloudUpload,
                                 contentDescription = null
                             )
                             Spacer(Modifier.width(8.dp))
-                            Text(
-                                if (scanning) {
-                                    "Reading roster..."
-                                } else {
-                                    "Upload Roster Image"
-                                }
-                            )
+                            Text(if (scanning) "Reading roster…" else "Upload Roster Image")
                         }
 
                         if (scanning) {
-                            Text(
-                                "Please wait while the roster is being analysed.",
-                                style =
-                                    MaterialTheme.typography.labelMedium,
-                                color =
-                                    MaterialTheme.colorScheme
-                                        .primary
-                            )
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.secondaryContainer
+                            ) {
+                                Text(
+                                    "Analysing roster cells. Please wait…",
+                                    modifier = Modifier.padding(12.dp),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            }
                         }
 
                         error?.let {
                             Surface(
-                                shape = RoundedCornerShape(14.dp),
-                                color =
-                                    MaterialTheme.colorScheme
-                                        .errorContainer
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.errorContainer
                             ) {
                                 Row(
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .padding(12.dp),
-                                    verticalAlignment =
-                                        Alignment.CenterVertically
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
                                         Icons.Default.ErrorOutline,
                                         contentDescription = null,
-                                        tint =
-                                            MaterialTheme.colorScheme
-                                                .onErrorContainer
+                                        tint = MaterialTheme.colorScheme.onErrorContainer
                                     )
                                     Spacer(Modifier.width(8.dp))
                                     Text(
                                         it,
-                                        style =
-                                            MaterialTheme.typography
-                                                .bodySmall,
-                                        color =
-                                            MaterialTheme.colorScheme
-                                                .onErrorContainer
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onErrorContainer
                                     )
                                 }
                             }
@@ -360,424 +341,546 @@ fun DutyRosterScreen(
 
             if (draftDays != null) {
                 item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(18.dp),
-                            verticalArrangement =
-                                Arrangement.spacedBy(12.dp)
-                        ) {
-                            Row(
-                                verticalAlignment =
-                                    Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Default.CheckCircle,
-                                    contentDescription = null,
-                                    tint =
-                                        MaterialTheme.colorScheme
-                                            .primary
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text(
-                                    "Review & Confirm",
-                                    style =
-                                        MaterialTheme.typography
-                                            .titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                    ReviewRosterCard(
+                        days = draftDays.orEmpty(),
+                        names = names,
+                        draftName = draftName,
+                        showNameMenu = showNameMenu,
+                        onShowNameMenu = { showNameMenu = true },
+                        onDismissNameMenu = { showNameMenu = false },
+                        onSelectName = {
+                            draftName = it
+                            showNameMenu = false
+                        },
+                        hourText = hourText,
+                        minuteText = minuteText,
+                        onHourChange = {
+                            hourText = it.filter(Char::isDigit).take(2)
+                        },
+                        onMinuteChange = {
+                            minuteText = it.filter(Char::isDigit).take(2)
+                        },
+                        onSave = {
+                            val hour = hourText.toIntOrNull()?.coerceIn(0, 23) ?: 6
+                            val minute = minuteText.toIntOrNull()?.coerceIn(0, 59) ?: 30
 
-                            Text(
-                                "Choose your name manually. The app will never guess your identity from OCR.",
-                                style =
-                                    MaterialTheme.typography.bodySmall,
-                                color =
-                                    MaterialTheme.colorScheme
-                                        .onSurfaceVariant
+                            DutyRosterStorage.save(
+                                context,
+                                DutyRoster(
+                                    uploadedAt = System.currentTimeMillis(),
+                                    sourceName = "Roster image",
+                                    myName = draftName.trim(),
+                                    notificationHour = hour,
+                                    notificationMinute = minute,
+                                    days = draftDays.orEmpty()
+                                )
                             )
 
-                            OutlinedButton(
-                                onClick = {
-                                    showNameMenu = true
-                                },
-                                modifier =
-                                    Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(14.dp)
-                            ) {
-                                Text(
-                                    draftName.ifBlank {
-                                        "Select your name"
-                                    }
-                                )
-                            }
+                            DutyRosterNotification.createChannel(context)
+                            DutyRosterNotification.schedule(context)
 
-                            DropdownMenu(
-                                expanded = showNameMenu,
-                                onDismissRequest = {
-                                    showNameMenu = false
-                                }
-                            ) {
-                                names.forEach { name ->
-                                    DropdownMenuItem(
-                                        text = { Text(name) },
-                                        onClick = {
-                                            draftName = name
-                                            showNameMenu = false
-                                        }
-                                    )
-                                }
-                            }
-
-                            HorizontalDivider()
-
-                            Text(
-                                "Daily notification",
-                                style =
-                                    MaterialTheme.typography
-                                        .titleSmall,
-                                fontWeight = FontWeight.SemiBold
-                            )
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment =
-                                    Alignment.CenterVertically,
-                                horizontalArrangement =
-                                    Arrangement.spacedBy(10.dp)
-                            ) {
-                                Surface(
-                                    shape =
-                                        RoundedCornerShape(12.dp),
-                                    color =
-                                        MaterialTheme.colorScheme
-                                            .secondaryContainer
-                                ) {
-                                    Icon(
-                                        Icons.Default.Notifications,
-                                        contentDescription = null,
-                                        modifier =
-                                            Modifier.padding(10.dp),
-                                        tint =
-                                            MaterialTheme.colorScheme
-                                                .onSecondaryContainer
-                                    )
-                                }
-
-                                OutlinedTextField(
-                                    value = hourText,
-                                    onValueChange = {
-                                        hourText =
-                                            it.filter(
-                                                Char::isDigit
-                                            ).take(2)
-                                    },
-                                    label = { Text("Hour") },
-                                    singleLine = true,
-                                    modifier =
-                                        Modifier.weight(1f)
-                                )
-
-                                Text(
-                                    ":",
-                                    fontWeight = FontWeight.Bold
-                                )
-
-                                OutlinedTextField(
-                                    value = minuteText,
-                                    onValueChange = {
-                                        minuteText =
-                                            it.filter(
-                                                Char::isDigit
-                                            ).take(2)
-                                    },
-                                    label = { Text("Minute") },
-                                    singleLine = true,
-                                    modifier =
-                                        Modifier.weight(1f)
-                                )
-                            }
-
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color =
-                                    MaterialTheme.colorScheme
-                                        .surfaceVariant
-                            ) {
-                                Row(
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .padding(12.dp),
-                                    verticalAlignment =
-                                        Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        Icons.Default.AccessTime,
-                                        contentDescription = null
-                                    )
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(
-                                        "Example: 06:30 AM — daily duty reminder",
-                                        style =
-                                            MaterialTheme.typography
-                                                .labelMedium
-                                    )
-                                }
-                            }
-
-                            Button(
-                                onClick = {
-                                    val hour =
-                                        hourText
-                                            .toIntOrNull()
-                                            ?.coerceIn(0, 23)
-                                            ?: 6
-
-                                    val minute =
-                                        minuteText
-                                            .toIntOrNull()
-                                            ?.coerceIn(0, 59)
-                                            ?: 30
-
-                                    DutyRosterStorage.save(
-                                        context,
-                                        DutyRoster(
-                                            uploadedAt =
-                                                System.currentTimeMillis(),
-                                            sourceName =
-                                                "Roster image",
-                                            myName =
-                                                draftName.trim(),
-                                            notificationHour =
-                                                hour,
-                                            notificationMinute =
-                                                minute,
-                                            days =
-                                                draftDays.orEmpty()
-                                        )
-                                    )
-
-                                    DutyRosterNotification
-                                        .createChannel(context)
-
-                                    DutyRosterNotification
-                                        .schedule(context)
-
-                                    savedRoster =
-                                        DutyRosterStorage
-                                            .load(context)
-
-                                    draftDays = null
-                                },
-                                enabled = draftName.isNotBlank(),
-                                modifier =
-                                    Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(14.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.Save,
-                                    contentDescription = null
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text("Confirm & Save Roster")
-                            }
-
-                            if (draftName.isBlank()) {
-                                Text(
-                                    "Select your name before saving.",
-                                    style =
-                                        MaterialTheme.typography
-                                            .labelSmall,
-                                    color =
-                                        MaterialTheme.colorScheme
-                                            .error
-                                )
-                            }
+                            savedRoster = DutyRosterStorage.load(context)
+                            draftDays = null
                         }
-                    }
+                    )
                 }
             }
 
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(18.dp),
-                        verticalArrangement =
-                            Arrangement.spacedBy(10.dp)
-                    ) {
-                        Text(
-                            "Today",
-                            style =
-                                MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        if (today == null) {
-                            Text(
-                                "Today's date was not found in the saved roster.",
-                                style =
-                                    MaterialTheme.typography.bodySmall,
-                                color =
-                                    MaterialTheme.colorScheme
-                                        .onSurfaceVariant
-                            )
-                        } else {
-                            val mine =
-                                today.duties.firstOrNull {
-                                    it.person.equals(
-                                        savedRoster?.myName,
-                                        ignoreCase = true
-                                    )
-                                }
-
-                            val morning =
-                                today.duties
-                                    .filter {
-                                        DutyRosterParser
-                                            .isMorning(it.duty)
-                                    }
-                                    .map { it.person }
-                                    .distinct()
-
-                            val off =
-                                today.duties
-                                    .filter {
-                                        DutyRosterParser
-                                            .isOff(it.duty)
-                                    }
-                                    .map { it.person }
-                                    .distinct()
-
-                            StatusRow(
-                                icon = Icons.Default.AccessTime,
-                                label = "My duty",
-                                value =
-                                    mine?.duty ?: "Not found"
-                            )
-
-                            StatusRow(
-                                icon = Icons.Default.EventNote,
-                                label = "Morning staff",
-                                value =
-                                    morning.joinToString(", ")
-                                        .ifBlank { "None" }
-                            )
-
-                            StatusRow(
-                                icon = Icons.Default.CheckCircle,
-                                label = "OFF today",
-                                value =
-                                    off.joinToString(", ")
-                                        .ifBlank { "None" }
-                            )
-                        }
-                    }
-                }
-            }
-
-            if (today != null) {
+            if (today != null && draftDays == null) {
                 item {
-                    Text(
-                        "Today's full roster",
-                        style =
-                            MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                    SectionLabel(
+                        icon = Icons.Default.EventNote,
+                        title = "Today's Full Roster",
+                        subtitle = "Everyone scheduled for today."
                     )
                 }
 
                 items(
                     today.duties,
-                    key = {
-                        it.person + "-" + it.duty
-                    }
+                    key = { it.person + "-" + it.duty }
                 ) { entry ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(14.dp),
-                            verticalAlignment =
-                                Alignment.CenterVertically
-                        ) {
-                            Text(
-                                entry.person,
-                                modifier =
-                                    Modifier.weight(0.40f),
-                                fontWeight = FontWeight.SemiBold
-                            )
-
-                            Text(
-                                entry.duty,
-                                modifier =
-                                    Modifier.weight(0.60f),
-                                style =
-                                    MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
+                    RosterPersonRow(
+                        entry = entry,
+                        isMe = entry.person.equals(
+                            savedRoster?.myName,
+                            ignoreCase = true
+                        )
+                    )
                 }
             }
 
             item {
-                Spacer(Modifier.padding(bottom = 12.dp))
+                Spacer(Modifier.height(12.dp))
             }
         }
     }
 }
 
 @Composable
-private fun StatusRow(
+private fun TodayDutyCard(
+    today: RosterDay,
+    myName: String
+) {
+    val mine = today.duties.firstOrNull {
+        it.person.equals(myName, ignoreCase = true)
+    }
+
+    val morning = today.duties
+        .filter { DutyRosterParser.isMorning(it.duty) }
+        .map { it.person }
+        .distinct()
+
+    val off = today.duties
+        .filter { DutyRosterParser.isOff(it.duty) }
+        .map { it.person }
+        .distinct()
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(13.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Icon(
+                        Icons.Default.AccessTime,
+                        contentDescription = null,
+                        modifier = Modifier.padding(10.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Spacer(Modifier.width(12.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "Today's Duty",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        today.displayDate,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(50.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Text(
+                        "${today.duties.size} staff",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            DutyHighlight(
+                title = "My duty",
+                value = mine?.duty ?: "Not found",
+                icon = Icons.Default.Person,
+                highlighted = true
+            )
+
+            DutyHighlight(
+                title = "Morning staff",
+                value = morning.joinToString(", ").ifBlank { "None" },
+                icon = Icons.Default.EventNote
+            )
+
+            DutyHighlight(
+                title = "OFF today",
+                value = off.joinToString(", ").ifBlank { "None" },
+                icon = Icons.Default.CheckCircle
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReviewRosterCard(
+    days: List<RosterDay>,
+    names: List<String>,
+    draftName: String,
+    showNameMenu: Boolean,
+    onShowNameMenu: () -> Unit,
+    onDismissNameMenu: () -> Unit,
+    onSelectName: (String) -> Unit,
+    hourText: String,
+    minuteText: String,
+    onHourChange: (String) -> Unit,
+    onMinuteChange: (String) -> Unit,
+    onSave: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        modifier = Modifier.padding(9.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                Spacer(Modifier.width(10.dp))
+                Column {
+                    Text(
+                        "Review & Confirm",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "${days.size} days detected",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Text(
+                "Select your name manually. OCR will not guess your identity.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            OutlinedButton(
+                onClick = onShowNameMenu,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Icon(Icons.Default.Person, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    draftName.ifBlank { "Select your name" },
+                    fontWeight = if (draftName.isBlank())
+                        FontWeight.Normal else FontWeight.SemiBold
+                )
+            }
+
+            DropdownMenu(
+                expanded = showNameMenu,
+                onDismissRequest = onDismissNameMenu
+            ) {
+                names.forEach { name ->
+                    DropdownMenuItem(
+                        text = { Text(name) },
+                        onClick = { onSelectName(name) }
+                    )
+                }
+            }
+
+            HorizontalDivider()
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.Notifications,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.width(8.dp))
+                Column {
+                    Text(
+                        "Daily reminder",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        "Choose when you want the roster notification.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedTextField(
+                    value = hourText,
+                    onValueChange = onHourChange,
+                    label = { Text("Hour") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(":", fontWeight = FontWeight.Bold)
+                OutlinedTextField(
+                    value = minuteText,
+                    onValueChange = onMinuteChange,
+                    label = { Text("Minute") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant
+            ) {
+                Row(
+                    modifier = Modifier.padding(11.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.AccessTime,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "Example 06:30 — morning duty reminder",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            }
+
+            Button(
+                onClick = onSave,
+                enabled = draftName.isNotBlank(),
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Icon(Icons.Default.Save, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Save Roster")
+            }
+
+            if (draftName.isBlank()) {
+                Text(
+                    "Select your name to continue.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RosterPersonRow(
+    entry: DutyEntry,
+    isMe: Boolean
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isMe)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = if (isMe)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.surfaceVariant
+            ) {
+                Icon(
+                    if (isMe) Icons.Default.Person else Icons.Default.EventNote,
+                    contentDescription = null,
+                    modifier = Modifier.padding(8.dp),
+                    tint = if (isMe)
+                        MaterialTheme.colorScheme.onPrimary
+                    else
+                        MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(Modifier.width(11.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        entry.person,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    if (isMe) {
+                        Spacer(Modifier.width(7.dp))
+                        Surface(
+                            shape = RoundedCornerShape(50.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        ) {
+                            Text(
+                                "YOU",
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(5.dp))
+                DutyChips(entry.duty)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DutyChips(duty: String) {
+    val parts = duty
+        .split(" • ")
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
+
+    if (parts.isEmpty()) {
+        Text(
+            "—",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        return
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        parts.take(2).forEachIndexed { index, part ->
+            AssistChip(
+                onClick = {},
+                enabled = false,
+                label = {
+                    Text(
+                        if (parts.size > 1)
+                            if (index == 0) "AM  ${part}" else "PM  ${part}"
+                        else
+                            part
+                    )
+                },
+                leadingIcon = {
+                    Icon(Icons.Default.AccessTime, contentDescription = null)
+                },
+                colors = AssistChipDefaults.assistChipColors(
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    disabledLabelColor = MaterialTheme.colorScheme.onSurface,
+                    disabledLeadingIconContentColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun DutyHighlight(
+    title: String,
+    value: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    value: String
+    highlighted: Boolean = false
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
+        shape = RoundedCornerShape(15.dp),
+        color = if (highlighted)
+            MaterialTheme.colorScheme.primaryContainer
+        else
+            MaterialTheme.colorScheme.surfaceVariant
     ) {
         Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-            verticalAlignment =
-                Alignment.CenterVertically
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(10.dp))
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    label,
-                    style =
-                        MaterialTheme.typography.labelMedium,
-                    color =
-                        MaterialTheme.colorScheme
-                            .onSurfaceVariant
+                    title,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     value,
-                    style =
-                        MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun SectionLabel(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Spacer(Modifier.width(8.dp))
+        Column {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun MiniStat(
+    label: String,
+    value: String
+) {
+    Column {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f)
+        )
+        Text(
+            value,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
     }
 }
