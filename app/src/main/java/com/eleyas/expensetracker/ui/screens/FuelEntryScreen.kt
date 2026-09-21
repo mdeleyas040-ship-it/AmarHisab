@@ -173,7 +173,7 @@ fun FuelEntryScreen(
 
                     OutlinedTextField(
                         value = pricePerLiter,
-                        trailingContent = { MoneyShortLabel(pricePerLiter) },
+                        trailingIcon = { MoneyShortLabel(pricePerLiter) },
                         onValueChange = {
                             if (
                                 it.isEmpty() ||
