@@ -239,7 +239,7 @@ class AccountingLogicRegressionTest {
     }
 
     @Test
-    fun homeExtraAdjustmentCanFundHomeLoanPayment() {
+    fun homeExtraAdjustmentAndHomeLoanPaymentAreLedgerMovements() {
         val entries = HomeLedgerEngine.build(
             transactions = listOf(
                 tx(1, "home_adjustment", 2_000.0)
