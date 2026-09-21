@@ -292,8 +292,7 @@ fun saveTransactionToFirestore(
                 "exchangeRateUsed" to (
                         transaction.exchangeRateUsed
                             ?: -1.0
-                        ),
-                "audioMemoPath" to (transaction.audioMemoPath ?: "")
+                        )
             )
         )
         .addOnSuccessListener {
