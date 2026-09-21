@@ -1450,10 +1450,11 @@ class MainViewModel : ViewModel() {
     /**
      * Home → Loan payment save করার নতুন নিরাপদ path।
      *
-     * extraHomeAmount:
-     * - shortage না থাকলে 0 রাখা হবে; Extra UI দেখানোর প্রয়োজন নেই।
-     * - shortage থাকলে অন্তত shortage পরিমাণ হতে হবে।
-     * - Extra shortage-এর চেয়ে বেশি হলেও allowed; অতিরিক্তটাও Home adjustment হিসেবে থাকবে।
+     * shortageLoanName / shortageLoanAmount:
+     * - shortage থাকলেই নতুন Loan source হিসেবে ব্যবহার হবে।
+     * - Loan amount কমপক্ষে shortage হতে হবে।
+     * - Loan amount shortage-এর চেয়ে বেশি হলে পুরো amount Personal → Home যাবে;
+     *   অতিরিক্ত অংশ Home-এ থেকে যাবে।
      *
      * return:
      * - true = payment save হয়েছে
