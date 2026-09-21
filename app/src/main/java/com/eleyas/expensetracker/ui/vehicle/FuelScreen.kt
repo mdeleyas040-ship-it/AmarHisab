@@ -1,6 +1,7 @@
 package com.eleyas.expensetracker.ui.vehicle
 
 import androidx.compose.foundation.layout.*
+import com.eleyas.expensetracker.ui.components.MoneyShortLabel
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -428,6 +429,7 @@ private fun AddFuelScreen(
                     OutlinedTextField(
 
                         value = pricePerLiter,
+                        trailingContent = { MoneyShortLabel(pricePerLiter) },
 
                         onValueChange = {
                             pricePerLiter = it
