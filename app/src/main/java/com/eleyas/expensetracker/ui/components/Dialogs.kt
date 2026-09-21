@@ -461,9 +461,8 @@ fun BorrowingDialog(
                     Modifier.height(14.dp)
                 )
 
-                MoneyShortLabel(amount)
-                                    OutlinedTextField(
-                    value = amount, 
+                OutlinedTextField(
+                    value = amount,
                     
                     onValueChange = {
                         amount = it
@@ -477,6 +476,13 @@ fun BorrowingDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    MoneyShortLabel(amount)
+                }
 
                 Spacer(
                     Modifier.height(10.dp)
