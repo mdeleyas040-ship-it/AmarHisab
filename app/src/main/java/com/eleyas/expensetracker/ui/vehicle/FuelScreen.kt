@@ -429,7 +429,7 @@ private fun AddFuelScreen(
                     OutlinedTextField(
 
                         value = pricePerLiter,
-                        trailingContent = { MoneyShortLabel(pricePerLiter) },
+                        trailingIcon = { MoneyShortLabel(pricePerLiter) },
 
                         onValueChange = {
                             pricePerLiter = it
