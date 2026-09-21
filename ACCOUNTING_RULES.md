@@ -31,6 +31,7 @@ A transaction must affect only the fund from which the money actually moves.
 13. The loan popup's **source type** (for example, bank/person) is not the same concept as the accounting fund.
 14. Existing transaction history must remain readable after future app versions.
 15. Backup/restore must preserve transactions, loans, loan payments, lendings, returns, wallets, currencies and their fund-source information.
+16. If a Home Loan Payment has a shortage and the user chooses a new Loan as the source, the new Loan amount enters Personal first and the full entered Loan amount is automatically transferred Personal → Home before the Home Loan Payment. The entered Loan amount may exceed the minimum shortage; any excess remains in Home. This shortage-specific auto-transfer does not change the normal Loan entry flow.
 
 ## 3. Canonical flow
 
