@@ -172,7 +172,8 @@ fun FuelEntryScreen(
                     )
 
                     MoneyShortLabel(pricePerLiter)
-                                            OutlinedTextField(\n                        value = pricePerLiter,
+                                            OutlinedTextField(
+                        value = pricePerLiter,
                         
                         onValueChange = {
                             if (
