@@ -2292,13 +2292,6 @@ fun AddTransactionDialog(
 
                                 val extraAmount = 0.0
 
-                                val enteredShortageLoanAmount =
-                                    shortageLoanAmount
-                                        .replace(",", "")
-                                        .trim()
-                                        .toDoubleOrNull()
-                                        ?: 0.0
-
                                 val availableHomeAfterTransfer =
                                     if (type == "home") {
                                         homeBalance + value
@@ -2338,20 +2331,36 @@ fun AddTransactionDialog(
                                     }
 
                                     if (shortage > 0.0) {
-                                        if (shortageLoanName.trim().isBlank()) {
-                                            WarningPopupManager.show(
-                                                title = "Loan source দিন",
-                                                message = "Shortage পূরণ করতে কার কাছ থেকে Loan নিয়েছেন তার নাম দিন।"
-                                            )
-                                            return@Button
-                                        }
+                                        when (shortageSourceType) {
+                                            "loan" -> {
+                                                if (selectedShortageLoan == null) {
+                                                    WarningPopupManager.show(
+                                                        title = "Loan নির্বাচন করুন",
+                                                        message = "আগে নতুন Loan Entry তৈরি করে নির্বাচন করুন।"
+                                                    )
+                                                    return@Button
+                                                }
+                                            }
 
-                                        if (enteredShortageLoanAmount + 0.000001 < shortage) {
-                                            WarningPopupManager.show(
-                                                title = "Loan amount কম",
-                                                message = "Shortage ৳" + formatMoney(shortage) + "। নতুন Loan কমপক্ষে এই পরিমাণ হতে হবে।"
-                                            )
-                                            return@Button
+                                            "personal" -> Unit
+
+                                            "other" -> {
+                                                if (shortageSourceNote.trim().isBlank()) {
+                                                    WarningPopupManager.show(
+                                                        title = "Source details দিন",
+                                                        message = "Shortage-এর টাকা কোথা থেকে এসেছে তার তথ্য দিন।"
+                                                    )
+                                                    return@Button
+                                                }
+                                            }
+
+                                            else -> {
+                                                WarningPopupManager.show(
+                                                    title = "Shortage source নির্বাচন করুন",
+                                                    message = "Loan, Personal Money অথবা Other Source থেকে একটি নির্বাচন করুন।"
+                                                )
+                                                return@Button
+                                            }
                                         }
                                     }
                                 }
@@ -2384,8 +2393,9 @@ fun AddTransactionDialog(
                                             extraAmount,
                                             transactionId,
                                             value,
-                                            shortageLoanName.trim(),
-                                            enteredShortageLoanAmount
+                                            shortageSourceType,
+                                            shortageSourceNote.trim(),
+                                            selectedShortageLoan?.id
                                         )
 
                                     if (!paymentSaved) {
