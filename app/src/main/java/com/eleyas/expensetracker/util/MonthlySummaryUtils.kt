@@ -19,9 +19,6 @@ data class MonthlySummary(
 }
 
 object MonthlySummaryUtils {
-    private val inputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply {
-        isLenient = false
-    }
 
     fun currentCycle(reference: Calendar = Calendar.getInstance()): Pair<Date, Date> {
         val end = (reference.clone() as Calendar).apply {
@@ -54,7 +51,9 @@ object MonthlySummaryUtils {
     }
 
     fun parseDate(value: String): Date? = try {
-        inputFormat.parse(value)
+        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply {
+            isLenient = false
+        }.parse(value)
     } catch (_: Exception) {
         null
     }
