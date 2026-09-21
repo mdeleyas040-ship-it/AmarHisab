@@ -56,6 +56,7 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
 
         openOnThisDay = shouldOpenOnThisDay(intent)
+        openMonthlySummary = shouldOpenMonthlySummary(intent)
 
         createNotificationChannel()
         SmartReminderScheduler.createNotificationChannel(this)
@@ -75,7 +76,8 @@ class MainActivity : FragmentActivity() {
         setContent {
             AmarHisabTheme {
                 AuthGate(
-                    openOnThisDay = openOnThisDay
+                    openOnThisDay = openOnThisDay,
+                    openMonthlySummary = openMonthlySummary
                 )
                 AppUpdateDialog(
                     context = LocalContext.current
@@ -91,6 +93,19 @@ class MainActivity : FragmentActivity() {
         if (shouldOpenOnThisDay(intent)) {
             openOnThisDay = true
         }
+        if (shouldOpenMonthlySummary(intent)) {
+            openMonthlySummary = true
+        }
+    }
+
+    var openMonthlySummary by mutableStateOf(false)
+        private set
+
+    private fun shouldOpenMonthlySummary(intent: android.content.Intent?): Boolean {
+        return intent?.getBooleanExtra(
+            RecapNotificationManager.EXTRA_OPEN_MONTHLY_SUMMARY,
+            false
+        ) == true
     }
 
     private fun shouldOpenOnThisDay(
@@ -121,7 +136,8 @@ class MainActivity : FragmentActivity() {
 
 @Composable
 fun AuthGate(
-    openOnThisDay: Boolean = false
+    openOnThisDay: Boolean = false,
+    openMonthlySummary: Boolean = false
 ) {
     val context = LocalContext.current
     var currentUser by remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) }
@@ -133,6 +149,7 @@ fun AuthGate(
         AmarHisabApp(
             currentUserId = uid,
             openOnThisDay = openOnThisDay,
+            openMonthlySummary = openMonthlySummary,
             onLogout = {
                 FirebaseAuth.getInstance().signOut()
                 currentUser = null
@@ -149,6 +166,7 @@ fun AuthGate(
 fun AmarHisabApp(
     currentUserId: String,
     openOnThisDay: Boolean = false,
+    openMonthlySummary: Boolean = false,
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
@@ -197,11 +215,18 @@ fun AmarHisabApp(
     var reminderTransactionId by remember(currentUserId) { mutableStateOf<Long?>(null) }
     var showNotificationScreen by remember { mutableStateOf(false) }
     var showOnThisDayScreen by remember { mutableStateOf(false) }
+    var showMonthlySummaryScreen by remember { mutableStateOf(openMonthlySummary) }
+    var pendingMonthlySummary by remember { mutableStateOf<MonthlySummary?>(null) }
 
-    LaunchedEffect(openOnThisDay) {
+    LaunchedEffect(openOnThisDay, openMonthlySummary) {
         if (openOnThisDay) {
             showNotificationScreen = false
             showOnThisDayScreen = true
+        }
+        if (openMonthlySummary) {
+            showNotificationScreen = false
+            showOnThisDayScreen = false
+            showMonthlySummaryScreen = true
         }
     }
     var showBudgetDialog by remember(currentUserId) { mutableStateOf(false) }
@@ -303,6 +328,15 @@ fun AmarHisabApp(
         }
     }
     var sharingSearchQuery by remember { mutableStateOf<String?>(null) }
+    val monthlyPdfExportLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.CreateDocument("application/pdf")) { uri: Uri? ->
+        uri?.let {
+            pendingMonthlySummary?.let { summary ->
+                ReportExporter.exportMonthlySummaryToPdf(context, it, summary, usdToBdt, usdToMvr)
+            }
+        }
+        pendingMonthlySummary = null
+    }
+
     val searchPdfExportLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.CreateDocument("application/pdf")) { uri: Uri? ->
         uri?.let {
             sharingSearchQuery?.let { query -> viewModel.exportSearchResultsPdf(context, it, query) }
@@ -310,10 +344,11 @@ fun AmarHisabApp(
     }
 
     BackHandler(
-        enabled = showCalendarScreen || showCalculatorScreen || showShoppingList || showVehicleModule || showOnThisDayScreen || showNotificationScreen || showSettingsScreen || settingsSubView != null || selectedTab != 0 || isSearchActive
+        enabled = showCalendarScreen || showCalculatorScreen || showShoppingList || showVehicleModule || showOnThisDayScreen || showNotificationScreen || showMonthlySummaryScreen || showSettingsScreen || settingsSubView != null || selectedTab != 0 || isSearchActive
     ) {
         when {
             showOnThisDayScreen -> showOnThisDayScreen = false
+            showMonthlySummaryScreen -> showMonthlySummaryScreen = false
             showCalendarScreen -> showCalendarScreen = false
             showCalculatorScreen -> showCalculatorScreen = false
             showShoppingList -> showShoppingList = false
@@ -331,7 +366,7 @@ fun AmarHisabApp(
     Scaffold(
         modifier = Modifier.nestedScroll(topBarScrollBehavior.nestedScrollConnection),
         topBar = {
-            if (!showCalendarScreen && !showCalculatorScreen && !showShoppingList && !showNotificationScreen && !showSettingsScreen && !isSearchActive) {
+            if (!showCalendarScreen && !showCalculatorScreen && !showShoppingList && !showNotificationScreen && !showMonthlySummaryScreen && !showSettingsScreen && !isSearchActive) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     CenterAlignedTopAppBar(
                         scrollBehavior = topBarScrollBehavior,
@@ -370,7 +405,7 @@ fun AmarHisabApp(
             }
         },
         bottomBar = {
-            if (!showCalendarScreen && !showCalculatorScreen && !showShoppingList && !showNotificationScreen && !showSettingsScreen && !isSearchActive) {
+            if (!showCalendarScreen && !showCalculatorScreen && !showShoppingList && !showNotificationScreen && !showMonthlySummaryScreen && !showSettingsScreen && !isSearchActive) {
                 AnimatedVisibility(
                     visible = topBarScrollBehavior.state.collapsedFraction < 0.5f,
                     enter = slideInVertically(initialOffsetY = { it }),
@@ -386,8 +421,26 @@ fun AmarHisabApp(
         }
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            BirthdayPopupCheck(currentUserId, birthday)
-            when (selectedTab) {
+            if (showMonthlySummaryScreen) {
+                val (cycleStart, cycleEnd) = MonthlySummaryUtils.currentCycle()
+                val monthlySummary = remember(transactions, showMonthlySummaryScreen) {
+                    MonthlySummaryUtils.forPeriod(transactions, cycleStart, cycleEnd)
+                }
+                MonthlySummaryScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    summary = monthlySummary,
+                    wallets = wallets,
+                    usdToBdt = usdToBdt,
+                    usdToMvr = usdToMvr,
+                    onBack = { showMonthlySummaryScreen = false },
+                    onDownloadPdf = { summary ->
+                        pendingMonthlySummary = summary
+                        monthlyPdfExportLauncher.launch("AmarHisab_Monthly_Summary.pdf")
+                    }
+                )
+            } else {
+                BirthdayPopupCheck(currentUserId, birthday)
+                when (selectedTab) {
                 0 -> HomeScreen(
                     Modifier.fillMaxSize(), currentUserId, viewModel.balance, viewModel.totalIncome, viewModel.totalExpense,
                     viewModel.totalHome, viewModel.totalHomeExpense, viewModel.homeBalance, viewModel.totalLoanReceived,
@@ -436,6 +489,7 @@ fun AmarHisabApp(
                         else { val text = viewModel.getLendingStatement(lending); val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(android.content.Intent.EXTRA_TEXT, text) }; context.startActivity(android.content.Intent.createChooser(intent, "Share via")) }
                     }, searchQuery = globalSearchQuery
                 )
+                }
             }
 
             if (showSettingsScreen) {
@@ -464,7 +518,7 @@ fun AmarHisabApp(
 
             if (showNotificationScreen) {
                 Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-                    NotificationScreen(notifications = notifications, onNotificationClick = { notification -> if (notification.type.equals("on_this_day", ignoreCase = true)) { showNotificationScreen = false; showOnThisDayScreen = true } })
+                    NotificationScreen(notifications = notifications, onNotificationClick = { notification -> if (notification.type.equals("on_this_day", ignoreCase = true)) { showNotificationScreen = false; showOnThisDayScreen = true } else if (notification.type.equals("monthly_recap", ignoreCase = true)) { showNotificationScreen = false; showMonthlySummaryScreen = true } })
                     IconButton(onClick = { showNotificationScreen = false }, modifier = Modifier.padding(16.dp).align(Alignment.TopStart)) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
                 }
             }
