@@ -1244,8 +1244,6 @@ fun AddTransactionDialog(
                         Modifier.height(20.dp)
                     )
 
-                    MoneyShortLabel(amount)
-
                     OutlinedTextField(
                         value = amount,
                     
@@ -1279,6 +1277,13 @@ fun AddTransactionDialog(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(17.dp)
                     )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        MoneyShortLabel(amount)
+                    }
 
                     Spacer(
                         Modifier.height(11.dp)
