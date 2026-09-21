@@ -254,7 +254,7 @@ fun AddPartScreen(
 
                         OutlinedTextField(
                             value = cost,
-                            trailingContent = { MoneyShortLabel(cost) },
+                            trailingIcon = { MoneyShortLabel(cost) },
                             onValueChange = {
                                 if (
                                     it.isEmpty() ||
