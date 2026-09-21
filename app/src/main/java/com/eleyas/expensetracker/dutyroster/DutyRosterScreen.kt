@@ -105,6 +105,12 @@ fun DutyRosterScreen(
 
     val todayIso = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Calendar.getInstance().time)
     val today = activeDays.firstOrNull { it.dateIso == todayIso }
+    val lastRosterDay = activeDays.maxByOrNull { it.dateIso }
+    val isFinalRosterDay =
+        savedRoster != null &&
+                draftDays == null &&
+                today != null &&
+                lastRosterDay?.dateIso == today.dateIso
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -262,6 +268,92 @@ fun DutyRosterScreen(
                                         savedRoster?.notificationMinute ?: 30
                                     )
                                 )
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (isFinalRosterDay) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(22.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        ),
+                        border = BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.30f)
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(17.dp),
+                            verticalArrangement = Arrangement.spacedBy(11.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(13.dp),
+                                    color = MaterialTheme.colorScheme.secondary
+                                ) {
+                                    Icon(
+                                        Icons.Default.EventNote,
+                                        contentDescription = null,
+                                        modifier = Modifier.padding(10.dp),
+                                        tint = MaterialTheme.colorScheme.onSecondary
+                                    )
+                                }
+
+                                Spacer(Modifier.width(11.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        "Roster শেষ দিন",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        "আজকের রাতেই নতুন roster upload করুন",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                }
+
+                                Surface(
+                                    shape = RoundedCornerShape(50.dp),
+                                    color = MaterialTheme.colorScheme.secondary
+                                ) {
+                                    Text(
+                                        "ACTION",
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSecondary
+                                    )
+                                }
+                            }
+
+                            Text(
+                                "পুরোনো roster শেষ হওয়ার আগেই নতুন roster scan করে save করলে পরের duty cycle ready থাকবে।",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+
+                            Button(
+                                onClick = { launcher.launch("image/*") },
+                                enabled = !scanning,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.CloudUpload,
+                                    contentDescription = null
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text("Upload New Roster")
                             }
                         }
                     }
