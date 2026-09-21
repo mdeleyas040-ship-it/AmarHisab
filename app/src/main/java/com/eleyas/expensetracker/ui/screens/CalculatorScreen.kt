@@ -87,9 +87,9 @@ fun CalculatorScreen(
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text("লোনের তথ্য দিন", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         
-                        OutlinedTextField(
-                            value = principalText,
-                            trailingIcon = { MoneyShortLabel(principalText) },
+                        MoneyShortLabel(principalText)
+                                                    OutlinedTextField(\n                            value = principalText, 
+                            
                             onValueChange = { principalText = it },
                             label = { Text("লোনের পরিমাণ (Principal)") },
                             placeholder = { Text("যেমন: 1,00,000") },
