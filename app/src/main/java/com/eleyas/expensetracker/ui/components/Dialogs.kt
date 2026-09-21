@@ -766,7 +766,7 @@ fun AddTransactionDialog(
         Double,
         String,
         String,
-        Double
+        Long?
     ) -> Boolean = { _, _, _, _, _, _, _, _, _ -> true }
 ) {
     val context = LocalContext.current
