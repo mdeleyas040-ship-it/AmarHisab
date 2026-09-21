@@ -61,6 +61,13 @@
 
         </activity>
 
+        <!-- Meal reminder detail screen -->
+        <activity
+            android:name=".meal.MealDetailsActivity"
+            android:exported="false"
+            android:label="আজকের খাবারের তালিকা"
+            android:theme="@style/Theme.AmarHisab" />
+
         <service
             android:name=".QuickEntryTileService"
             android:icon="@drawable/ic_notification_calendar"
@@ -138,6 +145,19 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="com.eleyas.expensetracker.ACTION_DUTY_ROSTER" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Meal reminders: 7:00 AM, 11:00 AM, 6:00 PM -->
+        <receiver
+            android:name=".meal.MealReminderReceiver"
+            android:enabled="true"
+            android:exported="false">
+
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="com.eleyas.expensetracker.ACTION_MEAL_REMINDER" />
             </intent-filter>
         </receiver>
 
