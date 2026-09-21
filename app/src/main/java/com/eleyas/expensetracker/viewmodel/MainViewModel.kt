@@ -1535,7 +1535,7 @@ class MainViewModel : ViewModel() {
             // Loan হিসেবে ঢুকবে। তারপর একই পুরো Loan amount Personal → Home
             // transfer হবে। তাই shortage-এর চেয়ে বেশি Loan নিলে extra অংশও
             // Home-এ থেকে যাবে।
-            val shortageLoanId = System.currentTimeMillis()
+            val shortageLoanId = System.nanoTime()
             val shortageTransferId = shortageLoanId + 1L
 
             val shortageLoan = LoanAccount(
