@@ -280,6 +280,45 @@ class AccountingLogicRegressionTest {
     }
 
     @Test
+    fun shortageLoanAboveMinimumTransfersFullAmountToHome() {
+        val shortage = 20_000.0
+        val newLoan = loan(10, 30_000.0)
+        val homeEntries = HomeLedgerEngine.build(
+            transactions = listOf(
+                tx(1, "home", 25_000.0),
+                tx(2, "home", 5_000.0),
+                tx(3, "home", 30_000.0)
+            ),
+            loans = listOf(newLoan),
+            loanPayments = listOf(
+                payment(1, 1, 50_000.0, "home")
+            ),
+            lendings = emptyList(),
+            lendingReturns = emptyList()
+        )
+
+        val homeSummary = HomeLedgerEngine.summarize(homeEntries)
+
+        // Shortage is 20,000, but the user borrowed 30,000.
+        // The full 30,000 enters Home, leaving 10,000 in Home.
+        assertEquals(10_000.0, homeSummary.balance, 0.001)
+
+        // The new loan enters Personal, then the full 30,000 Home transfer
+        // removes the same amount from Personal. Net Personal effect is zero.
+        assertEquals(
+            0.0,
+            personalBalance(
+                loans = listOf(newLoan),
+                transactions = listOf(tx(3, "home", 30_000.0))
+            ),
+            0.001
+        )
+
+        assertEquals(true, newLoan.fundSource == "personal")
+        assertEquals(true, shortage < newLoan.principal)
+    }
+
+    @Test
     fun homeTransferPlusExtraCanCoverHomeLoanShortage() {
         val entries = HomeLedgerEngine.build(
             transactions = listOf(
