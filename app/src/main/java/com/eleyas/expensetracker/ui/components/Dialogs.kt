@@ -2067,7 +2067,12 @@ fun AddTransactionDialog(
                                         null
                                     }
 
-                                val extraAmount = 0.0
+                                val extraAmount =
+                                    extraHomeAmount
+                                        .replace(",", "")
+                                        .trim()
+                                        .toDoubleOrNull()
+                                        ?: 0.0
 
                                 val shortage =
                                     if (
@@ -2100,10 +2105,14 @@ fun AddTransactionDialog(
                                         return@Button
                                     }
 
-                                    if (shortage > 0.0) {
+                                    if (shortage > 0.0 &&
+                                        extraAmount + 0.000001 < shortage
+                                    ) {
                                         WarningPopupManager.show(
-                                            title = "Home balance যথেষ্ট নয়",
-                                            message = "এই Loan payment-এর জন্য আরও ৳" + formatMoney(shortage) + " Home fund প্রয়োজন। Home Adjustment দিয়ে কৃত্রিমভাবে balance বাড়ানো যাবে না।"
+                                            title = "Extra / Adjustment কম",
+                                            message = "Home balance কম পড়ছে ৳" + formatMoney(shortage) +
+                                                    "। কমপক্ষে ৳" + formatMoney(shortage) +
+                                                    " Extra / Adjustment দিন।"
                                         )
 
                                         return@Button
