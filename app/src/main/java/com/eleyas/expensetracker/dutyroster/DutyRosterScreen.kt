@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +30,8 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -158,7 +161,11 @@ fun DutyRosterScreen(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    border = BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.20f)
+                    )
                 ) {
                     Column(
                         modifier = Modifier.padding(20.dp),
@@ -215,6 +222,30 @@ fun DutyRosterScreen(
                         }
 
                         if (savedRoster != null) {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 11.dp, vertical = 9.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        "Roster active • Daily reminder enabled",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
+                            }
+
                             HorizontalDivider(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)
                             )
@@ -466,11 +497,26 @@ private fun TodayDutyCard(
                 Spacer(Modifier.width(12.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        "Today's Duty",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "Today's Duty",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(50.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        ) {
+                            Text(
+                                "LIVE",
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
                     Text(
                         today.displayDate,
                         style = MaterialTheme.typography.labelSmall,
@@ -701,7 +747,11 @@ private fun RosterPersonRow(
                 MaterialTheme.colorScheme.primaryContainer
             else
                 MaterialTheme.colorScheme.surface
-        )
+        ),
+        border = if (isMe)
+            BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.28f))
+        else
+            null
     ) {
         Row(
             modifier = Modifier
@@ -783,22 +833,30 @@ private fun DutyChips(duty: String) {
         parts.take(2).forEachIndexed { index, part ->
             AssistChip(
                 onClick = {},
-                enabled = false,
                 label = {
                     Text(
                         if (parts.size > 1)
                             if (index == 0) "AM  ${part}" else "PM  ${part}"
                         else
-                            part
+                            part,
+                        fontWeight = FontWeight.SemiBold
                     )
                 },
                 leadingIcon = {
                     Icon(Icons.Default.AccessTime, contentDescription = null)
                 },
                 colors = AssistChipDefaults.assistChipColors(
-                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    disabledLabelColor = MaterialTheme.colorScheme.onSurface,
-                    disabledLeadingIconContentColor = MaterialTheme.colorScheme.primary
+                    containerColor = when {
+                        parts.size <= 1 -> MaterialTheme.colorScheme.surfaceVariant
+                        index == 0 -> MaterialTheme.colorScheme.primaryContainer
+                        else -> MaterialTheme.colorScheme.secondaryContainer
+                    },
+                    labelColor = MaterialTheme.colorScheme.onSurface,
+                    leadingIconContentColor = when {
+                        parts.size <= 1 -> MaterialTheme.colorScheme.primary
+                        index == 0 -> MaterialTheme.colorScheme.primary
+                        else -> MaterialTheme.colorScheme.secondary
+                    }
                 )
             )
         }
@@ -818,7 +876,11 @@ private fun DutyHighlight(
         color = if (highlighted)
             MaterialTheme.colorScheme.primaryContainer
         else
-            MaterialTheme.colorScheme.surfaceVariant
+            MaterialTheme.colorScheme.surfaceVariant,
+        border = if (highlighted)
+            BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.30f))
+        else
+            null
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -828,7 +890,7 @@ private fun DutyHighlight(
             Spacer(Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    title,
+                    if (highlighted) "YOUR DUTY" else title,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
