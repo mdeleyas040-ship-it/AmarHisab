@@ -1388,9 +1388,16 @@ class MainViewModel : ViewModel() {
      * Home → Loan payment-এর জন্য available Home balance যাচাই।
      * Extra ছাড়া shortage থাকলে payment save হবে না।
      */
-    fun getHomeLoanShortage(amount: Double): Double {
+    fun getHomeLoanShortage(
+        amount: Double,
+        additionalHomeAmount: Double = 0.0
+    ): Double {
         if (amount <= 0.0) return 0.0
-        return (amount - homeBalance).coerceAtLeast(0.0)
+
+        val availableHome =
+            homeBalance + additionalHomeAmount.coerceAtLeast(0.0)
+
+        return (amount - availableHome).coerceAtLeast(0.0)
     }
 
     /**
@@ -1459,6 +1466,7 @@ class MainViewModel : ViewModel() {
         date: String,
         note: String,
         extraHomeAmount: Double,
+        additionalHomeAmount: Double = 0.0,
         sourceTransactionId: Long? = null
     ): Boolean {
         if (amount <= 0.0) {
@@ -1496,7 +1504,10 @@ class MainViewModel : ViewModel() {
             return false
         }
 
-        val shortage = getHomeLoanShortage(amount)
+        val shortage = getHomeLoanShortage(
+            amount = amount,
+            additionalHomeAmount = additionalHomeAmount
+        )
         if (shortage > 0.000001) {
             if (extraHomeAmount + 0.000001 < shortage) {
                 WarningPopupManager.show(
