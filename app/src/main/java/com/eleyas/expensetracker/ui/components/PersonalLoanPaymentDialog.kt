@@ -174,6 +174,7 @@ fun PersonalLoanPaymentDialog(
                                 Spacer(Modifier.height(13.dp))
                                 OutlinedTextField(
                                     value = amount,
+                                    trailingContent = { MoneyShortLabel(amount) },
                                     onValueChange = { amount = it },
                                     modifier = Modifier.fillMaxWidth(),
                                     label = { Text("পরিশোধের টাকা") },
