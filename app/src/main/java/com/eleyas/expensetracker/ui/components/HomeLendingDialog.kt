@@ -144,8 +144,8 @@ fun HomeLendingDialog(
                         }
                     }
 
-                    OutlinedTextField(
-                        value = amount, onValueChange = { amount = it }, trailingIcon = { MoneyShortLabel(amount) }, modifier = Modifier.fillMaxWidth(),
+                    MoneyShortLabel(amount)
+                                            OutlinedTextField(\n                        value = amount,  onValueChange = { amount = it },  modifier = Modifier.fillMaxWidth(),
                         label = { Text("ধারের টাকা") },
                         leadingIcon = { Text("৳", color = primary, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, shape = RoundedCornerShape(16.dp)
