@@ -161,6 +161,7 @@ fun PremiumLoanDialog(
                             Spacer(Modifier.height(7.dp))
                             OutlinedTextField(
                                 value = principal,
+                                trailingContent = { MoneyShortLabel(principal) },
                                 onValueChange = { principal = it },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
@@ -172,6 +173,7 @@ fun PremiumLoanDialog(
                             Spacer(Modifier.height(9.dp))
                             OutlinedTextField(
                                 value = installment,
+                                trailingContent = { MoneyShortLabel(installment) },
                                 onValueChange = { installment = it },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
