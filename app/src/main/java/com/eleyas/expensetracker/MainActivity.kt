@@ -2648,7 +2648,7 @@ fun AmarHisabApp(
                     editingTransaction = null
                 },
 
-                { id, a, d, extraHomeAmount, transactionId, homeTransferAmount ->
+                { id, a, d, extraHomeAmount, transactionId, homeTransferAmount, shortageLoanName, shortageLoanAmount ->
 
                     loans
                         .firstOrNull {
@@ -2664,7 +2664,9 @@ fun AmarHisabApp(
                                 note = "বাড়িতে পাঠানো টাকা থেকে Loan payment",
                                 extraHomeAmount = extraHomeAmount,
                                 additionalHomeAmount = homeTransferAmount,
-                                sourceTransactionId = transactionId
+                                sourceTransactionId = transactionId,
+                                shortageLoanName = shortageLoanName,
+                                shortageLoanAmount = shortageLoanAmount
                             )
                         } ?: false
                 }
