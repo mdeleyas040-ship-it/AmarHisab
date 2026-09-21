@@ -88,7 +88,8 @@ fun CalculatorScreen(
                         Text("লোনের তথ্য দিন", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         
                         MoneyShortLabel(principalText)
-                                                    OutlinedTextField(\n                            value = principalText, 
+                                                    OutlinedTextField(
+                            value = principalText, 
                             
                             onValueChange = { principalText = it },
                             label = { Text("লোনের পরিমাণ (Principal)") },
