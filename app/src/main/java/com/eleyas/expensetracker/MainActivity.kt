@@ -2664,7 +2664,7 @@ fun AmarHisabApp(
                     editingTransaction = null
                 },
 
-                { id, a, d, extraHomeAmount, transactionId, homeTransferAmount, shortageLoanName, shortageLoanAmount ->
+                { id, a, d, extraHomeAmount, transactionId, homeTransferAmount, shortageSourceType, shortageSourceNote, shortageLoanId ->
 
                     loans
                         .firstOrNull {
@@ -2681,8 +2681,9 @@ fun AmarHisabApp(
                                 extraHomeAmount = extraHomeAmount,
                                 additionalHomeAmount = homeTransferAmount,
                                 sourceTransactionId = transactionId,
-                                shortageLoanName = shortageLoanName,
-                                shortageLoanAmount = shortageLoanAmount
+                                shortageSourceType = shortageSourceType,
+                                shortageSourceNote = shortageSourceNote,
+                                shortageLoanId = shortageLoanId
                             )
                         } ?: false
                 }
