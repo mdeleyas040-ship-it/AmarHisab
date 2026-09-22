@@ -677,6 +677,27 @@ class MainViewModel : ViewModel() {
         Toast.makeText(context, "✅ ধারের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
+    fun updateLending(
+        context: Context,
+        lending: LendingAccount,
+        person: String,
+        amount: Double,
+        date: String,
+        note: String,
+        dueDate: String?
+    ) {
+        val updated = lending.copy(
+            person = person,
+            amount = amount,
+            date = date,
+            note = note,
+            dueDate = dueDate
+        )
+        lendings = lendings.map { if (it.id == lending.id) updated else it }
+        persistLoanData(context)
+        Toast.makeText(context, "✅ ধার দেওয়ার তথ্য আপডেট হয়েছে", Toast.LENGTH_SHORT).show()
+    }
+
     fun addLendingReturn(context: Context, lending: LendingAccount, amount: Double, date: String, note: String) {
         val ret = LendingReturn(System.currentTimeMillis(), lending.id, amount, date, note)
         lendingReturns = lendingReturns + ret

@@ -769,6 +769,134 @@ fun LendingDialog(onDismiss: () -> Unit, onSave: (String, Double, String, String
     }
 }
 
+
+@Composable
+fun LendingEditDialog(
+    lending: LendingAccount,
+    onDismiss: () -> Unit,
+    onSave: (String, Double, String, String, String?) -> Unit
+) {
+    val context = LocalContext.current
+    var person by remember(lending.id) { mutableStateOf(lending.person) }
+    var amount by remember(lending.id) { mutableStateOf(formatMoney(lending.amount)) }
+    var date by remember(lending.id) { mutableStateOf(lending.date) }
+    var dueDate by remember(lending.id) { mutableStateOf(lending.dueDate ?: "") }
+    var note by remember(lending.id) { mutableStateOf(lending.note) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            shape = RoundedCornerShape(28.dp)
+        ) {
+            Column(Modifier.padding(20.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Edit, contentDescription = null, tint = Blue)
+                    Spacer(Modifier.width(8.dp))
+                    Column {
+                        Text("ধারের তথ্য এডিট", fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
+                        Text(lending.person, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = person,
+                    onValueChange = { person = it },
+                    label = { Text("ব্যক্তির নাম") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { amount = it },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    label = { Text("ধারের টাকা") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(10.dp))
+
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = {
+                            val calendar = Calendar.getInstance()
+                            try {
+                                SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(date)?.let { calendar.time = it }
+                            } catch (_: Exception) {}
+                            DatePickerDialog(
+                                context,
+                                { _, year, month, day -> date = "%02d/%02d/%04d".format(day, month + 1, year) },
+                                calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)
+                            ).show()
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Column(horizontalAlignment = Alignment.Start) {
+                            Text("দেওয়ার তারিখ", fontSize = 10.sp)
+                            Text(date, fontSize = 12.sp)
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            val calendar = Calendar.getInstance()
+                            try {
+                                if (dueDate.isNotBlank()) {
+                                    SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).parse(dueDate)?.let { calendar.time = it }
+                                }
+                            } catch (_: Exception) {}
+                            DatePickerDialog(
+                                context,
+                                { _, year, month, day -> dueDate = "%02d/%02d/%04d".format(day, month + 1, year) },
+                                calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)
+                            ).show()
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Column(horizontalAlignment = Alignment.Start) {
+                            Text("ফেরত পাওয়ার তারিখ", fontSize = 10.sp)
+                            Text(dueDate.ifBlank { "নির্ধারিত নয়" }, fontSize = 12.sp)
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text("নোট") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 3
+                )
+
+                Spacer(Modifier.height(14.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text("বাতিল") }
+                    Spacer(Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            val value = amount.replace(",", "").trim().toDoubleOrNull()
+                            if (person.isBlank() || value == null || value <= 0.0) {
+                                Toast.makeText(context, "নাম ও সঠিক টাকার পরিমাণ দিন।", Toast.LENGTH_SHORT).show()
+                            } else {
+                                onSave(person.trim(), value, date, note.trim(), dueDate.takeIf { it.isNotBlank() })
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Blue)
+                    ) {
+                        Icon(Icons.Default.Save, contentDescription = null)
+                        Spacer(Modifier.width(6.dp))
+                        Text("আপডেট করুন")
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun LendingReturnDialog(lending: LendingAccount, onDismiss: () -> Unit, onSave: (Double, String, String) -> Unit) {
     val context = LocalContext.current
