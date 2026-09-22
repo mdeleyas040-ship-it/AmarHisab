@@ -1167,7 +1167,17 @@ private fun LoanPremiumCard(
 
         Column(modifier = Modifier.padding(18.dp)) {
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+
+                if (loan.sourceType != "bank") {
+                    PersonProfileAvatar(
+                        personId = loan.personId,
+                        people = people,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(50.dp)
+                    )
+                    Spacer(Modifier.width(10.dp))
+                }
 
                 Column(modifier = Modifier.weight(1f)) {
 
