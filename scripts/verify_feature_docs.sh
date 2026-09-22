@@ -4,17 +4,17 @@ set -euo pipefail
 BASE_REF="${BASE_REF:-}"
 if [[ -z "$BASE_REF" ]]; then echo "BASE_REF is required."; exit 1; fi
 
+branch_name="${BRANCH_NAME:-$(git branch --show-current)}"
+if [[ "$branch_name" != feature/* ]]; then
+  echo "Branch $branch_name is not feature/*; feature-documentation gate not required."
+  exit 0
+fi
+
 git fetch origin "$BASE_REF" --depth=1 >/dev/null 2>&1 || true
 changed="$(git diff --name-only "origin/$BASE_REF...HEAD")"
 
 if ! echo "$changed" | grep -qE "^app/"; then
   echo "No app source change detected; feature documentation gate not required."
-  exit 0
-fi
-
-branch_name="${BRANCH_NAME:-$(git branch --show-current)}"
-if [[ "$branch_name" != feature/* ]]; then
-  echo "App code changed on $branch_name. Feature-documentation gate applies to feature/* branches only."
   exit 0
 fi
 
