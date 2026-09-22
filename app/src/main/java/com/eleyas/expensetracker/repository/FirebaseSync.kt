@@ -45,6 +45,7 @@ fun syncLoansToFirestore(
                 val loanData = mapOf(
                     "id" to loan.id,
                     "name" to loan.name,
+                    "personId" to (loan.personId ?: ""),
                     "sourceType" to loan.sourceType,
                     "principal" to loan.principal,
                     "monthlyInstallment" to loan.monthlyInstallment,
@@ -147,6 +148,7 @@ fun syncLendingsToFirestore(
                 val data = mapOf(
                     "id" to lending.id,
                     "person" to lending.person,
+                    "personId" to (lending.personId ?: ""),
                     "amount" to lending.amount,
                     "date" to lending.date,
                     "note" to lending.note,

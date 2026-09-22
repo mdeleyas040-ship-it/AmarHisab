@@ -49,6 +49,8 @@ class MainViewModel : ViewModel() {
         private set
     var loans by mutableStateOf<List<LoanAccount>>(emptyList())
         private set
+    var personProfiles by mutableStateOf<List<PersonProfile>>(emptyList())
+        private set
     var categoryBudgets by mutableStateOf<List<CategoryBudget>>(emptyList())
         private set
     var loanPayments by mutableStateOf<List<LoanPayment>>(emptyList())
@@ -1280,6 +1282,11 @@ class MainViewModel : ViewModel() {
         saveAutoBackup(context)
     }
 
+    fun loadPersonProfiles(context: Context) {
+        val profilePrefs = AccountStorage.getPrefs(context, currentUserId)
+        personProfiles = com.eleyas.expensetracker.util.loadPersonProfiles(profilePrefs)
+    }
+
     fun addLoan(
         context: Context,
         name: String,
@@ -1288,11 +1295,13 @@ class MainViewModel : ViewModel() {
         monthly: Double,
         date: String,
         note: String,
-        dueDate: String? = null
+        dueDate: String? = null,
+        personId: String? = null
     ): LoanAccount {
         val newLoan = LoanAccount(
             id = System.currentTimeMillis(),
             name = name,
+            personId = personId,
             sourceType = type,
             principal = amount,
             monthlyInstallment = monthly,
@@ -1876,7 +1885,8 @@ class MainViewModel : ViewModel() {
         date: String,
         note: String,
         dueDate: String? = null,
-        fundSource: String = "personal"
+        fundSource: String = "personal",
+        personId: String? = null
     ) {
         val resolvedSource =
             if (fundSource.equals("home", ignoreCase = true) ||
@@ -1893,7 +1903,8 @@ class MainViewModel : ViewModel() {
             date,
             note,
             dueDate = dueDate,
-            fundSource = resolvedSource
+            fundSource = resolvedSource,
+            personId = personId
         )
         lendings = lendings + lending
         persistLoanData(context)

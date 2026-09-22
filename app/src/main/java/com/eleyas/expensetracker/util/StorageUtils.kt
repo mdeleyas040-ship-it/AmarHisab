@@ -71,6 +71,53 @@ import androidx.compose.runtime.setValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Redeem
 
+
+private const val PERSON_PROFILES_KEY = "person_profiles_v1"
+
+fun savePersonProfiles(prefs: SharedPreferences, people: List<PersonProfile>) {
+    val array = JSONArray()
+    people.forEach { person ->
+        array.put(JSONObject().apply {
+            put("id", person.id)
+            put("name", person.name)
+            put("photoUri", person.photoUri ?: "")
+            put("phone", person.phone)
+            put("note", person.note)
+            put("createdAt", person.createdAt)
+            put("updatedAt", person.updatedAt)
+        })
+    }
+    prefs.edit().putString(PERSON_PROFILES_KEY, array.toString()).apply()
+}
+
+fun loadPersonProfiles(prefs: SharedPreferences): List<PersonProfile> = try {
+    val array = JSONArray(prefs.getString(PERSON_PROFILES_KEY, "[]") ?: "[]")
+    List(array.length()) { index ->
+        val o = array.getJSONObject(index)
+        PersonProfile(
+            id = o.getString("id"),
+            name = o.getString("name"),
+            photoUri = o.optString("photoUri").takeIf { it.isNotBlank() },
+            phone = o.optString("phone"),
+            note = o.optString("note"),
+            createdAt = o.optLong("createdAt", System.currentTimeMillis()),
+            updatedAt = o.optLong("updatedAt", System.currentTimeMillis())
+        )
+    }
+} catch (_: Exception) { emptyList() }
+
+fun upsertPersonProfile(prefs: SharedPreferences, person: PersonProfile) {
+    val people = loadPersonProfiles(prefs).filterNot { it.id == person.id } + person
+    savePersonProfiles(prefs, people)
+}
+
+fun deletePersonProfile(prefs: SharedPreferences, personId: String) {
+    savePersonProfiles(prefs, loadPersonProfiles(prefs).filterNot { it.id == personId })
+}
+
+fun findPersonProfileByName(prefs: SharedPreferences, name: String): PersonProfile? =
+    loadPersonProfiles(prefs).firstOrNull { it.name.trim().equals(name.trim(), ignoreCase = true) }
+
 fun saveCategoryBudgets(
     prefs: SharedPreferences,
     budgets: List<CategoryBudget>
@@ -530,6 +577,7 @@ fun saveLoans(
             JSONObject().apply {
                 put("id", loan.id)
                 put("name", loan.name)
+                put("personId", loan.personId ?: "")
                 put(
                     "sourceType",
                     loan.sourceType
@@ -833,6 +881,10 @@ fun saveLendings(
                 put(
                     "person",
                     lending.person
+                )
+                put(
+                    "personId",
+                    lending.personId ?: ""
                 )
                 put(
                     "amount",
@@ -1787,6 +1839,8 @@ fun parseBackupJson(
                             history,
                         borrowings =
                             borrowings,
+                        personId =
+                            o.optString("personId").takeIf { it.isNotBlank() },
                         dueDate =
                             o.optString(
                                 "dueDate"
@@ -1884,6 +1938,8 @@ fun parseBackupJson(
                             o.getLong("id"),
                         person =
                             o.getString("person"),
+                        personId =
+                            o.optString("personId").takeIf { it.isNotBlank() },
                         amount =
                             o.getDouble(
                                 "amount"

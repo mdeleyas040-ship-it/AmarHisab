@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.eleyas.expensetracker.model.*
+import com.eleyas.expensetracker.util.persistPersonProfilePhoto
 import com.eleyas.expensetracker.ui.theme.*
 import com.eleyas.expensetracker.util.*
 import kotlinx.coroutines.launch
@@ -3394,7 +3395,9 @@ fun LendingDialog(
         String,
         String?,
         String
-    ) -> Unit
+    ) -> Unit,
+    people: List<PersonProfile> = emptyList(),
+    onProfilePhotoSaved: (PersonProfile) -> Unit = {}
 ) {
     val context = LocalContext.current
 
@@ -3402,8 +3405,18 @@ fun LendingDialog(
     val lendTealDark = Color(0xFF078B78)
     val lendTealSoft = Color(0xFF102A2A)
 
-    var person by remember {
-        mutableStateOf("")
+    var person by remember { mutableStateOf("") }
+    var selectedPersonId by remember { mutableStateOf<String?>(null) }
+    var showPeople by remember { mutableStateOf(false) }
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null && person.isNotBlank()) {
+            val path = persistPersonProfilePhoto(context, uri)
+            if (path != null) {
+                val id = selectedPersonId ?: java.util.UUID.randomUUID().toString()
+                selectedPersonId = id
+                onProfilePhotoSaved(PersonProfile(id = id, name = person.trim(), photoUri = path))
+            }
+        }
     }
 
     var amount by remember {
@@ -3695,6 +3708,8 @@ fun LendingDialog(
                         value = person,
                         onValueChange = {
                             person = it
+                            selectedPersonId = people.firstOrNull { p -> p.name.equals(it.trim(), ignoreCase = true) }?.id
+                            showPeople = true
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -3720,6 +3735,39 @@ fun LendingDialog(
                             cursorColor = lendTeal
                         )
                     )
+                }
+
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(onClick = { showPeople = !showPeople }, modifier = Modifier.weight(1f)) {
+                            Icon(Icons.Default.Person, null)
+                            Spacer(Modifier.width(5.dp))
+                            Text("আগের ব্যক্তি")
+                        }
+                        OutlinedButton(onClick = { photoPicker.launch("image/*") }, modifier = Modifier.weight(1f)) {
+                            Icon(Icons.Default.AddAPhoto, null)
+                            Spacer(Modifier.width(5.dp))
+                            Text("ছবি যোগ")
+                        }
+                    }
+                    if (showPeople && people.isNotEmpty()) {
+                        Card(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+                            Column(Modifier.padding(8.dp)) {
+                                people.filter { person.isBlank() || it.name.contains(person, true) }.take(5).forEach { p ->
+                                    TextButton(onClick = {
+                                        person = p.name
+                                        selectedPersonId = p.id
+                                        showPeople = false
+                                    }, modifier = Modifier.fillMaxWidth()) {
+                                        Text(p.name, modifier = Modifier.fillMaxWidth())
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // =========================================================

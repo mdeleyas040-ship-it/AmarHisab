@@ -53,10 +53,21 @@ data class FinancialMilestone(
     val linkedTransactionId: Long? = null
 )
 
+data class PersonProfile(
+    val id: String,
+    val name: String,
+    val photoUri: String? = null,
+    val phone: String = "",
+    val note: String = "",
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = createdAt
+)
+
 data class BackupData(
     val transactions: List<Transaction>,
     val usdToBdt: Double,
     val usdToMvr: Double,
+    val people: List<PersonProfile> = emptyList(),
     val loans: List<LoanAccount> = emptyList(),
     val loanPayments: List<LoanPayment> = emptyList(),
     val lendings: List<LendingAccount> = emptyList(),
@@ -91,7 +102,9 @@ data class LoanAccount(
     val borrowings: List<LoanBorrowing> = emptyList(),
     val dueDate: String? = null,
     // Fund that actually received the loan principal. Old records default to personal.
-    val fundSource: String = "personal"
+    val fundSource: String = "personal",
+    // Optional stable link to a reusable person profile. Legacy records remain null.
+    val personId: String? = null
 )
 
 data class LoanPayment(
@@ -115,7 +128,9 @@ data class LendingAccount(
     val note: String,
     val dueDate: String? = null,
     val fundSource: String = "personal",
-    val currency: String = "BDT"
+    val currency: String = "BDT",
+    // Optional stable link to a reusable person profile. Legacy records remain null.
+    val personId: String? = null
 )
 
 data class LendingReturn(

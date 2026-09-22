@@ -307,6 +307,9 @@ fun AmarHisabApp(
 
     val transactions = viewModel.transactions
     val loans = viewModel.loans
+    LaunchedEffect(currentUserId) {
+        viewModel.loadPersonProfiles(context)
+    }
     val categoryBudgets = viewModel.categoryBudgets
     val loanPayments = viewModel.loanPayments
     val loanInterestTerms = viewModel.loanInterestTerms
@@ -2311,6 +2314,11 @@ fun AmarHisabApp(
 
         if (showLendingDialog) {
             LendingDialog(
+                people = viewModel.personProfiles,
+                onProfilePhotoSaved = { profile ->
+                    upsertPersonProfile(prefs, profile)
+                    viewModel.loadPersonProfiles(context)
+                },
                 onDismiss = {
                     showLendingDialog = false
                 },
@@ -2322,7 +2330,8 @@ fun AmarHisabApp(
                         date = date,
                         note = note,
                         dueDate = dueDate,
-                        fundSource = source
+                        fundSource = source,
+                        personId = viewModel.personProfiles.firstOrNull { it.name.equals(person.trim(), ignoreCase = true) }?.id
                     )
                     showLendingDialog = false
                 }
