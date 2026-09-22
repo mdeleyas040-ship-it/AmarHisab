@@ -186,6 +186,11 @@ class MainViewModel : ViewModel() {
         NotificationStorage.save(context, notifications, currentUserId)
     }
 
+    fun clearAllNotifications(context: Context) {
+        notifications = emptyList()
+        NotificationStorage.save(context, notifications, currentUserId)
+    }
+
     private fun setupFirestoreListeners(userId: String) {
         cloudLoading = true
         
