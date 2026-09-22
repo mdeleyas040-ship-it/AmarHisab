@@ -44,6 +44,8 @@ import java.util.*
 import com.eleyas.expensetracker.ui.vehicle.VehicleModule
 import com.eleyas.expensetracker.ui.birthday.BirthdayScreen
 import com.eleyas.expensetracker.ui.screens.ZakatCharityScreen
+import com.eleyas.expensetracker.dutyroster.DutyRosterNotification
+import com.eleyas.expensetracker.dutyroster.DutyRosterScreen
 import com.eleyas.expensetracker.ui.screens.MonthlySummaryScreen
 import com.eleyas.expensetracker.util.MonthlySummary
 import com.eleyas.expensetracker.util.MonthlySummaryUtils
@@ -63,12 +65,16 @@ class MainActivity : FragmentActivity() {
     var quickEntryType by mutableStateOf<String?>(null)
         private set
 
+    var openDutyRoster by mutableStateOf(false)
+        private set
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         openOnThisDay = shouldOpenOnThisDay(intent)
         openMonthlySummary = shouldOpenMonthlySummary(intent)
         quickEntryType = QuickEntryManager.entryTypeFrom(intent)
+        openDutyRoster = intent?.getBooleanExtra(DutyRosterNotification.EXTRA_OPEN_DUTY_ROSTER, false) == true
 
         createNotificationChannel()
         SmartReminderScheduler.createNotificationChannel(this)
@@ -91,6 +97,8 @@ class MainActivity : FragmentActivity() {
                     openOnThisDay = openOnThisDay,
                     openMonthlySummary = openMonthlySummary,
                     quickEntryType = quickEntryType,
+                    openDutyRoster = openDutyRoster,
+                    onDutyRosterHandled = { openDutyRoster = false },
                     onQuickEntryHandled = {
                         quickEntryType = null
                     }
@@ -113,6 +121,7 @@ class MainActivity : FragmentActivity() {
             openMonthlySummary = true
         }
         quickEntryType = QuickEntryManager.entryTypeFrom(intent)
+        if (intent?.getBooleanExtra(DutyRosterNotification.EXTRA_OPEN_DUTY_ROSTER, false) == true) openDutyRoster = true
     }
 
     private fun shouldOpenMonthlySummary(intent: android.content.Intent?): Boolean =
@@ -161,6 +170,8 @@ fun AuthGate(
     openOnThisDay: Boolean = false,
     openMonthlySummary: Boolean = false,
     quickEntryType: String? = null,
+    openDutyRoster: Boolean = false,
+    onDutyRosterHandled: () -> Unit = {},
     onQuickEntryHandled: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -198,6 +209,8 @@ fun AuthGate(
             openOnThisDay = openOnThisDay,
             openMonthlySummary = openMonthlySummary,
             quickEntryType = quickEntryType,
+            openDutyRoster = openDutyRoster,
+            onDutyRosterHandled = onDutyRosterHandled,
             onQuickEntryHandled = onQuickEntryHandled,
             onLogout = {
                 FirebaseAuth.getInstance().signOut()
@@ -236,6 +249,8 @@ fun AmarHisabApp(
     openOnThisDay: Boolean = false,
     openMonthlySummary: Boolean = false,
     quickEntryType: String? = null,
+    openDutyRoster: Boolean = false,
+    onDutyRosterHandled: () -> Unit = {},
     onQuickEntryHandled: () -> Unit = {},
     onLogout: () -> Unit
 ) {
@@ -270,6 +285,8 @@ fun AmarHisabApp(
         RecapNotificationManager.scheduleMonthlyRecap(
             context
         )
+        DutyRosterNotification.createChannel(context)
+        DutyRosterNotification.schedule(context)
 
         SmartReminderScheduler.scheduleNext(
             context
@@ -408,6 +425,15 @@ fun AmarHisabApp(
 
     var showRemittanceHistoryScreen by remember {
         mutableStateOf(false)
+    }
+
+    var showDutyRosterScreen by remember { mutableStateOf(false) }
+
+    LaunchedEffect(openDutyRoster) {
+        if (openDutyRoster) {
+            showDutyRosterScreen = true
+            onDutyRosterHandled()
+        }
     }
 
     var addType by remember(currentUserId) {
@@ -1081,6 +1107,7 @@ fun AmarHisabApp(
             showBirthdayScreen ||
                     showZakatCharityScreen ||
                     showRemittanceHistoryScreen ||
+                    showDutyRosterScreen ||
                     showCalendarScreen ||
                     showCalculatorScreen ||
                     showShoppingList ||
@@ -1107,6 +1134,9 @@ fun AmarHisabApp(
 
             showRemittanceHistoryScreen ->
                 showRemittanceHistoryScreen = false
+
+            showDutyRosterScreen ->
+                showDutyRosterScreen = false
 
             showOnThisDayScreen ->
                 showOnThisDayScreen = false
@@ -1169,6 +1199,7 @@ fun AmarHisabApp(
                 !showBirthdayScreen &&
                 !showZakatCharityScreen &&
                 !showRemittanceHistoryScreen &&
+                !showDutyRosterScreen &&
                 !showCalendarScreen &&
                 !showCalculatorScreen &&
                 !showShoppingList &&
@@ -1251,6 +1282,10 @@ fun AmarHisabApp(
 
                                     onRemittanceHistory = {
                                         showRemittanceHistoryScreen = true
+                                    },
+
+                                    onDutyRoster = {
+                                        showDutyRosterScreen = true
                                     },
 
                                     onSettings = {
@@ -1747,6 +1782,13 @@ fun AmarHisabApp(
                     onBack = {
                         showRemittanceHistoryScreen = false
                     }
+                )
+            }
+
+            if (showDutyRosterScreen) {
+                DutyRosterScreen(
+                    context = context,
+                    onBack = { showDutyRosterScreen = false }
                 )
             }
 
