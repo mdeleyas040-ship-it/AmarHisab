@@ -705,6 +705,13 @@ class MainViewModel : ViewModel() {
         Toast.makeText(context, "✅ ধার ফেরতের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
     }
 
+    fun deleteLending(context: Context, lending: LendingAccount) {
+        lendings = lendings.filter { it.id != lending.id }
+        lendingReturns = lendingReturns.filter { it.lendingId != lending.id }
+        persistLoanData(context)
+        Toast.makeText(context, "🗑️ ধারের তথ্য ও ফেরত history মুছে ফেলা হয়েছে", Toast.LENGTH_SHORT).show()
+    }
+
     fun updateBorrowing(context: Context, loan: LoanAccount, borrowing: LoanBorrowing, amount: Double, date: String, note: String) {
         val updatedBorrowing = borrowing.copy(amount = amount, date = date, note = note)
         val updatedLoan = loan.copy(borrowings = loan.borrowings.map { if (it.id == borrowing.id) updatedBorrowing else it })
