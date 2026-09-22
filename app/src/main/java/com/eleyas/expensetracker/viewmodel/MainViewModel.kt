@@ -2165,7 +2165,8 @@ class MainViewModel : ViewModel() {
             loanPayments,
             lendings,
             lendingReturns,
-            wallets
+            wallets,
+            personProfiles
         )
     }
 
@@ -2286,13 +2287,14 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun updateCloudData(cloudTransactions: List<Transaction>, cloudLoans: List<LoanAccount>, cloudPayments: List<LoanPayment>, cloudLendings: List<LendingAccount>, cloudReturns: List<LendingReturn>, cloudWallets: List<Wallet> = emptyList()) {
+    fun updateCloudData(cloudTransactions: List<Transaction>, cloudLoans: List<LoanAccount>, cloudPayments: List<LoanPayment>, cloudLendings: List<LendingAccount>, cloudReturns: List<LendingReturn>, cloudWallets: List<Wallet> = emptyList(), cloudPeople: List<PersonProfile> = emptyList()) {
         personalTransactions = cloudTransactions
         loans = cloudLoans
         loanPayments = cloudPayments
         lendings = cloudLendings
         lendingReturns = cloudReturns
         if (cloudWallets.isNotEmpty()) wallets = cloudWallets
+        personProfiles = cloudPeople
 
         saveTransactions(prefs, transactions)
         saveLoans(prefs, loans)
