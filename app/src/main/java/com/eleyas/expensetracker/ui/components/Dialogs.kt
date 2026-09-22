@@ -2,8 +2,6 @@ package com.eleyas.expensetracker.ui.components
 
 import android.Manifest
 import android.app.DatePickerDialog
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.media.MediaRecorder
@@ -34,9 +32,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.eleyas.expensetracker.model.*
-import com.eleyas.expensetracker.util.loadPersonProfiles
 import com.eleyas.expensetracker.util.persistPersonProfilePhoto
-import com.eleyas.expensetracker.util.upsertPersonProfile
 import com.eleyas.expensetracker.ui.theme.*
 import com.eleyas.expensetracker.util.*
 import kotlinx.coroutines.launch
@@ -3399,7 +3395,9 @@ fun LendingDialog(
         String,
         String?,
         String
-    ) -> Unit
+    ) -> Unit,
+    people: List<PersonProfile> = emptyList(),
+    onProfilePhotoSaved: (PersonProfile) -> Unit = {}
 ) {
     val context = LocalContext.current
 
@@ -3410,15 +3408,13 @@ fun LendingDialog(
     var person by remember { mutableStateOf("") }
     var selectedPersonId by remember { mutableStateOf<String?>(null) }
     var showPeople by remember { mutableStateOf(false) }
-    val prefs = remember { AccountStorage.getPrefs(context, "default") }
-    val people = remember(showPeople) { loadPersonProfiles(prefs) }
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null && person.isNotBlank()) {
             val path = persistPersonProfilePhoto(context, uri)
             if (path != null) {
                 val id = selectedPersonId ?: java.util.UUID.randomUUID().toString()
                 selectedPersonId = id
-                upsertPersonProfile(prefs, PersonProfile(id = id, name = person.trim(), photoUri = path))
+                onProfilePhotoSaved(PersonProfile(id = id, name = person.trim(), photoUri = path))
             }
         }
     }
