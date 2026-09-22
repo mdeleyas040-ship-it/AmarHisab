@@ -257,10 +257,12 @@ object RecapNotificationManager {
         val transactions = loadTransactions(prefs)
         val (startDate, endDate) = MonthlySummaryUtils.currentCycle()
         val summary = MonthlySummaryUtils.forPeriod(transactions, startDate, endDate)
-        return if (summary.totalExpense > 0) {
-            "১৫–১৫ হিসাব (${summary.startDate}–${summary.endDate}) • মোট খরচ: ৳ ${"%.2f".format(summary.totalExpense)}"
+        val totalExpense = summary.expenseTransactions.sumOf { it.amount }
+        val period = MonthlySummaryUtils.notificationPeriod(summary.start, summary.end)
+        return if (totalExpense > 0) {
+            "১৫–১৫ হিসাব ($" + "period) • মোট খরচ: ৳ " + "%.2f".format(totalExpense)
         } else {
-            "১৫–১৫ হিসাব (${summary.startDate}–${summary.endDate}) • কোনো খরচ নেই"
+            "১৫–১৫ হিসাব ($" + "period) • কোনো খরচ নেই"
         }
     }
 }
