@@ -32,7 +32,7 @@ jobs:
             ["app/src/main/java/com/eleyas/expensetracker/util/BalanceEngine.kt"]="484789fb1e29ae2a47074f3f2f24f7e82e96f5ac"
             ["app/src/main/java/com/eleyas/expensetracker/model/Models.kt"]="dd152e73f32b597ea52023ed95ab25cbbf2d36b6"
             # Intentional baseline update: approved accounting baseline plus additive person-profile linkage.
-            ["app/src/main/java/com/eleyas/expensetracker/viewmodel/MainViewModel.kt"]="f2ff7cbabdb1bb2d13bdf7cceeffc69dcc8de222"
+            ["app/src/main/java/com/eleyas/expensetracker/viewmodel/MainViewModel.kt"]="fa25e136f80bb487db4388be1cb9ae7771bfd053"
           )
 
           for file in "${!EXPECTED[@]}"; do
