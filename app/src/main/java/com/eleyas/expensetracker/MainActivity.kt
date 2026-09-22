@@ -1610,6 +1610,7 @@ fun AmarHisabApp(
                     loans,
                     loanPayments,
                     lendings,
+                    viewModel.personProfiles,
                     lendingReturns,
                     {
                         showLoanDialog = true
