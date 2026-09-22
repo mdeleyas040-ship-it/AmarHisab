@@ -302,7 +302,8 @@ fun PremiumLoanDialog(
                                         monthly,
                                         date,
                                         note.trim(),
-                                        dueDate.takeIf { it.isNotBlank() }
+                                        dueDate.takeIf { it.isNotBlank() },
+                                        selectedPersonId.takeIf { sourceType == "person" }
                                     )
                                 }
                             },
