@@ -82,3 +82,8 @@ Priority order:
 Safety → Existing behavior → Accounting/Data rules → User request → UI polish → Refactoring
 
 এই rule file-এর কোনো rule পরিবর্তন করতে হলে আগে explicit review/documentation করতে হবে.
+
+## 11. Feature Documentation Gate
+নতুন feature যোগ করলে FEATURE_RULES.md অবশ্যই follow করতে হবে। feature/* branch-এ app code change-এর সঙ্গে docs/features/ এর feature specification যোগ বা update করা বাধ্যতামূলক। Pull Request CI এই শর্ত যাচাই করবে।
+
+Feature specification-এ কেন, কী করবে, কোথায়, কীভাবে, Data, accounting impact, existing relationship, validation, compatibility, test plan এবং acceptance criteria লিখতে হবে।
