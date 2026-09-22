@@ -14,8 +14,8 @@
 - Loan/Lending data model
 - Local account storage
 - Lending entry dialog
-- Firebase loan/lending sync metadata
-- Person profile photo local storage
+- Firebase loan/lending sync metadata এবং personId restore
+- Person profile photo local storage (photo file device-local)
 
 ## 4. কীভাবে কাজ করবে
 ব্যক্তির নাম দিয়ে existing profile খোঁজা হবে। নতুন ব্যক্তি হলে একটি stable profile ID তৈরি হবে। ছবি app-এর internal person_profiles directory-তে copy হবে। Transaction-এ ব্যক্তির নামের পাশাপাশি optional personId রাখা হবে, যাতে পরবর্তী transaction একই profile-এর সঙ্গে যুক্ত হতে পারে।
@@ -50,6 +50,8 @@ personId nullable হওয়ায় পুরোনো Loan/Lending data পড়ত
 - নতুন ব্যক্তি ও ছবি সংরক্ষণ করা যায়।
 - আগের ব্যক্তি নির্বাচন করা যায়।
 - নতুন transaction-এ profile ID সংযুক্ত হয়।
+- Loan/Lending card-এ linked profile photo থাকলে তা avatar হিসেবে দেখা যায়।
+- Firestore থেকে Loan/Lending restore হলেও personId পুনরায় যুক্ত হয়।
 - accounting totals/formulas অপরিবর্তিত থাকে।
 - legacy transaction কাজ করে।
 - required CI checks PASS না হওয়া পর্যন্ত feature merge করা হবে না।
@@ -60,3 +62,5 @@ personId nullable হওয়ায় পুরোনো Loan/Lending data পড়ত
 - 2026-09-22: Loan dialog-এ reusable person selection/photo entry, explicit personId linkage এবং Firestore restore যোগ করা হয়েছে।
 - 2026-09-22: Backup export/import-এ person profile metadata এবং loan/lending personId preservation যোগ করা হয়েছে।
 - 2026-09-22: CI audit অনুযায়ী feature documentation এবং accounting-lock baseline update করা হচ্ছে।
+- 2026-09-22: Firestore personId read/restore, Lending edit linkage এবং Loan/Lending profile avatar display audit fix যোগ করা হয়েছে।
+- 2026-09-22: Photo storage device-local; Firebase metadata sync হলেও local photo file cross-device transfer হিসেবে দাবি করা হচ্ছে না।
