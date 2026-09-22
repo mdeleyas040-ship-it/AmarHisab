@@ -20,6 +20,21 @@ import java.util.Locale
 
 object ReportExporter {
 
+    private fun banglaPeriod(start: Date, end: Date): String {
+        val months = arrayOf(
+            "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন",
+            "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"
+        )
+        val format = SimpleDateFormat("dd", Locale.ENGLISH)
+        val yearFormat = SimpleDateFormat("yyyy", Locale.ENGLISH)
+        val monthFormat = SimpleDateFormat("M", Locale.ENGLISH)
+        fun formatDate(date: Date): String {
+            val month = monthFormat.format(date).toInt() - 1
+            return format.format(date) + " " + months[month] + " " + yearFormat.format(date)
+        }
+        return formatDate(start) + " – " + formatDate(end)
+    }
+
     // =========================================================
     // COMMON PDF WRITER
     // PDF IS FIRST CREATED COMPLETELY IN MEMORY
@@ -574,15 +589,15 @@ object ReportExporter {
                 page = document.startPage(pageInfo)
                 canvas = page.canvas
                 y = 46f
-                text("Amar Hisab - Monthly Summary", 40f, 16f, true)
+                text("Amar Hisab - মাসিক সারসংক্ষেপ", 40f, 16f, true)
                 y += 22f
-                text(MonthlySummaryUtils.displayPeriod(summary.start, summary.end), 40f, 10f)
+                text("হিসাবের সময়কাল: " + banglaPeriod(summary.start, summary.end), 40f, 10f)
                 y += 28f
             }
 
-            text("Amar Hisab - Monthly Summary", 40f, 22f, true)
+            text("Amar Hisab - মাসিক সারসংক্ষেপ", 40f, 22f, true)
             y += 28f
-            text("Period: " + MonthlySummaryUtils.displayPeriod(summary.start, summary.end), 40f, 11f)
+            text("হিসাবের সময়কাল: " + banglaPeriod(summary.start, summary.end), 40f, 11f)
             y += 28f
 
             val cardTop = y - 18f
@@ -593,9 +608,9 @@ object ReportExporter {
             paint.color = Color.DKGRAY
             paint.textSize = 10f
             paint.isFakeBoldText = true
-            canvas.drawText("Total Income", 55f, y + 4f, paint)
-            canvas.drawText("Total Expense", 235f, y + 4f, paint)
-            canvas.drawText("Net Cash Flow", 410f, y + 4f, paint)
+            canvas.drawText("মোট আয়", 55f, y + 4f, paint)
+            canvas.drawText("মোট খরচ", 235f, y + 4f, paint)
+            canvas.drawText("নিট নগদ প্রবাহ", 410f, y + 4f, paint)
 
             paint.color = Color.BLACK
             paint.textSize = 18f
@@ -606,7 +621,7 @@ object ReportExporter {
             y += 110f
 
             if (categoryTotals.isNotEmpty()) {
-                text("Expense by Category", 40f, 14f, true)
+                text("বিভাগ অনুযায়ী খরচ", 40f, 14f, true)
                 y += 22f
                 categoryTotals.forEach { (category, amount) ->
                     if (y > pageHeight - 70) finishAndStartPage()
@@ -617,16 +632,16 @@ object ReportExporter {
                 y += 12f
             }
 
-            text("Transactions", 40f, 14f, true)
+            text("লেনদেন", 40f, 14f, true)
             y += 22f
             paint.color = Color.DKGRAY
             paint.textSize = 9f
             paint.isFakeBoldText = true
-            canvas.drawText("Date", 40f, y, paint)
-            canvas.drawText("Category", 105f, y, paint)
-            canvas.drawText("Reason", 220f, y, paint)
-            canvas.drawText("Type", 405f, y, paint)
-            canvas.drawText("Amount", 480f, y, paint)
+            canvas.drawText("তারিখ", 40f, y, paint)
+            canvas.drawText("বিভাগ", 105f, y, paint)
+            canvas.drawText("কারণ", 220f, y, paint)
+            canvas.drawText("ধরন", 405f, y, paint)
+            canvas.drawText("পরিমাণ", 480f, y, paint)
             y += 8f
             canvas.drawLine(40f, y, 555f, y, paint)
             y += 16f
@@ -653,13 +668,26 @@ object ReportExporter {
                 canvas.drawText(transaction.date, 40f, y, paint)
                 canvas.drawText(transaction.category.take(17), 105f, y, paint)
                 canvas.drawText(transaction.reason.take(28), 220f, y, paint)
-                canvas.drawText(transaction.type.uppercase().take(10), 405f, y, paint)
+                canvas.drawText(
+                    when (transaction.type.lowercase()) {
+                        "income" -> "আয়"
+                        "expense", "home", "home_expense" -> "খরচ"
+                        "transfer" -> "স্থানান্তর"
+                        "lending" -> "ধার দেওয়া"
+                        "borrowing" -> "ধার নেওয়া"
+                        "repayment" -> "পরিশোধ"
+                        else -> transaction.type.take(10)
+                    },
+                    405f,
+                    y,
+                    paint
+                )
                 canvas.drawText("%.2f".format(toBdt(transaction)), 480f, y, paint)
                 y += 17f
             }
 
             if (summary.transactions.isEmpty()) {
-                text("No transactions recorded in this period.", 40f, 10f)
+                text("এই সময়কালে কোনো লেনদেন পাওয়া যায়নি।", 40f, 10f)
                 y += 20f
             }
 
@@ -667,7 +695,7 @@ object ReportExporter {
             context.contentResolver.openOutputStream(uri, "w")?.use { document.writeTo(it) }
                 ?: throw Exception("Selected PDF file খুলতে পারছে না")
             document.close()
-            Toast.makeText(context, "✅ Monthly PDF Saved", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "✅ মাসিক PDF সংরক্ষণ হয়েছে", Toast.LENGTH_LONG).show()
 
             // Automatically open the saved PDF in the installed PDF viewer.
             try {
@@ -685,7 +713,7 @@ object ReportExporter {
                 ).show()
             }
         } catch (e: Exception) {
-            Toast.makeText(context, "❌ Monthly PDF Error: " + e.message, Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "❌ মাসিক PDF তৈরিতে সমস্যা: " + (e.message ?: "অজানা সমস্যা"), Toast.LENGTH_LONG).show()
         }
     }
 
