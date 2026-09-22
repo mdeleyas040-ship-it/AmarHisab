@@ -60,11 +60,11 @@ object MonthlySummaryUtils {
 
     fun displayPeriod(start: Date, end: Date): String {
         val format = SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH)
-        return "\${format.format(start)} – \${format.format(end)}"
+        return "${format.format(start)} – ${format.format(end)}"
     }
 
     fun notificationPeriod(start: Date, end: Date): String {
         val format = SimpleDateFormat("dd/MM", Locale.getDefault())
-        return "\${format.format(start)}–\${format.format(end)}"
+        return "${format.format(start)}–${format.format(end)}"
     }
 }
