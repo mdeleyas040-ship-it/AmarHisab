@@ -3229,11 +3229,13 @@ fun AmarHisabApp(
                 lending =
                     editingLending!!,
 
+                people = viewModel.personProfiles,
+
                 onDismiss = {
                     editingLending = null
                 },
 
-                onSave = { p, a, d, n, dd ->
+                onSave = { p, a, d, n, dd, selectedPersonId ->
 
                     viewModel.updateLending(
                         context,
@@ -3242,7 +3244,8 @@ fun AmarHisabApp(
                         a,
                         d,
                         n,
-                        dd
+                        dd,
+                        selectedPersonId
                     )
 
                     editingLending = null
