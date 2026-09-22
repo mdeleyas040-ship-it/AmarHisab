@@ -396,6 +396,10 @@ class MainViewModel : ViewModel() {
                                         doc.getString("name")
                                             ?: "",
 
+                                    personId =
+                                        doc.getString("personId")
+                                            ?.ifBlank { null },
+
                                     sourceType =
                                         doc.getString(
                                             "sourceType"
@@ -1978,7 +1982,8 @@ class MainViewModel : ViewModel() {
         amount: Double,
         date: String,
         note: String,
-        dueDate: String?
+        dueDate: String?,
+        personId: String? = null
     ) {
         if (amount <= 0.0) {
             WarningPopupManager.show(
@@ -1992,7 +1997,8 @@ class MainViewModel : ViewModel() {
             amount = amount,
             date = date,
             note = note,
-            dueDate = dueDate
+            dueDate = dueDate,
+            personId = personId
         )
         lendings = lendings.map { if (it.id == lending.id) updated else it }
         persistLoanData(context)
