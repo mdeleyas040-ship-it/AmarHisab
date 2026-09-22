@@ -3,7 +3,4 @@
     <cache-path
         name="receipts"
         path="receipts/" />
-    <files-path
-        name="internal"
-        path="." />
 </paths>

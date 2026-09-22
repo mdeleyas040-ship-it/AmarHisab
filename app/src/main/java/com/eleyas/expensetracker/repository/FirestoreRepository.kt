@@ -57,6 +57,67 @@ object FirestoreRepository {
             }
     }
 
+    fun checkUserProfile(
+        onResult: (exists: Boolean) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val uid = currentUserId()
+        if (uid == null) {
+            onError("User login করা নেই।")
+            return
+        }
+
+        firestore.collection("users").document(uid).get()
+            .addOnSuccessListener { document ->
+                onResult(document.exists())
+            }
+            .addOnFailureListener { exception ->
+                onError(exception.message ?: "Profile তথ্য যাচাই করা যায়নি।")
+            }
+    }
+
+    fun completeUserProfile(
+        name: String,
+        phone: String,
+        currency: String,
+        monthlyIncome: Double?,
+        country: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val uid = currentUserId()
+        val user = auth.currentUser
+        if (uid == null || user == null) {
+            onError("User login করা নেই।")
+            return
+        }
+
+        val data = hashMapOf<String, Any>(
+            "uid" to uid,
+            "name" to name.trim(),
+            "email" to (user.email ?: ""),
+            "photoUrl" to (user.photoUrl?.toString() ?: ""),
+            "phone" to phone.trim(),
+            "currency" to currency,
+            "country" to country.trim(),
+            "profileCompleted" to true
+        )
+        if (monthlyIncome != null) data["monthlyIncome"] = monthlyIncome
+
+        firestore.collection("users").document(uid)
+            .set(data, com.google.firebase.firestore.SetOptions.merge())
+            .addOnSuccessListener {
+                user.updateProfile(
+                    com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                        .setDisplayName(name.trim())
+                        .build()
+                ).addOnCompleteListener { onSuccess() }
+            }
+            .addOnFailureListener { exception ->
+                onError(exception.message ?: "Profile তথ্য save করা যায়নি।")
+            }
+    }
+
     // --------------------------------------------------
     // SAVE TRANSACTION
     // --------------------------------------------------

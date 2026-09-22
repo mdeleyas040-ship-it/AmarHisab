@@ -199,7 +199,21 @@ fun AuthGate(
         )
     }
 
-    if (currentUser != null || isRecoveryMode) {
+    var showGoogleProfileSetup by remember {
+        mutableStateOf(false)
+    }
+
+    if (showGoogleProfileSetup) {
+        GoogleProfileSetupScreen(
+            onComplete = {
+                showGoogleProfileSetup = false
+                currentUser = FirebaseAuth.getInstance().currentUser
+            },
+            onError = {
+                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            }
+        )
+    } else if (currentUser != null || isRecoveryMode) {
 
         val uid =
             currentUser?.uid ?: "admin_recovery"
@@ -235,6 +249,12 @@ fun AuthGate(
             onLoginSuccess = {
                 currentUser =
                     FirebaseAuth.getInstance().currentUser
+            },
+            onProfileSetupRequired = {
+                showGoogleProfileSetup = true
+            },
+            onError = {
+                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             }
         )
     }

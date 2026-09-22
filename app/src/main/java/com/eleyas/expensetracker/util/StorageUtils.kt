@@ -1728,6 +1728,12 @@ fun parseBackupJson(
                             ).takeIf {
                                 it.isNotBlank()
                             },
+                        audioMemoPath =
+                            o.optString(
+                                "audioMemoPath"
+                            ).takeIf {
+                                it.isNotBlank()
+                            },
                         walletId =
                             o.optString(
                                 "walletId",
@@ -1744,6 +1750,13 @@ fun parseBackupJson(
                                 "addedByName"
                             ).takeIf {
                                 it.isNotBlank()
+                            },
+                        exchangeRateUsed =
+                            o.optDouble(
+                                "exchangeRateUsed",
+                                -1.0
+                            ).takeIf {
+                                it > 0.0
                             }
                     )
                 )
