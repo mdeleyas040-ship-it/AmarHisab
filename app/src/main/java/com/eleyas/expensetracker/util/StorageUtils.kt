@@ -2234,7 +2234,8 @@ fun exportBackupToUri(
     loanPayments: List<LoanPayment>,
     lendings: List<LendingAccount>,
     lendingReturns: List<LendingReturn>,
-    wallets: List<Wallet>
+    wallets: List<Wallet>,
+    people: List<PersonProfile> = emptyList()
 ): Boolean {
     return try {
         context.contentResolver
