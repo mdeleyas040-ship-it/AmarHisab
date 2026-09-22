@@ -121,8 +121,8 @@ internal fun NextOffCountdownCard(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                if (mode == "OFF TODAY") Icons.Default.Hotel
-                else Icons.Default.EventAvailable,
+                if (mode == "OFF TODAY") Icons.Default.CheckCircle
+                else Icons.Default.EventNote,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
