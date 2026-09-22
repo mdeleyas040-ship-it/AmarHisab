@@ -3022,7 +3022,8 @@ fun AmarHisabApp(
                                 m,
                                 d,
                                 nt,
-                                dd
+                                dd,
+                                selectedPersonId
                             )
 
                         if (shortageLoanCreationPending) {
