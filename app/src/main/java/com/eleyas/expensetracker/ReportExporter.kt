@@ -2,6 +2,7 @@
 package com.eleyas.expensetracker
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -653,9 +654,26 @@ object ReportExporter {
             }
 
             document.finishPage(page)
-            context.contentResolver.openOutputStream(uri)?.use { document.writeTo(it) }
+            context.contentResolver.openOutputStream(uri, "w")?.use { document.writeTo(it) }
+                ?: throw Exception("Selected PDF file খুলতে পারছে না")
             document.close()
             Toast.makeText(context, "✅ Monthly PDF Saved", Toast.LENGTH_LONG).show()
+
+            // Automatically open the saved PDF in the installed PDF viewer.
+            try {
+                val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "application/pdf")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(viewIntent)
+            } catch (_: Exception) {
+                Toast.makeText(
+                    context,
+                    "PDF সংরক্ষণ হয়েছে, কিন্তু PDF viewer খোলা যায়নি",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         } catch (e: Exception) {
             Toast.makeText(context, "❌ Monthly PDF Error: " + e.message, Toast.LENGTH_LONG).show()
         }
