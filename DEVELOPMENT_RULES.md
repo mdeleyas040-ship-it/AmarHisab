@@ -40,11 +40,17 @@ ACCOUNTING_RULES.md সর্বোচ্চ অগ্রাধিকার প�
 - Security rules পরিবর্তনের আগে affected read/write paths audit করতে হবে।
 
 ## 6. Git Safety
-- feature/my-journey এবং stable/main branch সরাসরি overwrite করা যাবে না।
-- আগে feature/fix/integration branch ব্যবহার করতে হবে।
+- `main` হলো stable/release branch এবং `dev` হলো permanent development + testing branch।
+- সাধারণ নতুন feature বা fix-এর জন্য নতুন `feature/*` বা `fix/*` branch তৈরি করা যাবে না; কাজ সরাসরি `dev`-এ হবে।
+- `main`-এ সরাসরি feature/fix development করা যাবে না।
+- `main` এবং `dev` permanent branches; এগুলো delete করা যাবে না।
+- `dev`-এ কাজের flow হবে: Audit → Code → Build → Test → Runtime Test → CI।
+- সব required test/audit/CI PASS হওয়ার পর `dev` → `main` merge করা যাবে।
+- Merge করার আগে `dev` এবং `main` compare + audit করতে হবে।
+- `backup/*` এবং `recovery/*` branch শুধু emergency backup/recovery-এর জন্য; normal development নয়।
+- `backup/*` এবং `recovery/*` branch delete বা force-push করা যাবে না।
 - Force checkout, reset --hard, branch delete, branch rename বা destructive merge explicit approval ছাড়া করা যাবে না।
 - Uncommitted local changes থাকলে আগে নিরাপদে preserve করতে হবে।
-- Merge করার আগে compare + audit করতে হবে।
 
 ## 7. Build/Test Gate
 কোনো change complete বলা যাবে না যতক্ষণ না:
