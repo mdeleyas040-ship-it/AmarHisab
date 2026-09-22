@@ -30,7 +30,9 @@ data class Wallet(
     val name: String,
     val type: String,
     val initialBalance: Double = 0.0,
-    val currency: String = "BDT",
+    val currency: String = "BDT"
+    // Optional stable link to a reusable person profile. Legacy records remain null.
+    val personId: String? = null,
     val color: Int = 0xFF4CAF50.toInt()
 )
 
@@ -93,8 +95,6 @@ data class CategoryBudget(
 data class LoanAccount(
     val id: Long,
     val name: String,
-    // Optional stable link to a reusable person profile. Legacy records remain null.
-    val personId: String? = null,
     val sourceType: String,
     val principal: Double,
     val monthlyInstallment: Double,
@@ -106,6 +106,8 @@ data class LoanAccount(
     val dueDate: String? = null,
     // Fund that actually received the loan principal. Old records default to personal.
     val fundSource: String = "personal"
+    // Optional stable link to a reusable person profile. Legacy records remain null.
+    val personId: String? = null
 )
 
 data class LoanPayment(
@@ -124,8 +126,6 @@ data class LoanPayment(
 data class LendingAccount(
     val id: Long,
     val person: String,
-    // Optional stable link to a reusable person profile. Legacy records remain null.
-    val personId: String? = null,
     val amount: Double,
     val date: String,
     val note: String,
