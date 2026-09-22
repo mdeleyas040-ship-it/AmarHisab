@@ -14,3 +14,7 @@
 .cxx
 local.properties
 app/google-services (1).json
+# Android Studio machine-specific metadata
+.idea/deploymentTargetSelector.xml
+.idea/deviceManager.xml
+.idea/planningMode.xml
