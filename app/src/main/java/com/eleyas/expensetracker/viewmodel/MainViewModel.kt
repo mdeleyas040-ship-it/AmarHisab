@@ -1324,7 +1324,8 @@ class MainViewModel : ViewModel() {
         monthly: Double,
         date: String,
         note: String,
-        dueDate: String? = null
+        dueDate: String? = null,
+        personId: String? = null
     ) {
         if (amount <= 0.0) {
             WarningPopupManager.show(
@@ -1366,6 +1367,7 @@ class MainViewModel : ViewModel() {
             monthlyInstallment = monthly,
             startDate = date,
             note = note,
+            personId = personId,
             lastEditedDate =
                 SimpleDateFormat(
                     "dd/MM/yyyy HH:mm",
