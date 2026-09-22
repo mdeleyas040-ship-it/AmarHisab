@@ -1284,7 +1284,7 @@ class MainViewModel : ViewModel() {
 
     fun loadPersonProfiles(context: Context) {
         val prefs = AccountStorage.getPrefs(context, currentUserId)
-        personProfiles = loadPersonProfiles(prefs)
+        personProfiles = com.eleyas.expensetracker.util.loadPersonProfiles(prefs)
     }
 
     fun addLoan(
