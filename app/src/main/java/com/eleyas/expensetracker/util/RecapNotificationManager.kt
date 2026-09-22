@@ -262,7 +262,7 @@ object RecapNotificationManager {
         return if (totalExpense > 0) {
             "১৫–১৫ হিসাব (" + period + ") • মোট খরচ: ৳ " + "%.2f".format(totalExpense)
         } else {
-            "১৫–১৫ হিসাব (" + period + ") • কোনো খরচ নেই
+            "১৫–১৫ হিসাব (" + period + ") • কোনো খরচ নেই"
         }
     }
 }
