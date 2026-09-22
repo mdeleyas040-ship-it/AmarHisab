@@ -1370,9 +1370,6 @@ fun AmarHisabApp(
                         }
                     )
                 }
-                }
-            }
-
             }
         }
     ) { paddingValues ->
