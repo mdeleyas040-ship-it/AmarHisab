@@ -57,4 +57,6 @@ personId nullable হওয়ায় পুরোনো Loan/Lending data পড়ত
 ## 12. Change history
 - 2026-09-22: PersonProfile model, local profile/photo storage এবং Loan/Lending personId ভিত্তি যোগ করা হয়েছে।
 - 2026-09-22: Lending dialog-এ existing person selection ও photo entry যোগ করা হয়েছে।
+- 2026-09-22: Loan dialog-এ reusable person selection/photo entry, explicit personId linkage এবং Firestore restore যোগ করা হয়েছে।
+- 2026-09-22: Backup export/import-এ person profile metadata এবং loan/lending personId preservation যোগ করা হয়েছে।
 - 2026-09-22: CI audit অনুযায়ী feature documentation এবং accounting-lock baseline update করা হচ্ছে।
