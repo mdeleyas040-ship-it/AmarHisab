@@ -71,4 +71,5 @@ Future developers must prefer:
 Never silently reinterpret an old transaction.
 
 **Locked baseline:** 2026-09-18  
-**Protected branch baseline:** feature/my-journey
+**Protected stable branch:** `main`  
+**Permanent development/testing branch:** `dev`
