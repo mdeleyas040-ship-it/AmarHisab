@@ -1,8 +1,5 @@
 package com.eleyas.expensetracker.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,10 +50,6 @@ fun MoneyShortLabel(valueText: String) {
         fontSize = 11.sp,
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier
-            .background(
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f),
-                RoundedCornerShape(8.dp)
-            )
-            .padding(horizontal = 6.dp, vertical = 3.dp)
+
     )
 }
