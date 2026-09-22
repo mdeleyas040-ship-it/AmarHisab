@@ -1,6 +1,8 @@
 
 package com.eleyas.expensetracker.ui.screens
 
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,9 +16,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.io.File
 import com.eleyas.expensetracker.model.*
 import com.eleyas.expensetracker.ui.components.*
 import com.eleyas.expensetracker.ui.theme.*
@@ -30,6 +34,7 @@ fun LoansScreen(
     loans: List<LoanAccount>,
     loanPayments: List<LoanPayment>,
     lendings: List<LendingAccount>,
+    people: List<PersonProfile> = emptyList(),
     lendingReturns: List<LendingReturn>,
     onAddLoan: () -> Unit,
     onAddLoanPayment: (LoanAccount) -> Unit,
@@ -1103,6 +1108,29 @@ private fun EmptyFinanceCard(
 }
 
 
+
+@Composable
+private fun PersonProfileAvatar(
+    personId: String?,
+    people: List<PersonProfile>,
+    tint: Color,
+    modifier: Modifier = Modifier.size(56.dp)
+) {
+    val path = people.firstOrNull { it.id == personId }?.photoUri
+    val bitmap = remember(path) {
+        path?.takeIf { it.isNotBlank() }?.let { runCatching { BitmapFactory.decodeFile(File(it).absolutePath) }.getOrNull() }
+    }
+    Surface(shape = CircleShape, color = tint.copy(alpha = 0.12f), modifier = modifier) {
+        if (bitmap != null) {
+            Image(bitmap = bitmap.asImageBitmap(), contentDescription = "ব্যক্তির ছবি", modifier = Modifier.fillMaxSize())
+        } else {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                Icon(Icons.Default.Person, contentDescription = null, tint = tint, modifier = Modifier.size(30.dp))
+            }
+        }
+    }
+}
+
 // =====================================================================
 // LOAN PREMIUM CARD
 // =====================================================================
@@ -1110,6 +1138,7 @@ private fun EmptyFinanceCard(
 @Composable
 private fun LoanPremiumCard(
     loan: LoanAccount,
+    people: List<PersonProfile> = emptyList(),
     loanPayments: List<LoanPayment>,
     loanInterestTerms: List<LoanInterestTerms>,
     expanded: Boolean,
@@ -1380,6 +1409,7 @@ private fun LoanPremiumCard(
 @Composable
 private fun LendingPremiumCard(
     lending: LendingAccount,
+    people: List<PersonProfile> = emptyList(),
     lendingReturns: List<LendingReturn>,
     expanded: Boolean,
     onExpand: () -> Unit,
@@ -1430,16 +1460,11 @@ private fun LendingPremiumCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-                Surface(
-                    shape = CircleShape,
-                    color = TealGreen.copy(alpha = 0.12f),
-                    modifier = Modifier.size(56.dp)
-                ) {
-
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.Person, contentDescription = null, tint = TealGreen, modifier = Modifier.size(30.dp))
-                    }
-                }
+                PersonProfileAvatar(
+                    personId = lending.personId,
+                    people = people,
+                    tint = TealGreen
+                )
 
                 Spacer(Modifier.width(12.dp))
 
