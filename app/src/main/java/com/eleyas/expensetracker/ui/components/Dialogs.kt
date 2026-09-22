@@ -898,7 +898,7 @@ fun LendingEditDialog(
 }
 
 @Composable
-fun LendingReturnDialog(lending: LendingAccount, onDismiss: () -> Unit, onSave: (Double, String, String) -> Unit) {
+fun LendingReturnDialog(lending: LendingAccount, remainingDue: Double = lending.amount, onDismiss: () -> Unit, onSave: (Double, String, String) -> Unit) {
     val context = LocalContext.current
     var amount by remember { mutableStateOf("") }
     var date by remember { mutableStateOf(SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())) }
@@ -911,7 +911,7 @@ fun LendingReturnDialog(lending: LendingAccount, onDismiss: () -> Unit, onSave: 
                     Spacer(Modifier.width(8.dp))
                     Text("ধার ফেরত পেলাম", fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
                 }
-                Text(lending.person, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Column { Text(lending.person, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant); Text("বাকি পাওনা: ৳${formatMoney(remainingDue)}", fontSize = 12.sp, color = IncomeGreen, fontWeight = FontWeight.Bold) }
                 Spacer(Modifier.height(14.dp))
                 OutlinedTextField(value = amount, onValueChange = { amount = it }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), label = { Text("ফেরত পাওয়া টাকা") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(10.dp))

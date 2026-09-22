@@ -196,7 +196,7 @@ object RecapNotificationManager {
         val summary = MonthlySummaryUtils.forPeriod(loadTransactions(prefs), start, end)
         val expense = summary.expenseTransactions.sumOf { it.amount }
         val period = MonthlySummaryUtils.notificationPeriod(start, end)
-        return "হিসাব প্রস্তুত • \$period • খরচ: ৳ \${"%.2f".format(expense)}"
+        return "হিসাব প্রস্তুত • $period • খরচ: ৳ ${"%.2f".format(expense)}"
     }
 
     fun getMonthlyExpenseSummary(prefs: SharedPreferences): String = getMonthlyCycleSummary(prefs)
