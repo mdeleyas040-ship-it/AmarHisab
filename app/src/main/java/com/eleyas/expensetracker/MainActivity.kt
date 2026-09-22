@@ -2992,7 +2992,7 @@ fun AmarHisabApp(
                     viewModel.loadPersonProfiles(context)
                 },
 
-                { n, s, p, m, d, nt, dd, selectedPersonId ->
+                onSave = { n, s, p, m, d, nt, dd, selectedPersonId ->
 
                     if (
                         editingLoan != null
