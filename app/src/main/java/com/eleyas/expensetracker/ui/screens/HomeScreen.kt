@@ -79,6 +79,7 @@ fun HomeScreen(
             .addSnapshotListener { snapshot, _ -> serverNotice = snapshot?.getString("message")?.takeIf { it.isNotBlank() } }
     }
     BackHandler(enabled = showHomeMoneyFlow) { showHomeMoneyFlow = false }
+    val reminders = remember(transactions) { SmartReminderManager.getTransactionReminders(transactions) }
 
     Box(modifier.fillMaxSize()) {
         LazyColumn(
@@ -93,7 +94,6 @@ fun HomeScreen(
                     }
                 }
             }
-            val reminders = remember(transactions) { SmartReminderManager.getTransactionReminders(transactions) }
             if (reminders.isNotEmpty()) item { SmartReminderCard(reminders = reminders, onReminderClick = onReminderClick) }
 
             item {
