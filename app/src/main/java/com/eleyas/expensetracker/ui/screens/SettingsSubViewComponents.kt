@@ -34,24 +34,53 @@ import com.google.firebase.auth.FirebaseAuth
 @Composable
 fun PersonalInformationContent(onEditName: () -> Unit) {
     val user = FirebaseAuth.getInstance().currentUser
+    val displayName = user?.displayName?.takeIf { it.isNotBlank() } ?: "নাম সেট করা হয়নি"
+    val contact = user?.email?.takeIf { it.isNotBlank() }
+        ?: user?.phoneNumber?.takeIf { it.isNotBlank() }
+        ?: "যোগাযোগের তথ্য পাওয়া যায়নি"
+    val accountType = when {
+        !user?.email.isNullOrBlank() -> "ইমেইল অ্যাকাউন্ট"
+        !user?.phoneNumber.isNullOrBlank() -> "ফোন নম্বর অ্যাকাউন্ট"
+        else -> "অ্যাকাউন্ট তথ্য পাওয়া যায়নি"
+    }
+
     Column(
         modifier = Modifier.fillMaxSize().padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         SettingsSubCard {
-            Text("অ্যাকাউন্ট তথ্য", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(10.dp))
+            Text("ব্যক্তিগত তথ্য", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(6.dp))
             Text(
-                user?.displayName?.takeIf { it.isNotBlank() } ?: "নাম সেট করা হয়নি",
-                style = MaterialTheme.typography.titleLarge
-            )
-            Text(
-                user?.email ?: user?.phoneNumber ?: "অ্যাকাউন্ট তথ্য পাওয়া যায়নি",
+                "আপনার Amar Hisab অ্যাকাউন্টের প্রাথমিক তথ্য এখানে দেখুন।",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(Modifier.height(12.dp))
-            OutlinedButton(onClick = onEditName) {
+
+            Spacer(Modifier.height(16.dp))
+
+            Text("নাম", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(4.dp))
+            Text(displayName, style = MaterialTheme.typography.titleLarge)
+
+            Spacer(Modifier.height(14.dp))
+
+            Text("যোগাযোগ", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(4.dp))
+            Text(contact, style = MaterialTheme.typography.bodyLarge)
+
+            Spacer(Modifier.height(14.dp))
+
+            Text("অ্যাকাউন্টের ধরন", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(4.dp))
+            Text(accountType, style = MaterialTheme.typography.bodyLarge)
+
+            Spacer(Modifier.height(16.dp))
+
+            OutlinedButton(
+                onClick = onEditName,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Icon(Icons.Default.Edit, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("নাম পরিবর্তন করুন")
