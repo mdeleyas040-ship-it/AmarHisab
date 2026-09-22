@@ -731,7 +731,8 @@ fun AmarHisabApp(
                         loanPayments,
                         lendings,
                         lendingReturns,
-                        wallets
+                        wallets,
+                        viewModel.personProfiles
                     )
                 ) {
                     Toast.makeText(
@@ -765,7 +766,8 @@ fun AmarHisabApp(
                         backup.loanPayments,
                         backup.lendings,
                         backup.lendingReturns,
-                        backup.wallets
+                        backup.wallets,
+                        backup.people
                     )
 
                     Toast.makeText(
