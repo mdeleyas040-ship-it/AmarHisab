@@ -2299,14 +2299,17 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun updateCloudData(cloudTransactions: List<Transaction>, cloudLoans: List<LoanAccount>, cloudPayments: List<LoanPayment>, cloudLendings: List<LendingAccount>, cloudReturns: List<LendingReturn>, cloudWallets: List<Wallet> = emptyList(), cloudPeople: List<PersonProfile> = emptyList()) {
+    fun updateCloudData(cloudTransactions: List<Transaction>, cloudLoans: List<LoanAccount>, cloudPayments: List<LoanPayment>, cloudLendings: List<LendingAccount>, cloudReturns: List<LendingReturn>, cloudWallets: List<Wallet> = emptyList(), cloudPeople: List<PersonProfile>? = null) {
         personalTransactions = cloudTransactions
         loans = cloudLoans
         loanPayments = cloudPayments
         lendings = cloudLendings
         lendingReturns = cloudReturns
         if (cloudWallets.isNotEmpty()) wallets = cloudWallets
-        personProfiles = cloudPeople
+        if (cloudPeople != null) {
+            personProfiles = cloudPeople
+            savePersonProfiles(prefs, personProfiles)
+        }
 
         saveTransactions(prefs, transactions)
         saveLoans(prefs, loans)

@@ -1849,7 +1849,8 @@ fun AmarHisabApp(
                                 restored.loans,
                                 restored.loanPayments,
                                 restored.lendings,
-                                restored.lendingReturns
+                                restored.lendingReturns,
+                                cloudPeople = restored.people
                             )
 
                             Toast.makeText(
