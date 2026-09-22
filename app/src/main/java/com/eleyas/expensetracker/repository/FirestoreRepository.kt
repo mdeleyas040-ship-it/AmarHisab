@@ -69,7 +69,7 @@ object FirestoreRepository {
 
         firestore.collection("users").document(uid).get()
             .addOnSuccessListener { document ->
-                onResult(document.exists() && document.getBoolean("profileCompleted") == true)
+                onResult(document.exists())
             }
             .addOnFailureListener { exception ->
                 onError(exception.message ?: "Profile তথ্য যাচাই করা যায়নি।")
