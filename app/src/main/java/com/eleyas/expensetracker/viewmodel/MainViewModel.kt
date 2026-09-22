@@ -424,6 +424,10 @@ class MainViewModel : ViewModel() {
                                         doc.getString("note")
                                             ?: "",
 
+                                    personId =
+                                        doc.getString("personId")
+                                            ?.ifBlank { null },
+
                                     lastEditedDate =
                                         doc.getString(
                                             "lastEditedDate"
@@ -662,6 +666,10 @@ class MainViewModel : ViewModel() {
                                             "person"
                                         )
                                             ?: "",
+
+                                    personId =
+                                        doc.getString("personId")
+                                            ?.ifBlank { null },
 
                                     amount =
                                         doc.getDouble(
