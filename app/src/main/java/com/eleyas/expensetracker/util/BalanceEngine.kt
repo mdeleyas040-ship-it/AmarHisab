@@ -23,19 +23,21 @@ object BalanceEngine {
         loans: List<LoanAccount>,
         loanPayments: List<LoanPayment>,
         lendings: List<LendingAccount>,
-        lendingReturns: List<LendingReturn>
+        lendingReturns: List<LendingReturn>,
+        usdToBdt: Double,
+        usdToMvr: Double
     ): Double {
         val income = transactions
             .filter { it.type == "income" }
-            .sumOf { convertToBdt(it.amount, it.currency) }
+            .sumOf { convertToBdt(it.amount, it.currency, usdToBdt, usdToMvr) }
 
         val expense = transactions
             .filter { it.type == "expense" }
-            .sumOf { convertToBdt(it.amount, it.currency) }
+            .sumOf { convertToBdt(it.amount, it.currency, usdToBdt, usdToMvr) }
 
         val homeTransfer = transactions
             .filter { it.type == "home" }
-            .sumOf { convertToBdt(it.amount, it.currency) }
+            .sumOf { convertToBdt(it.amount, it.currency, usdToBdt, usdToMvr) }
 
         val loanReceived = loans.sumOf { it.principal }
         val loanPaid = loanPayments.sumOf { it.amount }
@@ -57,5 +59,19 @@ object BalanceEngine {
             homeTransfer -
             loanPaid -
             moneyLent
+    }
+
+    private fun convertToBdt(
+        amount: Double,
+        currency: String,
+        usdToBdt: Double,
+        usdToMvr: Double
+    ): Double {
+        return when (currency) {
+            "BDT" -> amount
+            "USD" -> amount * usdToBdt
+            "MVR" -> if (usdToMvr > 0.0) amount * (usdToBdt / usdToMvr) else 0.0
+            else -> 0.0
+        }
     }
 }
