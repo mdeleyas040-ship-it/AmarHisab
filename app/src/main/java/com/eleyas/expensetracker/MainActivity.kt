@@ -731,7 +731,8 @@ fun AmarHisabApp(
                         loanPayments,
                         lendings,
                         lendingReturns,
-                        wallets
+                        wallets,
+                        viewModel.personProfiles
                     )
                 ) {
                     Toast.makeText(
@@ -765,7 +766,8 @@ fun AmarHisabApp(
                         backup.loanPayments,
                         backup.lendings,
                         backup.lendingReturns,
-                        backup.wallets
+                        backup.wallets,
+                        backup.people
                     )
 
                     Toast.makeText(
@@ -1608,6 +1610,7 @@ fun AmarHisabApp(
                     loans,
                     loanPayments,
                     lendings,
+                    viewModel.personProfiles,
                     lendingReturns,
                     {
                         showLoanDialog = true
@@ -2322,7 +2325,7 @@ fun AmarHisabApp(
                 onDismiss = {
                     showLendingDialog = false
                 },
-                onSave = { person, amount, date, note, dueDate, source ->
+                onSave = { person, amount, date, note, dueDate, source, selectedPersonId ->
                     viewModel.addLending(
                         context = context,
                         person = person,
@@ -2331,7 +2334,7 @@ fun AmarHisabApp(
                         note = note,
                         dueDate = dueDate,
                         fundSource = source,
-                        personId = viewModel.personProfiles.firstOrNull { it.name.equals(person.trim(), ignoreCase = true) }?.id
+                        personId = selectedPersonId
                     )
                     showLendingDialog = false
                 }
@@ -2984,7 +2987,13 @@ fun AmarHisabApp(
                     }
                     .distinct(),
 
-                { n, s, p, m, d, nt, dd ->
+                people = viewModel.personProfiles,
+                onProfilePhotoSaved = { profile ->
+                    upsertPersonProfile(prefs, profile)
+                    viewModel.loadPersonProfiles(context)
+                },
+
+                onSave = { n, s, p, m, d, nt, dd, selectedPersonId ->
 
                     if (
                         editingLoan != null
@@ -2999,7 +3008,8 @@ fun AmarHisabApp(
                             m,
                             d,
                             nt,
-                            dd
+                            dd,
+                            selectedPersonId
                         )
 
                     } else {
@@ -3013,7 +3023,8 @@ fun AmarHisabApp(
                                 m,
                                 d,
                                 nt,
-                                dd
+                                dd,
+                                selectedPersonId
                             )
 
                         if (shortageLoanCreationPending) {
@@ -3219,11 +3230,13 @@ fun AmarHisabApp(
                 lending =
                     editingLending!!,
 
+                people = viewModel.personProfiles,
+
                 onDismiss = {
                     editingLending = null
                 },
 
-                onSave = { p, a, d, n, dd ->
+                onSave = { p, a, d, n, dd, selectedPersonId ->
 
                     viewModel.updateLending(
                         context,
@@ -3232,7 +3245,8 @@ fun AmarHisabApp(
                         a,
                         d,
                         n,
-                        dd
+                        dd,
+                        selectedPersonId
                     )
 
                     editingLending = null

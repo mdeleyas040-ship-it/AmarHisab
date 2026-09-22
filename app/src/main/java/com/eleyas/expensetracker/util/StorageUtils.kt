@@ -1256,7 +1256,8 @@ fun buildBackupJson(
     loanPayments: List<LoanPayment>,
     lendings: List<LendingAccount>,
     lendingReturns: List<LendingReturn>,
-    wallets: List<Wallet>
+    wallets: List<Wallet>,
+    people: List<PersonProfile> = emptyList()
 ): String {
 
     val root =
@@ -1350,6 +1351,26 @@ fun buildBackupJson(
         "transactions",
         transactionArray
     )
+
+    // -------------------------------------------------
+    // PERSON PROFILES
+    // -------------------------------------------------
+
+    val peopleArray = JSONArray()
+    people.forEach { person ->
+        peopleArray.put(
+            JSONObject().apply {
+                put("id", person.id)
+                put("name", person.name)
+                put("photoUri", person.photoUri ?: "")
+                put("phone", person.phone)
+                put("note", person.note)
+                put("createdAt", person.createdAt)
+                put("updatedAt", person.updatedAt)
+            }
+        )
+    }
+    root.put("people", peopleArray)
 
     // -------------------------------------------------
     // LOANS
@@ -1516,6 +1537,10 @@ fun buildBackupJson(
                 put(
                     "person",
                     lending.person
+                )
+                put(
+                    "personId",
+                    lending.personId ?: ""
                 )
                 put(
                     "amount",
@@ -1720,6 +1745,29 @@ fun parseBackupJson(
                             ).takeIf {
                                 it.isNotBlank()
                             }
+                    )
+                )
+            }
+        }
+
+        // -------------------------------------------------
+        // PERSON PROFILES
+        // -------------------------------------------------
+
+        val peopleArray = root.optJSONArray("people")
+        val people = mutableListOf<PersonProfile>()
+        if (peopleArray != null) {
+            for (i in 0 until peopleArray.length()) {
+                val o = peopleArray.getJSONObject(i)
+                people.add(
+                    PersonProfile(
+                        id = o.getString("id"),
+                        name = o.getString("name"),
+                        photoUri = o.optString("photoUri").takeIf { it.isNotBlank() },
+                        phone = o.optString("phone"),
+                        note = o.optString("note"),
+                        createdAt = o.optLong("createdAt", System.currentTimeMillis()),
+                        updatedAt = o.optLong("updatedAt", System.currentTimeMillis())
                     )
                 )
             }
@@ -2077,6 +2125,8 @@ fun parseBackupJson(
         BackupData(
             transactions =
                 transactions,
+            people =
+                people,
             usdToBdt =
                 root.optDouble(
                     "usdToBdt",
@@ -2114,7 +2164,8 @@ fun saveAutoBackup(
     loanPayments: List<LoanPayment>,
     lendings: List<LendingAccount>,
     lendingReturns: List<LendingReturn>,
-    wallets: List<Wallet>
+    wallets: List<Wallet>,
+    people: List<PersonProfile> = emptyList()
 ): Boolean {
     try {
         context
@@ -2140,7 +2191,9 @@ fun saveAutoBackup(
                         lendingReturns =
                             lendingReturns,
                         wallets =
-                            wallets
+                            wallets,
+                        people =
+                            people
                     ).toByteArray()
                 )
             }
@@ -2181,7 +2234,8 @@ fun exportBackupToUri(
     loanPayments: List<LoanPayment>,
     lendings: List<LendingAccount>,
     lendingReturns: List<LendingReturn>,
-    wallets: List<Wallet>
+    wallets: List<Wallet>,
+    people: List<PersonProfile> = emptyList()
 ): Boolean {
     return try {
         context.contentResolver
@@ -2204,7 +2258,9 @@ fun exportBackupToUri(
                         lendingReturns =
                             lendingReturns,
                         wallets =
-                            wallets
+                            wallets,
+                        people =
+                            people
                     ).toByteArray()
                 )
             }

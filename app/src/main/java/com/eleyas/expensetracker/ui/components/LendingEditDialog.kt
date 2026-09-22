@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.eleyas.expensetracker.model.LendingAccount
+import com.eleyas.expensetracker.model.PersonProfile
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -28,8 +29,9 @@ import java.util.Locale
 @Composable
 fun LendingEditDialog(
     lending: LendingAccount,
+    people: List<PersonProfile> = emptyList(),
     onDismiss: () -> Unit,
-    onSave: (String, Double, String, String, String?) -> Unit
+    onSave: (String, Double, String, String, String?, String?) -> Unit
 ) {
     val context = LocalContext.current
     val scheme = MaterialTheme.colorScheme
@@ -38,6 +40,7 @@ fun LendingEditDialog(
     var date by remember(lending.id) { mutableStateOf(lending.date) }
     var note by remember(lending.id) { mutableStateOf(lending.note) }
     var dueDate by remember(lending.id) { mutableStateOf(lending.dueDate ?: "") }
+    val selectedPersonId = people.firstOrNull { it.name.trim().equals(person.trim(), ignoreCase = true) }?.id ?: lending.personId
 
     fun pickDate(initial: String, onSelected: (String) -> Unit) {
         val calendar = Calendar.getInstance()
@@ -275,7 +278,8 @@ fun LendingEditDialog(
                                     note.trim(),
                                     dueDate.takeIf {
                                         it.isNotBlank()
-                                    }
+                                    },
+                                    selectedPersonId
                                 )
                             }
                         },
