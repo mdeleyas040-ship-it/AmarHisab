@@ -396,6 +396,10 @@ class MainViewModel : ViewModel() {
                                         doc.getString("name")
                                             ?: "",
 
+                                    personId =
+                                        doc.getString("personId")
+                                            ?.ifBlank { null },
+
                                     sourceType =
                                         doc.getString(
                                             "sourceType"
@@ -662,6 +666,10 @@ class MainViewModel : ViewModel() {
                                             "person"
                                         )
                                             ?: "",
+
+                                    personId =
+                                        doc.getString("personId")
+                                            ?.ifBlank { null },
 
                                     amount =
                                         doc.getDouble(
@@ -1324,7 +1332,8 @@ class MainViewModel : ViewModel() {
         monthly: Double,
         date: String,
         note: String,
-        dueDate: String? = null
+        dueDate: String? = null,
+        personId: String? = null
     ) {
         if (amount <= 0.0) {
             WarningPopupManager.show(
@@ -1366,6 +1375,7 @@ class MainViewModel : ViewModel() {
             monthlyInstallment = monthly,
             startDate = date,
             note = note,
+            personId = personId,
             lastEditedDate =
                 SimpleDateFormat(
                     "dd/MM/yyyy HH:mm",
@@ -1968,7 +1978,8 @@ class MainViewModel : ViewModel() {
         amount: Double,
         date: String,
         note: String,
-        dueDate: String?
+        dueDate: String?,
+        personId: String? = null
     ) {
         if (amount <= 0.0) {
             WarningPopupManager.show(
@@ -1982,7 +1993,8 @@ class MainViewModel : ViewModel() {
             amount = amount,
             date = date,
             note = note,
-            dueDate = dueDate
+            dueDate = dueDate,
+            personId = personId
         )
         lendings = lendings.map { if (it.id == lending.id) updated else it }
         persistLoanData(context)
@@ -2165,7 +2177,8 @@ class MainViewModel : ViewModel() {
             loanPayments,
             lendings,
             lendingReturns,
-            wallets
+            wallets,
+            personProfiles
         )
     }
 
@@ -2286,13 +2299,14 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun updateCloudData(cloudTransactions: List<Transaction>, cloudLoans: List<LoanAccount>, cloudPayments: List<LoanPayment>, cloudLendings: List<LendingAccount>, cloudReturns: List<LendingReturn>, cloudWallets: List<Wallet> = emptyList()) {
+    fun updateCloudData(cloudTransactions: List<Transaction>, cloudLoans: List<LoanAccount>, cloudPayments: List<LoanPayment>, cloudLendings: List<LendingAccount>, cloudReturns: List<LendingReturn>, cloudWallets: List<Wallet> = emptyList(), cloudPeople: List<PersonProfile> = emptyList()) {
         personalTransactions = cloudTransactions
         loans = cloudLoans
         loanPayments = cloudPayments
         lendings = cloudLendings
         lendingReturns = cloudReturns
         if (cloudWallets.isNotEmpty()) wallets = cloudWallets
+        personProfiles = cloudPeople
 
         saveTransactions(prefs, transactions)
         saveLoans(prefs, loans)

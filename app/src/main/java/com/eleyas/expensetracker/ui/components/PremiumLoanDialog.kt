@@ -2,6 +2,8 @@ package com.eleyas.expensetracker.ui.components
 
 import android.app.DatePickerDialog
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,8 +30,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.eleyas.expensetracker.model.LoanAccount
+import com.eleyas.expensetracker.model.PersonProfile
 import com.eleyas.expensetracker.ui.theme.Green
 import com.eleyas.expensetracker.util.formatMoney
+import com.eleyas.expensetracker.util.persistPersonProfilePhoto
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -40,7 +44,9 @@ fun PremiumLoanDialog(
     onDismiss: () -> Unit,
     existingLoan: LoanAccount? = null,
     existingNames: List<String> = emptyList(),
-    onSave: (String, String, Double, Double, String, String, String?) -> Unit
+    people: List<PersonProfile> = emptyList(),
+    onProfilePhotoSaved: (PersonProfile) -> Unit = {},
+    onSave: (String, String, Double, Double, String, String, String?, String?) -> Unit
 ) {
     val context = LocalContext.current
     val scheme = MaterialTheme.colorScheme
@@ -55,6 +61,19 @@ fun PremiumLoanDialog(
     var note by remember { mutableStateOf(existingLoan?.note ?: "") }
     var sourceMenu by remember { mutableStateOf(false) }
     var nameMenu by remember { mutableStateOf(false) }
+    var selectedPersonId by remember { mutableStateOf(existingLoan?.personId) }
+    var showPeople by remember { mutableStateOf(false) }
+
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null && sourceType == "person" && name.isNotBlank()) {
+            val path = persistPersonProfilePhoto(context, uri)
+            if (path != null) {
+                val id = selectedPersonId ?: java.util.UUID.randomUUID().toString()
+                selectedPersonId = id
+                onProfilePhotoSaved(PersonProfile(id = id, name = name.trim(), photoUri = path))
+            }
+        }
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -103,10 +122,60 @@ fun PremiumLoanDialog(
                 }
 
                 item {
+                    if (sourceType == "person") {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { showPeople = !showPeople },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.Person, null)
+                                Spacer(Modifier.width(5.dp))
+                                Text("আগের ব্যক্তি")
+                            }
+                            OutlinedButton(
+                                onClick = { photoPicker.launch("image/*") },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.Person, null)
+                                Spacer(Modifier.width(5.dp))
+                                Text("ছবি যোগ")
+                            }
+                        }
+                        if (showPeople && people.isNotEmpty()) {
+                            Card(Modifier.fillMaxWidth()) {
+                                Column(Modifier.padding(8.dp)) {
+                                    people.filter { name.isBlank() || it.name.contains(name, true) }.take(5).forEach { p ->
+                                        TextButton(
+                                            onClick = {
+                                                name = p.name
+                                                selectedPersonId = p.id
+                                                showPeople = false
+                                            },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text(p.name, modifier = Modifier.fillMaxWidth())
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
                     Box(Modifier.fillMaxWidth()) {
                         OutlinedTextField(
                             value = name,
-                            onValueChange = { name = it },
+                            onValueChange = {
+                                name = it
+                                if (sourceType == "person") {
+                                    selectedPersonId = people.firstOrNull { p -> p.name.equals(it.trim(), ignoreCase = true) }?.id
+                                    showPeople = true
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             label = { Text(if (sourceType == "bank") "ব্যাংকের নাম" else "ব্যক্তির নাম") },
@@ -233,7 +302,8 @@ fun PremiumLoanDialog(
                                         monthly,
                                         date,
                                         note.trim(),
-                                        dueDate.takeIf { it.isNotBlank() }
+                                        dueDate.takeIf { it.isNotBlank() },
+                                        selectedPersonId.takeIf { sourceType == "person" }
                                     )
                                 }
                             },
