@@ -2258,7 +2258,9 @@ fun exportBackupToUri(
                         lendingReturns =
                             lendingReturns,
                         wallets =
-                            wallets
+                            wallets,
+                        people =
+                            people
                     ).toByteArray()
                 )
             }
