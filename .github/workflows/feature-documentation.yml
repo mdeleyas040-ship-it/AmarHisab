@@ -1,0 +1,22 @@
+name: Feature Documentation Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  feature-documentation:
+    name: Require feature specification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify feature documentation
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          BRANCH_NAME: ${{ github.head_ref }}
+        run: |
+          chmod +x ./scripts/verify_feature_docs.sh
+          ./scripts/verify_feature_docs.sh

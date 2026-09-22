@@ -87,6 +87,7 @@ class RecapNotificationReceiver : BroadcastReceiver() {
 
         val mainIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra(RecapNotificationManager.EXTRA_OPEN_MONTHLY_SUMMARY, true)
         }
 
         val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

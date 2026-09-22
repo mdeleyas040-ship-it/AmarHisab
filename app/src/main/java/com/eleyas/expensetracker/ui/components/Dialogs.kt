@@ -4212,6 +4212,7 @@ fun LendingDialog(
 @Composable
 fun LendingReturnDialog(
     lending: LendingAccount,
+    remainingDue: Double = lending.amount,
     onDismiss: () -> Unit,
     onSave: (
         Double,
@@ -4420,14 +4421,14 @@ fun LendingReturnDialog(
                         ) {
 
                             Text(
-                                "মূল ধার",
+                                "বাকি পাওনা",
                                 fontSize = 9.sp,
                                 color =
                                     scheme.onSurfaceVariant
                             )
 
                             Text(
-                                "৳${formatMoney(lending.amount)}",
+                                "৳${formatMoney(remainingDue)}",
                                 fontSize = 13.sp,
                                 fontWeight =
                                     FontWeight.ExtraBold,

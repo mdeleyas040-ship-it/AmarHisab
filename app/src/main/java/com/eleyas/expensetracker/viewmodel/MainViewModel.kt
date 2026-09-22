@@ -1950,6 +1950,41 @@ class MainViewModel : ViewModel() {
         ).show()
     }
 
+    fun updateLending(
+        context: Context,
+        lending: LendingAccount,
+        person: String,
+        amount: Double,
+        date: String,
+        note: String,
+        dueDate: String?
+    ) {
+        if (amount <= 0.0) {
+            WarningPopupManager.show(
+                title = "ধারের পরিমাণ সঠিক নয়",
+                message = "ধারের পরিমাণ ০-এর বেশি দিন।"
+            )
+            return
+        }
+        val updated = lending.copy(
+            person = person,
+            amount = amount,
+            date = date,
+            note = note,
+            dueDate = dueDate
+        )
+        lendings = lendings.map { if (it.id == lending.id) updated else it }
+        persistLoanData(context)
+        makeText(context, "✅ ধার দেওয়ার তথ্য আপডেট হয়েছে", Toast.LENGTH_SHORT).show()
+    }
+
+    fun deleteLending(context: Context, lending: LendingAccount) {
+        lendings = lendings.filter { it.id != lending.id }
+        lendingReturns = lendingReturns.filter { it.lendingId != lending.id }
+        persistLoanData(context)
+        makeText(context, "🗑️ ধারের তথ্য ও ফেরত history মুছে ফেলা হয়েছে", Toast.LENGTH_SHORT).show()
+    }
+
     fun updateBorrowing(context: Context, loan: LoanAccount, borrowing: LoanBorrowing, amount: Double, date: String, note: String) {
         val updatedBorrowing = borrowing.copy(amount = amount, date = date, note = note)
         val updatedLoan = loan.copy(borrowings = loan.borrowings.map { if (it.id == borrowing.id) updatedBorrowing else it })

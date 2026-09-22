@@ -2,6 +2,7 @@
 package com.eleyas.expensetracker
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -9,6 +10,8 @@ import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.widget.Toast
 import com.eleyas.expensetracker.model.Transaction
+import com.eleyas.expensetracker.util.MonthlySummary
+import com.eleyas.expensetracker.util.MonthlySummaryUtils
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.text.SimpleDateFormat
@@ -16,6 +19,21 @@ import java.util.Date
 import java.util.Locale
 
 object ReportExporter {
+
+    private fun banglaPeriod(start: Date, end: Date): String {
+        val months = arrayOf(
+            "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন",
+            "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"
+        )
+        val format = SimpleDateFormat("dd", Locale.ENGLISH)
+        val yearFormat = SimpleDateFormat("yyyy", Locale.ENGLISH)
+        val monthFormat = SimpleDateFormat("M", Locale.ENGLISH)
+        fun formatDate(date: Date): String {
+            val month = monthFormat.format(date).toInt() - 1
+            return format.format(date) + " " + months[month] + " " + yearFormat.format(date)
+        }
+        return formatDate(start) + " – " + formatDate(end)
+    }
 
     // =========================================================
     // COMMON PDF WRITER
@@ -522,6 +540,182 @@ object ReportExporter {
     // =========================================================
     // CSV EXPORT
     // =========================================================
+
+    fun exportMonthlySummaryToPdf(
+        context: Context,
+        uri: Uri,
+        summary: MonthlySummary,
+        usdToBdt: Double,
+        usdToMvr: Double
+    ) {
+        try {
+            fun toBdt(transaction: Transaction): Double = when (transaction.currency) {
+                "BDT" -> transaction.amount
+                "USD" -> transaction.amount * usdToBdt
+                "MVR" -> if (usdToMvr > 0) transaction.amount * (usdToBdt / usdToMvr) else 0.0
+                else -> transaction.amount
+            }
+
+            val totalIncome = summary.incomeTransactions.sumOf(::toBdt)
+            val totalExpense = summary.expenseTransactions.sumOf(::toBdt)
+            val net = totalIncome - totalExpense
+            val categoryTotals = summary.expenseTransactions
+                .groupBy { it.category.ifBlank { "Other" } }
+                .mapValues { (_, list) -> list.sumOf(::toBdt) }
+                .toList()
+                .sortedByDescending { it.second }
+
+            val document = PdfDocument()
+            val pageWidth = 595
+            val pageHeight = 842
+            var pageNumber = 1
+            var pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
+            var page = document.startPage(pageInfo)
+            var canvas = page.canvas
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+            var y = 46f
+
+            fun text(value: String, x: Float, size: Float, bold: Boolean = false) {
+                paint.color = Color.BLACK
+                paint.textSize = size
+                paint.isFakeBoldText = bold
+                canvas.drawText(value, x, y, paint)
+            }
+
+            fun finishAndStartPage() {
+                document.finishPage(page)
+                pageNumber++
+                pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
+                page = document.startPage(pageInfo)
+                canvas = page.canvas
+                y = 46f
+                text("Amar Hisab - মাসিক সারসংক্ষেপ", 40f, 16f, true)
+                y += 22f
+                text("হিসাবের সময়কাল: " + banglaPeriod(summary.start, summary.end), 40f, 10f)
+                y += 28f
+            }
+
+            text("Amar Hisab - মাসিক সারসংক্ষেপ", 40f, 22f, true)
+            y += 28f
+            text("হিসাবের সময়কাল: " + banglaPeriod(summary.start, summary.end), 40f, 11f)
+            y += 28f
+
+            val cardTop = y - 18f
+            val cardBottom = y + 78f
+            paint.color = Color.rgb(245, 245, 245)
+            canvas.drawRoundRect(40f, cardTop, 555f, cardBottom, 12f, 12f, paint)
+
+            paint.color = Color.DKGRAY
+            paint.textSize = 10f
+            paint.isFakeBoldText = true
+            canvas.drawText("মোট আয়", 55f, y + 4f, paint)
+            canvas.drawText("মোট খরচ", 235f, y + 4f, paint)
+            canvas.drawText("নিট নগদ প্রবাহ", 410f, y + 4f, paint)
+
+            paint.color = Color.BLACK
+            paint.textSize = 18f
+            paint.isFakeBoldText = true
+            canvas.drawText("BDT " + "%.2f".format(totalIncome), 55f, y + 38f, paint)
+            canvas.drawText("BDT " + "%.2f".format(totalExpense), 235f, y + 38f, paint)
+            canvas.drawText("BDT " + "%.2f".format(net), 410f, y + 38f, paint)
+            y += 110f
+
+            if (categoryTotals.isNotEmpty()) {
+                text("বিভাগ অনুযায়ী খরচ", 40f, 14f, true)
+                y += 22f
+                categoryTotals.forEach { (category, amount) ->
+                    if (y > pageHeight - 70) finishAndStartPage()
+                    text(category.take(30), 45f, 10f)
+                    text("BDT " + "%.2f".format(amount), 430f, 10f)
+                    y += 18f
+                }
+                y += 12f
+            }
+
+            text("লেনদেন", 40f, 14f, true)
+            y += 22f
+            paint.color = Color.DKGRAY
+            paint.textSize = 9f
+            paint.isFakeBoldText = true
+            canvas.drawText("তারিখ", 40f, y, paint)
+            canvas.drawText("বিভাগ", 105f, y, paint)
+            canvas.drawText("কারণ", 220f, y, paint)
+            canvas.drawText("ধরন", 405f, y, paint)
+            canvas.drawText("পরিমাণ", 480f, y, paint)
+            y += 8f
+            canvas.drawLine(40f, y, 555f, y, paint)
+            y += 16f
+
+            summary.transactions.forEach { transaction ->
+                if (y > pageHeight - 45) {
+                    finishAndStartPage()
+                    paint.color = Color.DKGRAY
+                    paint.textSize = 9f
+                    paint.isFakeBoldText = true
+                    canvas.drawText("Date", 40f, y, paint)
+                    canvas.drawText("Category", 105f, y, paint)
+                    canvas.drawText("Reason", 220f, y, paint)
+                    canvas.drawText("Type", 405f, y, paint)
+                    canvas.drawText("Amount", 480f, y, paint)
+                    y += 8f
+                    canvas.drawLine(40f, y, 555f, y, paint)
+                    y += 16f
+                }
+
+                paint.color = Color.BLACK
+                paint.textSize = 8.5f
+                paint.isFakeBoldText = false
+                canvas.drawText(transaction.date, 40f, y, paint)
+                canvas.drawText(transaction.category.take(17), 105f, y, paint)
+                canvas.drawText(transaction.reason.take(28), 220f, y, paint)
+                canvas.drawText(
+                    when (transaction.type.lowercase()) {
+                        "income" -> "আয়"
+                        "expense", "home", "home_expense" -> "খরচ"
+                        "transfer" -> "স্থানান্তর"
+                        "lending" -> "ধার দেওয়া"
+                        "borrowing" -> "ধার নেওয়া"
+                        "repayment" -> "পরিশোধ"
+                        else -> transaction.type.take(10)
+                    },
+                    405f,
+                    y,
+                    paint
+                )
+                canvas.drawText("%.2f".format(toBdt(transaction)), 480f, y, paint)
+                y += 17f
+            }
+
+            if (summary.transactions.isEmpty()) {
+                text("এই সময়কালে কোনো লেনদেন পাওয়া যায়নি।", 40f, 10f)
+                y += 20f
+            }
+
+            document.finishPage(page)
+            context.contentResolver.openOutputStream(uri, "w")?.use { document.writeTo(it) }
+                ?: throw Exception("Selected PDF file খুলতে পারছে না")
+            document.close()
+            Toast.makeText(context, "✅ মাসিক PDF সংরক্ষণ হয়েছে", Toast.LENGTH_LONG).show()
+
+            // Automatically open the saved PDF in the installed PDF viewer.
+            try {
+                val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "application/pdf")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(viewIntent)
+            } catch (_: Exception) {
+                Toast.makeText(
+                    context,
+                    "PDF সংরক্ষণ হয়েছে, কিন্তু PDF viewer খোলা যায়নি",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(context, "❌ মাসিক PDF তৈরিতে সমস্যা: " + (e.message ?: "অজানা সমস্যা"), Toast.LENGTH_LONG).show()
+        }
+    }
 
     fun exportToCsv(
         context: Context,
