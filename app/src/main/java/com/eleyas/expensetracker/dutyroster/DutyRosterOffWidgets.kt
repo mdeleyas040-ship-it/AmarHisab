@@ -39,8 +39,11 @@ internal fun NextOffCountdownCard(
     nowMillis: Long
 ) {
     val todayIso = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(nowMillis)
-    // "Next OFF" means the next upcoming OFF after today.
-    // If today is already OFF, skip today so the countdown does not show 00:00:00.
+    val todayEntry = roster.days.firstOrNull { it.dateIso == todayIso }
+    val todayIsOff = todayEntry?.duties?.firstOrNull {
+        it.person.equals(roster.myName, ignoreCase = true)
+    }?.duty?.let(DutyRosterParser::isOff) == true
+
     val nextOff = roster.days
         .filter { it.dateIso > todayIso }
         .sortedBy { it.dateIso }
@@ -48,13 +51,64 @@ internal fun NextOffCountdownCard(
             day.duties.firstOrNull {
                 it.person.equals(roster.myName, ignoreCase = true)
             }?.duty?.let(DutyRosterParser::isOff) == true
-        } ?: return
+        }
 
-    val offDate = runCatching {
-        SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(nextOff.dateIso)?.time
-    }.getOrNull() ?: return
+    val lastRosterDay = roster.days.maxByOrNull { it.dateIso }
+    val lastRosterDate = lastRosterDay?.let {
+        runCatching {
+            SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(it.dateIso)?.time
+        }.getOrNull()
+    }
 
-    val remaining = (offDate - nowMillis).coerceAtLeast(0L)
+    val nextOffDate = nextOff?.let {
+        runCatching {
+            SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(it.dateIso)?.time
+        }.getOrNull()
+    }
+
+    val mode = when {
+        todayIsOff -> "OFF TODAY"
+        nextOffDate != null -> "NEXT OFF"
+        lastRosterDate != null && lastRosterDate >= nowMillis -> "NEXT ROSTER IN"
+        else -> "NEW ROSTER NEEDED"
+    }
+
+    if (mode == "NEW ROSTER NEEDED") {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(9.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.EventAvailable,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.width(8.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "NEW ROSTER NEEDED",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "Current roster has ended",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f)
+                    )
+                }
+            }
+        }
+        return
+    }
+
+    val targetMillis = when (mode) {
+        "OFF TODAY" -> null
+        "NEXT OFF" -> nextOffDate
+        else -> lastRosterDate
+    }
+
+    val remaining = targetMillis?.let { (it - nowMillis).coerceAtLeast(0L) } ?: 0L
     val totalSeconds = remaining / 1000L
     val days = totalSeconds / 86400L
     val hours = (totalSeconds % 86400L) / 3600L
@@ -67,19 +121,24 @@ internal fun NextOffCountdownCard(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                Icons.Default.CheckCircle,
+                if (mode == "OFF TODAY") Icons.Default.Hotel
+                else Icons.Default.EventAvailable,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
             Spacer(Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "Next OFF",
+                    mode,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    "Next OFF • " + nextOff.displayDate,
+                    when (mode) {
+                        "OFF TODAY" -> "আজ আপনার OFF day"
+                        "NEXT OFF" -> "Next OFF • " + nextOff!!.displayDate
+                        else -> "Roster ends • " + lastRosterDay!!.displayDate
+                    },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f)
                 )
@@ -98,19 +157,21 @@ internal fun NextOffCountdownCard(
             }
         }
 
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(15.dp),
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
-        ) {
-            Row(
-                modifier = Modifier.padding(vertical = 11.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
+        if (mode != "OFF TODAY") {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(15.dp),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
             ) {
-                CountdownUnit(days.toString().padStart(2, '0'), "Days")
-                CountdownUnit(hours.toString().padStart(2, '0'), "Hours")
-                CountdownUnit(minutes.toString().padStart(2, '0'), "Minutes")
-                CountdownUnit(seconds.toString().padStart(2, '0'), "Seconds")
+                Row(
+                    modifier = Modifier.padding(vertical = 11.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    CountdownUnit(days.toString().padStart(2, '0'), "Days")
+                    CountdownUnit(hours.toString().padStart(2, '0'), "Hours")
+                    CountdownUnit(minutes.toString().padStart(2, '0'), "Minutes")
+                    CountdownUnit(seconds.toString().padStart(2, '0'), "Seconds")
+                }
             }
         }
     }
