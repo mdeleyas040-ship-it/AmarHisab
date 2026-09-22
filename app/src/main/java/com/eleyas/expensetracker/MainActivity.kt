@@ -2986,7 +2986,13 @@ fun AmarHisabApp(
                     }
                     .distinct(),
 
-                { n, s, p, m, d, nt, dd ->
+                people = viewModel.personProfiles,
+                onProfilePhotoSaved = { profile ->
+                    upsertPersonProfile(prefs, profile)
+                    viewModel.loadPersonProfiles(context)
+                },
+
+                { n, s, p, m, d, nt, dd, selectedPersonId ->
 
                     if (
                         editingLoan != null
@@ -3001,7 +3007,8 @@ fun AmarHisabApp(
                             m,
                             d,
                             nt,
-                            dd
+                            dd,
+                            selectedPersonId
                         )
 
                     } else {
