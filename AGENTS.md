@@ -15,6 +15,5 @@ These repository rules are mandatory for every AI agent, coding assistant and au
 9. If rules conflict, preserve accounting/data safety first and ask for clarification when needed.
 10. Treat DEVELOPMENT_RULES.md as the canonical development contract.
 
-
 ## Feature Rule — বাধ্যতামূলক
-Before adding or changing a feature, read FEATURE_RULES.md. A feature/* branch that changes app code must also add or update a feature specification under docs/features/. Do not merge a new feature without its specification. Include purpose, behavior, location, flow, data, accounting impact, dependencies, validation, compatibility, tests and acceptance criteria.
+Before adding or changing a feature, read FEATURE_RULES.md. Feature development must be done on the permanent `dev` branch; do not create a new `feature/*` branch for ordinary feature work. Add or update the required feature specification under `docs/features/`. Do not merge a new feature without its specification. Include purpose, behavior, location, flow, data, accounting impact, dependencies, validation, compatibility, tests and acceptance criteria.
