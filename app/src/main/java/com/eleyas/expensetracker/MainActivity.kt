@@ -2314,6 +2314,11 @@ fun AmarHisabApp(
 
         if (showLendingDialog) {
             LendingDialog(
+                people = viewModel.personProfiles,
+                onProfilePhotoSaved = { profile ->
+                    upsertPersonProfile(prefs, profile)
+                    viewModel.loadPersonProfiles(context)
+                },
                 onDismiss = {
                     showLendingDialog = false
                 },
