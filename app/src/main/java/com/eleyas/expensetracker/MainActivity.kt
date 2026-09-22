@@ -1167,6 +1167,7 @@ fun AmarHisabApp(
                 !showWishlistScreen &&
                 !showNotificationScreen &&
                 !showSettingsScreen &&
+                !showDutyRosterScreen &&
                 !isSearchActive
             ) {
 
@@ -1319,6 +1320,7 @@ fun AmarHisabApp(
                 !showSavingsScreen &&
                 !showNotificationScreen &&
                 !showSettingsScreen &&
+                !showDutyRosterScreen &&
                 !isSearchActive
             ) {
 
