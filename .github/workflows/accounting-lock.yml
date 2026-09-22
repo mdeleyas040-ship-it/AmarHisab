@@ -31,8 +31,8 @@ jobs:
             ["app/src/main/java/com/eleyas/expensetracker/util/HomeLedgerEngine.kt"]="d2363c6b4177dbb3a6dba4dafe0b101fac0554fe"
             ["app/src/main/java/com/eleyas/expensetracker/util/BalanceEngine.kt"]="484789fb1e29ae2a47074f3f2f24f7e82e96f5ac"
             ["app/src/main/java/com/eleyas/expensetracker/model/Models.kt"]="dd152e73f32b597ea52023ed95ab25cbbf2d36b6"
-            # Intentional baseline update: approved accounting baseline plus additive person-profile linkage.
-            ["app/src/main/java/com/eleyas/expensetracker/viewmodel/MainViewModel.kt"]="268384470b69babbbe93cdfa285738fc990c4a90"
+            # Intentional baseline update: reviewed MainViewModel blob for additive person-profile linkage.
+            ["app/src/main/java/com/eleyas/expensetracker/viewmodel/MainViewModel.kt"]="ea9f4e78143d6dd4095461bd31c25c4f6c0a00a7"
           )
 
           for file in "${!EXPECTED[@]}"; do
