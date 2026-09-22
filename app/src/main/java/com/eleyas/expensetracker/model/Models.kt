@@ -105,7 +105,7 @@ data class LoanAccount(
     val borrowings: List<LoanBorrowing> = emptyList(),
     val dueDate: String? = null,
     // Fund that actually received the loan principal. Old records default to personal.
-    val fundSource: String = "personal"
+    val fundSource: String = "personal",
     // Optional stable link to a reusable person profile. Legacy records remain null.
     val personId: String? = null
 )
@@ -131,7 +131,9 @@ data class LendingAccount(
     val note: String,
     val dueDate: String? = null,
     val fundSource: String = "personal",
-    val currency: String = "BDT"
+    val currency: String = "BDT",
+    // Optional stable link to a reusable person profile. Legacy records remain null.
+    val personId: String? = null
 )
 
 data class LendingReturn(
