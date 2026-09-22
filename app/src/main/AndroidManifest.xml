@@ -128,6 +128,18 @@
 
         </receiver>
 
+        <!-- Daily Duty Roster -->
+        <receiver
+            android:name=".dutyroster.DutyRosterReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="com.eleyas.expensetracker.ACTION_DUTY_ROSTER" />
+            </intent-filter>
+        </receiver>
+
         <!-- SMS Receiver -->
         <receiver
             android:name=".util.SMSReceiver"
