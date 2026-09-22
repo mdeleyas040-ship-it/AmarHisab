@@ -2322,7 +2322,8 @@ fun AmarHisabApp(
                         date = date,
                         note = note,
                         dueDate = dueDate,
-                        fundSource = source
+                        fundSource = source,
+                        personId = viewModel.personProfiles.firstOrNull { it.name.equals(person.trim(), ignoreCase = true) }?.id
                     )
                     showLendingDialog = false
                 }
