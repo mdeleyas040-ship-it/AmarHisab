@@ -64,7 +64,9 @@ private fun generateNonce(byteLength: Int = 32): String {
 
 @Composable
 fun GoogleLoginScreen(
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    onProfileSetupRequired: () -> Unit,
+    onError: (String) -> Unit = {}
 ) {
 
     val context = LocalContext.current
@@ -159,20 +161,20 @@ fun GoogleLoginScreen(
 
                                 if (task.isSuccessful) {
 
-                                    FirestoreRepository.saveUser(
-
-                                        onSuccess = {
-
-                                            loading = false
-
-                                            onLoginSuccess()
+                                    FirestoreRepository.checkUserProfile(
+                                        onResult = { profileCompleted ->
+                                            if (profileCompleted) {
+                                                loading = false
+                                                onLoginSuccess()
+                                            } else {
+                                                loading = false
+                                                onProfileSetupRequired()
+                                            }
                                         },
-
                                         onError = { error ->
-
                                             loading = false
-
                                             errorMessage = error
+                                            onError(error)
                                         }
                                     )
 
