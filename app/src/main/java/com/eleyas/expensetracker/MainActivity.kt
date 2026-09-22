@@ -44,6 +44,9 @@ import java.util.*
 import com.eleyas.expensetracker.ui.vehicle.VehicleModule
 import com.eleyas.expensetracker.ui.birthday.BirthdayScreen
 import com.eleyas.expensetracker.ui.screens.ZakatCharityScreen
+import com.eleyas.expensetracker.ui.screens.MonthlySummaryScreen
+import com.eleyas.expensetracker.util.MonthlySummary
+import com.eleyas.expensetracker.util.MonthlySummaryUtils
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
@@ -55,6 +58,8 @@ class MainActivity : FragmentActivity() {
 
     var openOnThisDay by mutableStateOf(false)
         private set
+    var openMonthlySummary by mutableStateOf(false)
+        private set
     var quickEntryType by mutableStateOf<String?>(null)
         private set
 
@@ -62,6 +67,7 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
 
         openOnThisDay = shouldOpenOnThisDay(intent)
+        openMonthlySummary = shouldOpenMonthlySummary(intent)
         quickEntryType = QuickEntryManager.entryTypeFrom(intent)
 
         createNotificationChannel()
@@ -83,6 +89,7 @@ class MainActivity : FragmentActivity() {
             AmarHisabTheme {
                 AuthGate(
                     openOnThisDay = openOnThisDay,
+                    openMonthlySummary = openMonthlySummary,
                     quickEntryType = quickEntryType,
                     onQuickEntryHandled = {
                         quickEntryType = null
@@ -102,8 +109,14 @@ class MainActivity : FragmentActivity() {
         if (shouldOpenOnThisDay(intent)) {
             openOnThisDay = true
         }
+        if (shouldOpenMonthlySummary(intent)) {
+            openMonthlySummary = true
+        }
         quickEntryType = QuickEntryManager.entryTypeFrom(intent)
     }
+
+    private fun shouldOpenMonthlySummary(intent: android.content.Intent?): Boolean =
+        intent?.getBooleanExtra(RecapNotificationManager.EXTRA_OPEN_MONTHLY_SUMMARY, false) == true
 
     private fun shouldOpenOnThisDay(
         intent: android.content.Intent?
@@ -146,6 +159,7 @@ class MainActivity : FragmentActivity() {
 @Composable
 fun AuthGate(
     openOnThisDay: Boolean = false,
+    openMonthlySummary: Boolean = false,
     quickEntryType: String? = null,
     onQuickEntryHandled: () -> Unit = {}
 ) {
@@ -182,6 +196,7 @@ fun AuthGate(
         AmarHisabApp(
             currentUserId = uid,
             openOnThisDay = openOnThisDay,
+            openMonthlySummary = openMonthlySummary,
             quickEntryType = quickEntryType,
             onQuickEntryHandled = onQuickEntryHandled,
             onLogout = {
@@ -219,6 +234,7 @@ fun AuthGate(
 fun AmarHisabApp(
     currentUserId: String,
     openOnThisDay: Boolean = false,
+    openMonthlySummary: Boolean = false,
     quickEntryType: String? = null,
     onQuickEntryHandled: () -> Unit = {},
     onLogout: () -> Unit
@@ -336,12 +352,18 @@ fun AmarHisabApp(
         mutableStateOf(false)
     }
 
-    LaunchedEffect(openOnThisDay) {
+    var showMonthlySummaryScreen by remember { mutableStateOf(openMonthlySummary) }
+    var pendingMonthlySummary by remember { mutableStateOf<MonthlySummary?>(null) }
 
+    LaunchedEffect(openOnThisDay, openMonthlySummary) {
         if (openOnThisDay) {
-
             showNotificationScreen = false
             showOnThisDayScreen = true
+        }
+        if (openMonthlySummary) {
+            showNotificationScreen = false
+            showOnThisDayScreen = false
+            showMonthlySummaryScreen = true
         }
     }
 
@@ -1021,6 +1043,18 @@ fun AmarHisabApp(
         mutableStateOf<String?>(null)
     }
 
+    val monthlyPdfExportLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.CreateDocument("application/pdf")
+        ) { uri: Uri? ->
+            uri?.let {
+                pendingMonthlySummary?.let { summary ->
+                    ReportExporter.exportMonthlySummaryToPdf(context, it, summary, usdToBdt, usdToMvr)
+                }
+            }
+            pendingMonthlySummary = null
+        }
+
     val searchPdfExportLauncher =
         rememberLauncherForActivityResult(
             contract =
@@ -1056,6 +1090,7 @@ fun AmarHisabApp(
                             showVehicleModule ||
                     showOnThisDayScreen ||
                     showNotificationScreen ||
+                    showMonthlySummaryScreen ||
                     showSettingsScreen ||
                     settingsSubView != null ||
                     selectedTab != 0 ||
@@ -1075,6 +1110,9 @@ fun AmarHisabApp(
 
             showOnThisDayScreen ->
                 showOnThisDayScreen = false
+
+            showMonthlySummaryScreen ->
+                showMonthlySummaryScreen = false
 
             showCalendarScreen ->
                 showCalendarScreen = false
