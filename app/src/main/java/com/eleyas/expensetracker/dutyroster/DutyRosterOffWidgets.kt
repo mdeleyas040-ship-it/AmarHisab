@@ -80,7 +80,7 @@ internal fun NextOffCountdownCard(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    Icons.Default.EventAvailable,
+                    Icons.Default.EventNote,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
