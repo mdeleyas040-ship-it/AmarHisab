@@ -185,7 +185,7 @@ object RecapNotificationManager {
         val totalExpense = expenses.sumOf { it.amount }
         return if (totalExpense > 0) {
             val sdf = SimpleDateFormat("dd/MM", Locale.getDefault())
-            "এই সপ্তাহে (\${sdf.format(weekAgo.time)}-\${sdf.format(currentDate.time)}) মোট খরচ: ৳ \${"%.2f".format(totalExpense)}"
+            "এই সপ্তাহে (${sdf.format(weekAgo.time)}-${sdf.format(currentDate.time)}) মোট খরচ: ৳ ${"%.2f".format(totalExpense)}"
         } else {
             "এই সপ্তাহে কোনো খরচ নেই"
         }
