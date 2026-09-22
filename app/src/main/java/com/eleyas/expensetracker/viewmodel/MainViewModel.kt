@@ -1283,8 +1283,8 @@ class MainViewModel : ViewModel() {
     }
 
     fun loadPersonProfiles(context: Context) {
-        val prefs = AccountStorage.getPrefs(context, currentUserId)
-        personProfiles = com.eleyas.expensetracker.util.loadPersonProfiles(prefs)
+        val profilePrefs = AccountStorage.getPrefs(context, currentUserId)
+        personProfiles = com.eleyas.expensetracker.util.loadPersonProfiles(profilePrefs)
     }
 
     fun addLoan(
@@ -1897,16 +1897,108 @@ class MainViewModel : ViewModel() {
                 "personal"
             }
         val lending = LendingAccount(
-            id = System.currentTimeMillis(),
+            System.currentTimeMillis(),
+            person,
+            amount,
+            date,
+            note,
+            dueDate = dueDate,
+            fundSource = resolvedSource,
+            personId = personId
+        )
+        lendings = lendings + lending
+        persistLoanData(context)
+        makeText(context, "✅ ধারের তথ্য সেভ হয়েছে", Toast.LENGTH_SHORT).show()
+    }
+
+    fun addLendingReturn(context: Context, lending: LendingAccount, amount: Double, date: String, note: String) {
+        if (amount <= 0.0) {
+            WarningPopupManager.show(
+                title = "ফেরতের পরিমাণ সঠিক নয়",
+                message = "ধার ফেরতের পরিমাণ ০-এর বেশি দিন।"
+            )
+            return
+        }
+
+        val alreadyReturned =
+            lendingReturns
+                .filter { it.lendingId == lending.id }
+                .sumOf { it.amount }
+
+        val outstanding =
+            (lending.amount - alreadyReturned)
+                .coerceAtLeast(0.0)
+
+        if (amount > outstanding + 0.000001) {
+            WarningPopupManager.show(
+                title = "ফেরতের পরিমাণ বেশি",
+                message =
+                    "এই ধার থেকে সর্বোচ্চ ৳${formatMoney(outstanding)} ফেরত নেওয়া যাবে।\n\n" +
+                            "আপনি ৳${formatMoney(amount)} দিতে চাচ্ছেন।"
+            )
+            return
+        }
+
+        val ret =
+            LendingReturn(
+                System.currentTimeMillis(),
+                lending.id,
+                amount,
+                date,
+                note,
+                fundSource = if (FundSource.isHomeLending(lending)) "home" else "personal"
+            )
+
+        lendingReturns =
+            lendingReturns + ret
+
+        persistLoanData(context)
+
+        makeText(
+            context,
+            "✅ ধার ফেরতের তথ্য সেভ হয়েছে",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    fun updateLending(
+        context: Context,
+        lending: LendingAccount,
+        person: String,
+        amount: Double,
+        date: String,
+        note: String,
+        dueDate: String?
+    ) {
+        if (amount <= 0.0) {
+            WarningPopupManager.show(
+                title = "ধারের পরিমাণ সঠিক নয়",
+                message = "ধারের পরিমাণ ০-এর বেশি দিন।"
+            )
+            return
+        }
+        val updated = lending.copy(
             person = person,
-            personId = personId,
             amount = amount,
             date = date,
             note = note,
-            dueDate = dueDate,
-            fundSource = resolvedSource,
-            currency = "BDT"
+            dueDate = dueDate
         )
+        lendings = lendings.map { if (it.id == lending.id) updated else it }
+        persistLoanData(context)
+        makeText(context, "✅ ধার দেওয়ার তথ্য আপডেট হয়েছে", Toast.LENGTH_SHORT).show()
+    }
+
+    fun deleteLending(context: Context, lending: LendingAccount) {
+        lendings = lendings.filter { it.id != lending.id }
+        lendingReturns = lendingReturns.filter { it.lendingId != lending.id }
+        persistLoanData(context)
+        makeText(context, "🗑️ ধারের তথ্য ও ফেরত history মুছে ফেলা হয়েছে", Toast.LENGTH_SHORT).show()
+    }
+
+    fun updateBorrowing(context: Context, loan: LoanAccount, borrowing: LoanBorrowing, amount: Double, date: String, note: String) {
+        val updatedBorrowing = borrowing.copy(amount = amount, date = date, note = note)
+        val updatedLoan = loan.copy(borrowings = loan.borrowings.map { if (it.id == borrowing.id) updatedBorrowing else it })
         loans = loans.map { if (it.id == loan.id) updatedLoan else it }
         persistLoanData(context)
         makeText(context, "✅ ঋণের এন্ট্রি আপডেট হয়েছে", Toast.LENGTH_SHORT).show()
