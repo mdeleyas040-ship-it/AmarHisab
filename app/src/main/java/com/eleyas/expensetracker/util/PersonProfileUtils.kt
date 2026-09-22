@@ -9,7 +9,7 @@ import java.util.UUID
 fun persistPersonProfilePhoto(context: Context, source: Uri): String? {
     return try {
         val dir = File(context.filesDir, "person_profiles").apply { mkdirs() }
-        val target = File(dir, "\${UUID.randomUUID()}.jpg")
+        val target = File(dir, "${UUID.randomUUID()}.jpg")
         context.contentResolver.openInputStream(source)?.use { input ->
             target.outputStream().use { output -> input.copyTo(output) }
         } ?: return null
