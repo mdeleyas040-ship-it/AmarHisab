@@ -14,6 +14,7 @@ import java.util.*
 object RecapNotificationManager {
     const val ACTION_WEEKLY_RECAP = "com.eleyas.expensetracker.ACTION_WEEKLY_RECAP"
     const val ACTION_MONTHLY_RECAP = "com.eleyas.expensetracker.ACTION_MONTHLY_RECAP"
+    const val EXTRA_OPEN_MONTHLY_SUMMARY = "open_monthly_summary"
     
     const val CHANNEL_ID_WEEKLY = "weekly_recap_channel"
     const val CHANNEL_ID_MONTHLY = "monthly_recap_channel"
@@ -140,7 +141,7 @@ object RecapNotificationManager {
         }
     }
 
-    fun scheduleMonthlyRecap(context: Context, dayOfMonth: Int = 1, hour: Int = 9, minute: Int = 0) {
+    fun scheduleMonthlyRecap(context: Context, dayOfMonth: Int = 15, hour: Int = 9, minute: Int = 0) {
         if (!isMonthlyRecapEnabled(context)) return
 
         createNotificationChannels(context)
@@ -254,28 +255,12 @@ object RecapNotificationManager {
 
     fun getMonthlyExpenseSummary(prefs: SharedPreferences): String {
         val transactions = loadTransactions(prefs)
-        val currentDate = Calendar.getInstance()
-        val monthAgo = Calendar.getInstance().apply { add(Calendar.MONTH, -1) }
-
-        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-
-        val monthlyExpenses = transactions.filter { transaction ->
-            transaction.type == "expense" && try {
-                val txDate = dateFormat.parse(transaction.date)
-                txDate != null && txDate >= monthAgo.time && txDate <= currentDate.time
-            } catch (e: Exception) {
-                false
-            }
-        }
-
-        val totalExpense = monthlyExpenses.sumOf { it.amount }
-        val monthFormat = SimpleDateFormat("MMMM", Locale("bn", "BD"))
-        val currentMonth = monthFormat.format(currentDate.time)
-
-        return if (totalExpense > 0) {
-            "$currentMonth মাসে মোট খরচ: ৳ ${"%.2f".format(totalExpense)}"
+        val (startDate, endDate) = MonthlySummaryUtils.currentCycle()
+        val summary = MonthlySummaryUtils.forPeriod(transactions, startDate, endDate)
+        return if (summary.totalExpense > 0) {
+            "১৫–১৫ হিসাব (${summary.startDate}–${summary.endDate}) • মোট খরচ: ৳ ${"%.2f".format(summary.totalExpense)}"
         } else {
-            "$currentMonth মাসে কোনো খরচ নেই"
+            "১৫–১৫ হিসাব (${summary.startDate}–${summary.endDate}) • কোনো খরচ নেই"
         }
     }
 }
