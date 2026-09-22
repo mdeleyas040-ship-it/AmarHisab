@@ -9,6 +9,8 @@ import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.widget.Toast
 import com.eleyas.expensetracker.model.Transaction
+import com.eleyas.expensetracker.util.MonthlySummary
+import com.eleyas.expensetracker.util.MonthlySummaryUtils
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.text.SimpleDateFormat
@@ -522,6 +524,142 @@ object ReportExporter {
     // =========================================================
     // CSV EXPORT
     // =========================================================
+
+    fun exportMonthlySummaryToPdf(
+        context: Context,
+        uri: Uri,
+        summary: MonthlySummary,
+        usdToBdt: Double,
+        usdToMvr: Double
+    ) {
+        try {
+            fun toBdt(transaction: Transaction): Double = when (transaction.currency) {
+                "BDT" -> transaction.amount
+                "USD" -> transaction.amount * usdToBdt
+                "MVR" -> if (usdToMvr > 0) transaction.amount * (usdToBdt / usdToMvr) else 0.0
+                else -> transaction.amount
+            }
+
+            val totalIncome = summary.incomeTransactions.sumOf(::toBdt)
+            val totalExpense = summary.expenseTransactions.sumOf(::toBdt)
+            val net = totalIncome - totalExpense
+            val categoryTotals = summary.expenseTransactions
+                .groupBy { it.category.ifBlank { "Other" } }
+                .mapValues { (_, list) -> list.sumOf(::toBdt) }
+                .toList()
+                .sortedByDescending { it.second }
+
+            val document = PdfDocument()
+            val pageWidth = 595
+            val pageHeight = 842
+            var pageNumber = 1
+            var pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
+            var page = document.startPage(pageInfo)
+            var canvas = page.canvas
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+            var y = 46f
+
+            fun text(value: String, x: Float, size: Float, bold: Boolean = false) {
+                paint.color = Color.BLACK
+                paint.textSize = size
+                paint.isFakeBoldText = bold
+                canvas.drawText(value, x, y, paint)
+            }
+
+            fun finishAndStartPage() {
+                document.finishPage(page)
+                pageNumber++
+                pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
+                page = document.startPage(pageInfo)
+                canvas = page.canvas
+                y = 46f
+                text("Amar Hisab - Monthly Summary", 40f, 16f, true)
+                y += 22f
+                text(MonthlySummaryUtils.displayPeriod(summary.start, summary.end), 40f, 10f)
+                y += 28f
+            }
+
+            text("Amar Hisab - Monthly Summary", 40f, 22f, true)
+            y += 28f
+            text("Period: " + MonthlySummaryUtils.displayPeriod(summary.start, summary.end), 40f, 11f)
+            y += 28f
+
+            paint.color = Color.rgb(245, 245, 245)
+            canvas.drawRoundRect(40f, y - 18f, 555f, y + 60f, 12f, 12f, paint)
+            text("Total Income", 55f, 10f, true)
+            text("BDT " + "%.2f".format(totalIncome), 55f, 30f, true)
+            text("Total Expense", 235f, 10f, true)
+            text("BDT " + "%.2f".format(totalExpense), 235f, 30f, true)
+            text("Net Cash Flow", 410f, 10f, true)
+            text("BDT " + "%.2f".format(net), 410f, 30f, true)
+            y += 90f
+
+            if (categoryTotals.isNotEmpty()) {
+                text("Expense by Category", 40f, 14f, true)
+                y += 22f
+                categoryTotals.forEach { (category, amount) ->
+                    if (y > pageHeight - 70) finishAndStartPage()
+                    text(category.take(30), 45f, 10f)
+                    text("BDT " + "%.2f".format(amount), 430f, 10f)
+                    y += 18f
+                }
+                y += 12f
+            }
+
+            text("Transactions", 40f, 14f, true)
+            y += 22f
+            paint.color = Color.DKGRAY
+            paint.textSize = 9f
+            paint.isFakeBoldText = true
+            canvas.drawText("Date", 40f, y, paint)
+            canvas.drawText("Category", 105f, y, paint)
+            canvas.drawText("Reason", 220f, y, paint)
+            canvas.drawText("Type", 405f, y, paint)
+            canvas.drawText("Amount", 480f, y, paint)
+            y += 8f
+            canvas.drawLine(40f, y, 555f, y, paint)
+            y += 16f
+
+            summary.transactions.forEach { transaction ->
+                if (y > pageHeight - 45) {
+                    finishAndStartPage()
+                    paint.color = Color.DKGRAY
+                    paint.textSize = 9f
+                    paint.isFakeBoldText = true
+                    canvas.drawText("Date", 40f, y, paint)
+                    canvas.drawText("Category", 105f, y, paint)
+                    canvas.drawText("Reason", 220f, y, paint)
+                    canvas.drawText("Type", 405f, y, paint)
+                    canvas.drawText("Amount", 480f, y, paint)
+                    y += 8f
+                    canvas.drawLine(40f, y, 555f, y, paint)
+                    y += 16f
+                }
+
+                paint.color = Color.BLACK
+                paint.textSize = 8.5f
+                paint.isFakeBoldText = false
+                canvas.drawText(transaction.date, 40f, y, paint)
+                canvas.drawText(transaction.category.take(17), 105f, y, paint)
+                canvas.drawText(transaction.reason.take(28), 220f, y, paint)
+                canvas.drawText(transaction.type.uppercase().take(10), 405f, y, paint)
+                canvas.drawText("%.2f".format(toBdt(transaction)), 480f, y, paint)
+                y += 17f
+            }
+
+            if (summary.transactions.isEmpty()) {
+                text("No transactions recorded in this period.", 40f, 10f)
+                y += 20f
+            }
+
+            document.finishPage(page)
+            context.contentResolver.openOutputStream(uri)?.use { document.writeTo(it) }
+            document.close()
+            Toast.makeText(context, "✅ Monthly PDF Saved", Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            Toast.makeText(context, "❌ Monthly PDF Error: " + e.message, Toast.LENGTH_LONG).show()
+        }
+    }
 
     fun exportToCsv(
         context: Context,
