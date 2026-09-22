@@ -3394,7 +3394,8 @@ fun LendingDialog(
         String,
         String,
         String?,
-        String
+        String,
+        String?
     ) -> Unit,
     people: List<PersonProfile> = emptyList(),
     onProfilePhotoSaved: (PersonProfile) -> Unit = {}
@@ -4180,7 +4181,8 @@ fun LendingDialog(
                                     dueDate.takeIf {
                                         it.isNotBlank()
                                     },
-                                    fundSource
+                                    fundSource,
+                                    selectedPersonId
                                 )
                             },
                             modifier = Modifier
