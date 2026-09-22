@@ -30,9 +30,7 @@ data class Wallet(
     val name: String,
     val type: String,
     val initialBalance: Double = 0.0,
-    val currency: String = "BDT"
-    // Optional stable link to a reusable person profile. Legacy records remain null.
-    val personId: String? = null,
+    val currency: String = "BDT",
     val color: Int = 0xFF4CAF50.toInt()
 )
 
@@ -54,7 +52,6 @@ data class FinancialMilestone(
     val note: String = "",
     val linkedTransactionId: Long? = null
 )
-
 
 data class PersonProfile(
     val id: String,
