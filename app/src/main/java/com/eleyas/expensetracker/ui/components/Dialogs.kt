@@ -1244,45 +1244,50 @@ fun AddTransactionDialog(
                         Modifier.height(20.dp)
                     )
 
-                    OutlinedTextField(
-                        value = amount,
-                    
-                        onValueChange = {
-                            amount = it
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number
-                        ),
-                        label = {
-                            Text(
-                                "Amount",
-                                color = scheme.onSurfaceVariant
-                            )
-                        },
-                        placeholder = {
-                            Text(
-                                "যেমন: 100",
-                                color = scheme.onSurfaceVariant
-                            )
-                        },
-                        leadingIcon = {
-                            Text(
-                                "৳",
-                                color = accent,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(17.dp)
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
+                    Box(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        MoneyShortLabel(amount)
+                        OutlinedTextField(
+                            value = amount,
+                            onValueChange = {
+                                amount = it
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number
+                            ),
+                            label = {
+                                Text(
+                                    "Amount",
+                                    color = scheme.onSurfaceVariant
+                                )
+                            },
+                            placeholder = {
+                                Text(
+                                    "যেমন: 100",
+                                    color = scheme.onSurfaceVariant
+                                )
+                            },
+                            leadingIcon = {
+                                Text(
+                                    "৳",
+                                    color = accent,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(end = 76.dp),
+                            shape = RoundedCornerShape(17.dp)
+                        )
+
+                        MoneyShortLabel(
+                            amount,
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .padding(end = 14.dp)
+                        )
                     }
 
                     Spacer(

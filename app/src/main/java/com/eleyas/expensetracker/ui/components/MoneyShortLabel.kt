@@ -1,19 +1,15 @@
 package com.eleyas.expensetracker.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Locale
 import kotlin.math.abs
 
 @Composable
-fun MoneyShortLabel(valueText: String) {
+fun MoneyShortLabel(valueText: String, modifier: Modifier = Modifier) {
     val value = valueText.trim().replace(",", "")
         .map { c ->
             when (c) {
@@ -52,11 +48,7 @@ fun MoneyShortLabel(valueText: String) {
         text = if (unit.isBlank()) bangla else "$bangla $unit",
         fontSize = 11.sp,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier
-            .background(
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f),
-                RoundedCornerShape(8.dp)
-            )
-            .padding(horizontal = 6.dp, vertical = 3.dp)
+        modifier = modifier
+
     )
 }
