@@ -32,7 +32,7 @@ jobs:
             ["app/src/main/java/com/eleyas/expensetracker/util/BalanceEngine.kt"]="484789fb1e29ae2a47074f3f2f24f7e82e96f5ac"
             ["app/src/main/java/com/eleyas/expensetracker/model/Models.kt"]="da545896feb73e4855ce1a474e5f806906cf1de2"
             # Intentional baseline update for shortage-source Loan flow: approved MainViewModel accounting changes.
-            ["app/src/main/java/com/eleyas/expensetracker/viewmodel/MainViewModel.kt"]="4d3ba4e068c2b656b3e783fba3512eb0e0006d07"
+            ["app/src/main/java/com/eleyas/expensetracker/viewmodel/MainViewModel.kt"]="759fb9f4a0079b8cb1e71ea9399d61b6568cb939"
           )
 
           for file in "${!EXPECTED[@]}"; do
@@ -57,4 +57,4 @@ jobs:
             exit 1
           fi
 
-          echo "Accounting and data-protection lock verified."
+          echo "Accounting and data-protection lock verified. MainViewModel baseline intentionally includes reviewed lending edit/delete support."
