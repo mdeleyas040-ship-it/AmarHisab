@@ -12,7 +12,7 @@ import java.util.Locale
  * Amar Hisab — ফ্যামিলি / Shared Household
  *
  * Firestore structure:
- *   households/{id}                  → name, code, createdBy, createdAt, members[]
+ *   households/{id}                  → name, code, createdBy, createdAt, members[], memberUids[]
  *   households/{id}/homeTransactions → পরিবারের সবার shared home income/expense
  *
  * শুধু "home" / "home_expense" type transaction এখানে sync হয়।
@@ -45,7 +45,8 @@ object HouseholdRepository {
             "code" to household.code,
             "createdBy" to household.createdBy,
             "createdAt" to household.createdAt,
-            "members" to household.members.map { memberToMap(it) }
+            "members" to household.members.map { memberToMap(it) },
+            "memberUids" to household.members.map { it.uid }
         )
         firestore.collection("households").document(household.id).set(data)
             .addOnSuccessListener { onSuccess() }
@@ -80,7 +81,12 @@ object HouseholdRepository {
         onError: (String) -> Unit
     ) {
         firestore.collection("households").document(householdId)
-            .update("members", FieldValue.arrayUnion(memberToMap(member)))
+            .update(
+                mapOf(
+                    "members" to FieldValue.arrayUnion(memberToMap(member)),
+                    "memberUids" to FieldValue.arrayUnion(member.uid)
+                )
+            )
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { onError(it.message ?: "Join করা যায়নি") }
     }
@@ -95,7 +101,12 @@ object HouseholdRepository {
         firestore.collection("households").document(householdId).get()
             .addOnSuccessListener { doc ->
                 val remaining = docToHousehold(doc)?.members?.filter { it.uid != uid } ?: emptyList()
-                doc.reference.update("members", remaining.map { memberToMap(it) })
+                doc.reference.update(
+                    mapOf(
+                        "members" to remaining.map { memberToMap(it) },
+                        "memberUids" to remaining.map { it.uid }
+                    )
+                )
                     .addOnSuccessListener { onSuccess() }
                     .addOnFailureListener { onError(it.message ?: "Leave করা যায়নি") }
             }
