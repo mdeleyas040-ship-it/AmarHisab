@@ -1370,6 +1370,9 @@ fun AmarHisabApp(
                         }
                     )
                 }
+                }
+            }
+
             }
         }
     ) { paddingValues ->
@@ -1381,12 +1384,32 @@ fun AmarHisabApp(
                     .padding(paddingValues)
         ) {
 
-            BirthdayPopupCheck(
-                currentUserId,
-                birthday
-            )
+            if (showMonthlySummaryScreen) {
+                val (cycleStart, cycleEnd) = MonthlySummaryUtils.currentCycle()
+                val monthlySummary = MonthlySummaryUtils.forPeriod(
+                    transactions,
+                    cycleStart,
+                    cycleEnd
+                )
+                MonthlySummaryScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    summary = monthlySummary,
+                    wallets = wallets,
+                    usdToBdt = usdToBdt,
+                    usdToMvr = usdToMvr,
+                    onBack = { showMonthlySummaryScreen = false },
+                    onDownloadPdf = {
+                        pendingMonthlySummary = it
+                        monthlyPdfExportLauncher.launch("AmarHisab_Monthly_Summary.pdf")
+                    }
+                )
+            } else {
+                BirthdayPopupCheck(
+                    currentUserId,
+                    birthday
+                )
 
-            when (selectedTab) {
+                when (selectedTab) {
 
                 0 -> HomeScreen(
                     Modifier.fillMaxSize(),
