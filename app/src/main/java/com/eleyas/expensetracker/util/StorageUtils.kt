@@ -883,6 +883,10 @@ fun saveLendings(
                     lending.person
                 )
                 put(
+                    "personId",
+                    lending.personId ?: ""
+                )
+                put(
                     "amount",
                     lending.amount
                 )
