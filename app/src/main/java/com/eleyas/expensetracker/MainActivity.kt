@@ -2324,7 +2324,7 @@ fun AmarHisabApp(
                 onDismiss = {
                     showLendingDialog = false
                 },
-                onSave = { person, amount, date, note, dueDate, source ->
+                onSave = { person, amount, date, note, dueDate, source, selectedPersonId ->
                     viewModel.addLending(
                         context = context,
                         person = person,
@@ -2333,7 +2333,7 @@ fun AmarHisabApp(
                         note = note,
                         dueDate = dueDate,
                         fundSource = source,
-                        personId = viewModel.personProfiles.firstOrNull { it.name.equals(person.trim(), ignoreCase = true) }?.id
+                        personId = selectedPersonId
                     )
                     showLendingDialog = false
                 }
