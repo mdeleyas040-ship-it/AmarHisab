@@ -428,10 +428,6 @@ class MainViewModel : ViewModel() {
                                         doc.getString("note")
                                             ?: "",
 
-                                    personId =
-                                        doc.getString("personId")
-                                            ?.ifBlank { null },
-
                                     lastEditedDate =
                                         doc.getString(
                                             "lastEditedDate"
