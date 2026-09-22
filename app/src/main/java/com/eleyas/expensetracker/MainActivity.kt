@@ -307,6 +307,9 @@ fun AmarHisabApp(
 
     val transactions = viewModel.transactions
     val loans = viewModel.loans
+    LaunchedEffect(currentUserId) {
+        viewModel.loadPersonProfiles(context)
+    }
     val categoryBudgets = viewModel.categoryBudgets
     val loanPayments = viewModel.loanPayments
     val loanInterestTerms = viewModel.loanInterestTerms
