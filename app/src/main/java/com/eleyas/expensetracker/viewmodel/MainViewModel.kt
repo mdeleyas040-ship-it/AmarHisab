@@ -49,6 +49,8 @@ class MainViewModel : ViewModel() {
         private set
     var loans by mutableStateOf<List<LoanAccount>>(emptyList())
         private set
+    var personProfiles by mutableStateOf<List<PersonProfile>>(emptyList())
+        private set
     var categoryBudgets by mutableStateOf<List<CategoryBudget>>(emptyList())
         private set
     var loanPayments by mutableStateOf<List<LoanPayment>>(emptyList())
@@ -1278,6 +1280,11 @@ class MainViewModel : ViewModel() {
         financialMilestones = financialMilestones.filterNot { it.id == milestoneId }
         saveFinancialMilestones(prefs, financialMilestones)
         saveAutoBackup(context)
+    }
+
+    fun loadPersonProfiles(context: Context) {
+        val prefs = AccountStorage.getPrefs(context, currentUserId)
+        personProfiles = loadPersonProfiles(prefs)
     }
 
     fun addLoan(
