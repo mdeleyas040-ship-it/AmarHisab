@@ -112,7 +112,7 @@ fun HomeScreen(
             }
 
             item {
-                Card(Modifier.fillMaxWidth().shadow(10.dp, RoundedCornerShape(CardRadius), Color.Black, AccentGreen.copy(alpha=.35f)), shape = RoundedCornerShape(CardRadius), colors = CardDefaults.cardColors(containerColor = Color(0xFF181B21))) {
+                Card(modifier = Modifier.fillMaxWidth().shadow(elevation = 10.dp, shape = RoundedCornerShape(CardRadius), ambientColor = Color.Black, spotColor = AccentGreen.copy(alpha = .35f)), shape = RoundedCornerShape(CardRadius), colors = CardDefaults.cardColors(containerColor = Color(0xFF181B21))) {
                     Box(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color(0xFF1E222A), Color(0xFF12141A))))) {
                         Column(Modifier.fillMaxWidth().padding(CardPadding)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
@@ -130,7 +130,7 @@ fun HomeScreen(
             item {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text("আমার অ্যাকাউন্টসমূহ", fontSize = 19.sp, fontWeight = FontWeight.Bold); TextButton(onClick = onAddWallet) { Icon(Icons.Default.Add, null, Modifier.size(18.dp)); Spacer(Modifier.width(4.dp)); Text("নতুন", fontWeight = FontWeight.Bold) } }
                 Spacer(Modifier.height(8.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(wallets) { wallet -> Card(onClick={onWalletClick(wallet)}, Modifier.width(150.dp).height(100.dp), RoundedCornerShape(20.dp), colors=CardDefaults.cardColors(containerColor=Color(wallet.color.toLong() and 0xFFFFFFFFL))) { Column(Modifier.padding(14.dp).fillMaxSize(), verticalArrangement=Arrangement.SpaceBetween) { Text(wallet.name,color=Color.White,fontSize=13.sp,fontWeight=FontWeight.Bold,maxLines=1); Column { Text("৳${formatMoney(getWalletBalance(wallet.id))}",color=Color.White,fontSize=16.sp,fontWeight=FontWeight.ExtraBold); Text(wallet.type,color=Color.White.copy(alpha=.7f),fontSize=10.sp) } } } } }
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(wallets) { wallet -> Card(onClick = { onWalletClick(wallet) }, modifier = Modifier.width(150.dp).height(100.dp), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color(wallet.color.toLong() and 0xFFFFFFFFL))) { Column(Modifier.padding(14.dp).fillMaxSize(), verticalArrangement=Arrangement.SpaceBetween) { Text(wallet.name,color=Color.White,fontSize=13.sp,fontWeight=FontWeight.Bold,maxLines=1); Column { Text("৳${formatMoney(getWalletBalance(wallet.id))}",color=Color.White,fontSize=16.sp,fontWeight=FontWeight.ExtraBold); Text(wallet.type,color=Color.White.copy(alpha=.7f),fontSize=10.sp) } } } } }
             }
 
             item { Text("দ্রুত অ্যাকশন", fontSize = 19.sp, fontWeight = FontWeight.Bold) }
@@ -140,7 +140,7 @@ fun HomeScreen(
             }
 
             item {
-                Card(onClick={showHomeMoneyFlow=true}, Modifier.fillMaxWidth(), RoundedCornerShape(20.dp), colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) { Column(Modifier.padding(18.dp)) { Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) { Row(verticalAlignment=Alignment.CenterVertically) { Surface(Modifier.size(42.dp),RoundedCornerShape(12.dp),color=MaterialTheme.colorScheme.primary.copy(alpha=.12f)) { Box(contentAlignment=Alignment.Center) { Icon(Icons.Default.HomeWork,null,tint=MaterialTheme.colorScheme.primary) } }; Spacer(Modifier.width(10.dp)); Column { Text("বাড়ির হিসাব",fontSize=17.sp,fontWeight=FontWeight.Bold); Text("বাড়ির সব টাকা এক জায়গায়",fontSize=11.sp,color=MaterialTheme.colorScheme.onSurfaceVariant) } }; Icon(Icons.Default.ChevronRight,null,tint=MaterialTheme.colorScheme.onSurfaceVariant) }; Spacer(Modifier.height(12.dp)); HomeSummaryRow("বাড়িতে পাঠানো",totalHome,Blue); HomeSummaryRow("বাড়ির খরচ",totalHomeExpense,Color(0xFFF59E0B)); HorizontalDivider(Modifier.padding(vertical=7.dp)); HomeSummaryRow("বাড়িতে অবশিষ্ট",homeBalance,IncomeGreen) } }
+                Card(onClick = { showHomeMoneyFlow = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) { Column(Modifier.padding(18.dp)) { Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) { Row(verticalAlignment=Alignment.CenterVertically) { Surface(Modifier.size(42.dp),RoundedCornerShape(12.dp),color=MaterialTheme.colorScheme.primary.copy(alpha=.12f)) { Box(contentAlignment=Alignment.Center) { Icon(Icons.Default.HomeWork,null,tint=MaterialTheme.colorScheme.primary) } }; Spacer(Modifier.width(10.dp)); Column { Text("বাড়ির হিসাব",fontSize=17.sp,fontWeight=FontWeight.Bold); Text("বাড়ির সব টাকা এক জায়গায়",fontSize=11.sp,color=MaterialTheme.colorScheme.onSurfaceVariant) } }; Icon(Icons.Default.ChevronRight,null,tint=MaterialTheme.colorScheme.onSurfaceVariant) }; Spacer(Modifier.height(12.dp)); HomeSummaryRow("বাড়িতে পাঠানো",totalHome,Blue); HomeSummaryRow("বাড়ির খরচ",totalHomeExpense,Color(0xFFF59E0B)); HorizontalDivider(Modifier.padding(vertical=7.dp)); HomeSummaryRow("বাড়িতে অবশিষ্ট",homeBalance,IncomeGreen) } }
             }
         }
 
@@ -153,7 +153,7 @@ fun HomeScreen(
 
 @Composable
 fun QuickActionCard(modifier: Modifier = Modifier, icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, color: Color, onClick: () -> Unit) {
-    Card(onClick=onClick, modifier=modifier.height(65.dp), shape=RoundedCornerShape(16.dp), colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface), elevation=CardDefaults.cardElevation(2.dp)) {
+    Card(onClick = onClick, modifier = modifier.height(65.dp), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Row(Modifier.fillMaxSize().padding(horizontal=16.dp), verticalAlignment=Alignment.CenterVertically) { Surface(Modifier.size(38.dp),RoundedCornerShape(10.dp),color=color.copy(alpha=.15f)) { Box(contentAlignment=Alignment.Center) { Icon(icon,null,tint=color,modifier=Modifier.size(20.dp)) } }; Spacer(Modifier.width(12.dp)); Text(title,fontSize=14.sp,fontWeight=FontWeight.Bold) }
     }
 }
