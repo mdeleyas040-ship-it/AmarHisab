@@ -585,15 +585,25 @@ object ReportExporter {
             text("Period: " + MonthlySummaryUtils.displayPeriod(summary.start, summary.end), 40f, 11f)
             y += 28f
 
+            val cardTop = y - 18f
+            val cardBottom = y + 78f
             paint.color = Color.rgb(245, 245, 245)
-            canvas.drawRoundRect(40f, y - 18f, 555f, y + 60f, 12f, 12f, paint)
-            text("Total Income", 55f, 10f, true)
-            text("BDT " + "%.2f".format(totalIncome), 55f, 30f, true)
-            text("Total Expense", 235f, 10f, true)
-            text("BDT " + "%.2f".format(totalExpense), 235f, 30f, true)
-            text("Net Cash Flow", 410f, 10f, true)
-            text("BDT " + "%.2f".format(net), 410f, 30f, true)
-            y += 90f
+            canvas.drawRoundRect(40f, cardTop, 555f, cardBottom, 12f, 12f, paint)
+
+            paint.color = Color.DKGRAY
+            paint.textSize = 10f
+            paint.isFakeBoldText = true
+            canvas.drawText("Total Income", 55f, y + 4f, paint)
+            canvas.drawText("Total Expense", 235f, y + 4f, paint)
+            canvas.drawText("Net Cash Flow", 410f, y + 4f, paint)
+
+            paint.color = Color.BLACK
+            paint.textSize = 18f
+            paint.isFakeBoldText = true
+            canvas.drawText("BDT " + "%.2f".format(totalIncome), 55f, y + 38f, paint)
+            canvas.drawText("BDT " + "%.2f".format(totalExpense), 235f, y + 38f, paint)
+            canvas.drawText("BDT " + "%.2f".format(net), 410f, y + 38f, paint)
+            y += 110f
 
             if (categoryTotals.isNotEmpty()) {
                 text("Expense by Category", 40f, 14f, true)
