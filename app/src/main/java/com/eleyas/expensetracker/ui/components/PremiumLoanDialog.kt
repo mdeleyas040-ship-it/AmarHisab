@@ -105,7 +105,7 @@ fun PremiumLoanDialog(
                 ) {
                     Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.size(52.dp).background(Color.White.copy(alpha = .12f), RoundedCornerShape(18.dp)), contentAlignment = Alignment.Center) {
-                            Icon(if (sourceType == "bank") Icons.Default.AccountBalance else Icons.Default.Person, null, tint = Color.White, modifier = Modifier.size(29.dp))
+                            Icon(imageVector = if (sourceType == "bank") Icons.Default.AccountBalance else Icons.Default.Person, contentDescription = null, modifier = Modifier.size(29.dp), tint = Color.White)
                         }
                         Spacer(Modifier.width(11.dp))
                         Column(Modifier.weight(1f)) {
@@ -115,7 +115,7 @@ fun PremiumLoanDialog(
                         }
                         Spacer(Modifier.width(6.dp))
                         Surface(onClick = onDismiss, modifier = Modifier.size(40.dp), shape = RoundedCornerShape(13.dp), color = Color.White.copy(alpha = .10f)) {
-                            Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Close, "বন্ধ করুন", tint = Color.White, modifier = Modifier.size(24.dp)) }
+                            Box(contentAlignment = Alignment.Center) { Icon(imageVector = Icons.Default.Close, contentDescription = "বন্ধ করুন", modifier = Modifier.size(24.dp), tint = Color.White) }
                         }
                     }
                 }
@@ -125,7 +125,7 @@ fun PremiumLoanDialog(
                     Box(Modifier.fillMaxWidth()) {
                         OutlinedButton(onClick = { sourceMenu = true }, Modifier.fillMaxWidth().height(58.dp), shape = RoundedCornerShape(16.dp), border = BorderStroke(1.4.dp, accent), contentPadding = PaddingValues(horizontal = 12.dp)) {
                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                Box(Modifier.size(34.dp).background(accent.copy(alpha = .12f), CircleShape), contentAlignment = Alignment.Center) { Icon(if (sourceType == "bank") Icons.Default.AccountBalance else Icons.Default.Person, null, tint = accent, modifier = Modifier.size(19.dp)) }
+                                Box(Modifier.size(34.dp).background(accent.copy(alpha = .12f), CircleShape), contentAlignment = Alignment.Center) { Icon(imageVector = if (sourceType == "bank") Icons.Default.AccountBalance else Icons.Default.Person, contentDescription = null, modifier = Modifier.size(19.dp), tint = accent) }
                                 Spacer(Modifier.width(9.dp))
                                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
                                     Text(if (sourceType == "bank") "ব্যাংক ঋণ" else "ব্যক্তিগত ঋণ", fontWeight = FontWeight.Bold, fontSize = 13.sp)
@@ -135,12 +135,12 @@ fun PremiumLoanDialog(
                             }
                         }
                         DropdownMenu(expanded = sourceMenu, onDismissRequest = { sourceMenu = false }) {
-                            DropdownMenuItem(text = { Text("ব্যক্তিগত ঋণ") }, leadingIcon = { Icon(Icons.Default.Person, null, tint = Color(0xFF0FAF93)) }, onClick = { sourceType = "person"; sourceMenu = false })
-                            DropdownMenuItem(text = { Text("ব্যাংক ঋণ") }, leadingIcon = { Icon(Icons.Default.AccountBalance, null, tint = Color(0xFF1688F7)) }, onClick = { sourceType = "bank"; sourceMenu = false })
+                            DropdownMenuItem(text = { Text("ব্যক্তিগত ঋণ") }, leadingIcon = { Icon(imageVector = Icons.Default.Person, contentDescription = null, tint = Color(0xFF0FAF93)) }, onClick = { sourceType = "person"; sourceMenu = false })
+                            DropdownMenuItem(text = { Text("ব্যাংক ঋণ") }, leadingIcon = { Icon(imageVector = Icons.Default.AccountBalance, contentDescription = null, tint = Color(0xFF1688F7)) }, onClick = { sourceType = "bank"; sourceMenu = false })
                         }
                     }
 
-                    OutlinedTextField(value = name, onValueChange = { name = it; if (sourceType == "person") { selectedPersonId = people.firstOrNull { p -> p.name.equals(it.trim(), true) }?.id; showPeople = true } }, Modifier.fillMaxWidth(), singleLine = true, label = { Text(if (sourceType == "bank") "ব্যাংকের নাম" else "ব্যক্তির নাম") }, placeholder = { Text(if (sourceType == "bank") "ব্যাংকের নাম লিখুন" else "ব্যক্তির নাম লিখুন") }, leadingIcon = { Icon(if (sourceType == "bank") Icons.Default.AccountBalance else Icons.Default.Person, null, tint = accent) }, trailingIcon = if (existingLoan == null && existingNames.isNotEmpty()) ({ TextButton(onClick = { nameMenu = true }) { Text("আগের নাম", color = accent, fontSize = 10.sp) } }) else null, shape = RoundedCornerShape(16.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = accent, focusedLabelColor = accent, cursorColor = accent))
+                    OutlinedTextField(value = name, onValueChange = { name = it; if (sourceType == "person") { selectedPersonId = people.firstOrNull { p -> p.name.equals(it.trim(), true) }?.id; showPeople = true } }, Modifier.fillMaxWidth(), singleLine = true, label = { Text(if (sourceType == "bank") "ব্যাংকের নাম" else "ব্যক্তির নাম") }, placeholder = { Text(if (sourceType == "bank") "ব্যাংকের নাম লিখুন" else "ব্যক্তির নাম লিখুন") }, leadingIcon = { Icon(imageVector = if (sourceType == "bank") Icons.Default.AccountBalance else Icons.Default.Person, contentDescription = null, tint = accent) }, trailingIcon = if (existingLoan == null && existingNames.isNotEmpty()) ({ TextButton(onClick = { nameMenu = true }) { Text("আগের নাম", color = accent, fontSize = 10.sp) } }) else null, shape = RoundedCornerShape(16.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = accent, focusedLabelColor = accent, cursorColor = accent))
                     DropdownMenu(expanded = nameMenu, onDismissRequest = { nameMenu = false }) { existingNames.filter { it.isNotBlank() }.distinct().forEach { existingName -> DropdownMenuItem(text = { Text(existingName) }, onClick = { name = existingName; nameMenu = false }) } }
                     if (sourceType == "person") {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -173,7 +173,7 @@ fun PremiumLoanDialog(
                         }
                     }
                     Row(Modifier.fillMaxWidth().padding(top = 1.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.VerifiedUser, null, tint = accent.copy(alpha = .82f), Modifier.size(15.dp)); Spacer(Modifier.width(4.dp)); Text("আপনার ঋণ সংক্রান্ত তথ্য নিরাপদ এবং সুরক্ষিত", fontSize = 8.sp, color = scheme.onSurfaceVariant)
+                        Icon(imageVector = Icons.Default.VerifiedUser, contentDescription = null, modifier = Modifier.size(15.dp), tint = accent.copy(alpha = .82f)); Spacer(Modifier.width(4.dp)); Text("আপনার ঋণ সংক্রান্ত তথ্য নিরাপদ এবং সুরক্ষিত", fontSize = 8.sp, color = scheme.onSurfaceVariant)
                     }
                 }
             }
@@ -185,7 +185,7 @@ fun PremiumLoanDialog(
 private fun LoanDateSelector(label: String, value: String, accent: Color, modifier: Modifier, onClick: () -> Unit) {
     OutlinedButton(onClick = onClick, modifier = modifier.height(68.dp), shape = RoundedCornerShape(16.dp), border = BorderStroke(1.3.dp, MaterialTheme.colorScheme.outline.copy(alpha = .75f)), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 7.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.CalendarMonth, null, tint = accent, Modifier.size(20.dp))
+            Icon(imageVector = Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(20.dp), tint = accent)
             Spacer(Modifier.width(6.dp))
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
                 Text(label, fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
