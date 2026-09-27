@@ -13,45 +13,13 @@ data class Transaction(
     val walletId: String = "default_cash",
     val addedByUid: String? = null,
     val addedByName: String? = null,
-    // "home" (remittance) transaction পাঠানোর সময়ে ব্যবহৃত exchange rate (1 USD = কত BDT)।
-    // ঐতিহাসিক rate ট্র্যাক করার জন্য save করা হয়, পুরনো entry-তে null থাকবে।
     val exchangeRateUsed: Double? = null
 )
 
-data class ScratchNote(
-    val id: Long,
-    val title: String,
-    val content: String,
-    val updatedAt: Long
-)
-
-data class Wallet(
-    val id: String,
-    val name: String,
-    val type: String,
-    val initialBalance: Double = 0.0,
-    val currency: String = "BDT",
-    val color: Int = 0xFF4CAF50.toInt()
-)
-
-data class SavingsGoal(
-    val id: Long,
-    val name: String,
-    val targetAmount: Double,
-    val savedAmount: Double,
-    val targetDate: String,
-    val frequency: String = "daily"
-)
-
-data class FinancialMilestone(
-    val id: Long,
-    val title: String,
-    val amount: Double,
-    val currency: String,
-    val date: String,
-    val note: String = "",
-    val linkedTransactionId: Long? = null
-)
+data class ScratchNote(val id: Long, val title: String, val content: String, val updatedAt: Long)
+data class Wallet(val id: String, val name: String, val type: String, val initialBalance: Double = 0.0, val currency: String = "BDT", val color: Int = 0xFF4CAF50.toInt())
+data class SavingsGoal(val id: Long, val name: String, val targetAmount: Double, val savedAmount: Double, val targetDate: String, val frequency: String = "daily")
+data class FinancialMilestone(val id: Long, val title: String, val amount: Double, val currency: String, val date: String, val note: String = "", val linkedTransactionId: Long? = null)
 
 data class PersonProfile(
     val id: String,
@@ -60,92 +28,17 @@ data class PersonProfile(
     val phone: String = "",
     val note: String = "",
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = createdAt
+    val updatedAt: Long = createdAt,
+    // Public/searchable permanent profile ID. It never changes when the name changes.
+    val userId: String = ""
 )
 
-data class BackupData(
-    val transactions: List<Transaction>,
-    val usdToBdt: Double,
-    val usdToMvr: Double,
-    val people: List<PersonProfile> = emptyList(),
-    val loans: List<LoanAccount> = emptyList(),
-    val loanPayments: List<LoanPayment> = emptyList(),
-    val lendings: List<LendingAccount> = emptyList(),
-    val lendingReturns: List<LendingReturn> = emptyList(),
-    val wallets: List<Wallet> = emptyList()
-)
+data class BackupData(val transactions: List<Transaction>, val usdToBdt: Double, val usdToMvr: Double, val people: List<PersonProfile> = emptyList(), val loans: List<LoanAccount> = emptyList(), val loanPayments: List<LoanPayment> = emptyList(), val lendings: List<LendingAccount> = emptyList(), val lendingReturns: List<LendingReturn> = emptyList(), val wallets: List<Wallet> = emptyList())
+data class LoanBorrowing(val id: Long, val loanId: Long, val amount: Double, val date: String, val note: String = "")
+data class CategoryBudget(val month: String, val category: String, val limit: Double)
 
-data class LoanBorrowing(
-    val id: Long,
-    val loanId: Long,
-    val amount: Double,
-    val date: String,
-    val note: String = ""
-)
-
-data class CategoryBudget(
-    val month: String,
-    val category: String,
-    val limit: Double
-)
-
-data class LoanAccount(
-    val id: Long,
-    val name: String,
-    val sourceType: String,
-    val principal: Double,
-    val monthlyInstallment: Double,
-    val startDate: String,
-    val note: String,
-    val lastEditedDate: String = "",
-    val editHistory: List<String> = emptyList(),
-    val borrowings: List<LoanBorrowing> = emptyList(),
-    val dueDate: String? = null,
-    // Fund that actually received the loan principal. Old records default to personal.
-    val fundSource: String = "personal",
-    // Optional stable link to a reusable person profile. Legacy records remain null.
-    val personId: String? = null
-)
-
-data class LoanPayment(
-    val id: Long,
-    val loanId: Long,
-    val amount: Double,
-    val date: String,
-    val note: String,
-    val fundSource: String = "personal",
-
-    // Home → Loan payment-এর মূল Home transaction-এর ID
-    // পুরোনো payment-এর জন্য null থাকবে।
-    val sourceTransactionId: Long? = null
-)
-
-data class LendingAccount(
-    val id: Long,
-    val person: String,
-    val amount: Double,
-    val date: String,
-    val note: String,
-    val dueDate: String? = null,
-    val fundSource: String = "personal",
-    val currency: String = "BDT",
-    // Optional stable link to a reusable person profile. Legacy records remain null.
-    val personId: String? = null
-)
-
-data class LendingReturn(
-    val id: Long,
-    val lendingId: Long,
-    val amount: Double,
-    val date: String,
-    val note: String,
-    val fundSource: String = "personal",
-    val currency: String = "BDT"
-)
-
-data class LoanInterestTerms(
-    val loanId: Long,
-    val interestRate: Double = 0.0,
-    val totalInterest: Double = 0.0,
-    val interestType: String = "fixed"
-)
+data class LoanAccount(val id: Long, val name: String, val sourceType: String, val principal: Double, val monthlyInstallment: Double, val startDate: String, val note: String, val lastEditedDate: String = "", val editHistory: List<String> = emptyList(), val borrowings: List<LoanBorrowing> = emptyList(), val dueDate: String? = null, val fundSource: String = "personal", val personId: String? = null)
+data class LoanPayment(val id: Long, val loanId: Long, val amount: Double, val date: String, val note: String, val fundSource: String = "personal", val sourceTransactionId: Long? = null)
+data class LendingAccount(val id: Long, val person: String, val amount: Double, val date: String, val note: String, val dueDate: String? = null, val fundSource: String = "personal", val currency: String = "BDT", val personId: String? = null)
+data class LendingReturn(val id: Long, val lendingId: Long, val amount: Double, val date: String, val note: String, val fundSource: String = "personal", val currency: String = "BDT")
+data class LoanInterestTerms(val loanId: Long, val interestRate: Double = 0.0, val totalInterest: Double = 0.0, val interestType: String = "fixed")
