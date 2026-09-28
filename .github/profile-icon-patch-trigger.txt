@@ -1,1 +1,0 @@
-Trigger person profile icon wiring patch on dev.

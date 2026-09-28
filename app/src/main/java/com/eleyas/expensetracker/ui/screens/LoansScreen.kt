@@ -26,6 +26,8 @@ import com.eleyas.expensetracker.ui.components.*
 import com.eleyas.expensetracker.ui.theme.*
 import com.eleyas.expensetracker.util.displayLoanDate
 import com.eleyas.expensetracker.util.formatMoney
+import com.eleyas.expensetracker.util.savePersonProfiles
+import com.eleyas.expensetracker.util.userIdForPerson
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 private val TealGreen = Color(0xFF16A085)
@@ -64,11 +66,43 @@ fun LoansScreen(
     var expandedLendingId by remember { mutableStateOf<Long?>(null) }
     var loanToDelete by remember { mutableStateOf<LoanAccount?>(null) }
     var locallyDeletedLoanIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var profileDialogTarget by remember { mutableStateOf<PersonProfile?>(null) }
+    var localPeople by remember(people) { mutableStateOf(people) }
 
     val context = LocalContext.current
     val activeLoans = loans.filterNot { it.id in locallyDeletedLoanIds }
     val activeLoanPayments = loanPayments.filterNot { it.loanId in locallyDeletedLoanIds }
     val activeLoanInterestTerms = loanInterestTerms.filterNot { it.loanId in locallyDeletedLoanIds }
+
+    if (profileDialogTarget != null) {
+        val target = profileDialogTarget!!
+        var phone by remember(target.id) { mutableStateOf(target.phone) }
+        var note by remember(target.id) { mutableStateOf(target.note) }
+        AlertDialog(
+            onDismissRequest = { profileDialogTarget = null },
+            title = { Text(if (target.phone.isBlank() && target.note.isBlank()) "ব্যক্তির প্রোফাইল যোগ করুন" else "ব্যক্তির প্রোফাইল এডিট") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(target.name.ifBlank { "ব্যক্তি" }, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                    Text("AH User ID: ${userIdForPerson(AccountStorage.getPrefs(context, FirebaseAuth.getInstance().currentUser?.uid ?: "guest"), target)}", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    OutlinedTextField(value = phone, onValueChange = { phone = it }, modifier = Modifier.fillMaxWidth(), label = { Text("ফোন নম্বর") }, singleLine = true)
+                    OutlinedTextField(value = note, onValueChange = { note = it }, modifier = Modifier.fillMaxWidth(), label = { Text("নোট") }, minLines = 2)
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    val uid = FirebaseAuth.getInstance().currentUser?.uid ?: "guest"
+                    val prefs = AccountStorage.getPrefs(context, uid)
+                    val updated = target.copy(phone = phone.trim(), note = note.trim(), updatedAt = System.currentTimeMillis())
+                    val merged = localPeople.filterNot { it.id == updated.id } + updated
+                    savePersonProfiles(prefs, merged)
+                    localPeople = merged
+                    profileDialogTarget = null
+                }) { Text("সংরক্ষণ") }
+            },
+            dismissButton = { TextButton(onClick = { profileDialogTarget = null }) { Text("বাতিল") } }
+        )
+    }
 
     if (shareOptionsLoan != null) {
         AlertDialog(
@@ -217,6 +251,7 @@ fun LoansScreen(
                 items(filteredLoans, key = { it.id }) { loan ->
                     LoanPremiumCard(
                         loan = loan,
+                        people = localPeople,
                         loanPayments = activeLoanPayments,
                         loanInterestTerms = activeLoanInterestTerms,
                         expanded = expandedLoanId == loan.id,
@@ -233,7 +268,11 @@ fun LoansScreen(
                         onEditBorrowing = onEditBorrowing,
                         onDeleteBorrowing = onDeleteBorrowing,
                         onEditLoanPayment = onEditLoanPayment,
-                        onDeleteLoanPayment = onDeleteLoanPayment
+                        onDeleteLoanPayment = onDeleteLoanPayment,
+                        onProfileClick = {
+                            profileDialogTarget = localPeople.firstOrNull { it.id == loan.personId || it.name.trim().equals(loan.name.trim(), ignoreCase = true) }
+                                ?: PersonProfile(id = loan.personId ?: java.util.UUID.randomUUID().toString(), name = loan.name.trim())
+                        }
                     )
                 }
             }
@@ -267,13 +306,18 @@ fun LoansScreen(
                 items(lendings, key = { it.id }) { lending ->
                     LendingPremiumCard(
                         lending = lending,
+                        people = localPeople,
                         lendingReturns = lendingReturns,
                         expanded = expandedLendingId == lending.id,
                         onExpand = { expandedLendingId = if (expandedLendingId == lending.id) null else lending.id },
                         onShare = { shareOptionsLending = lending },
                         onEdit = { onEditLending(lending) },
                         onDelete = { onDeleteLending(lending) },
-                        onAddReturn = { onAddLendingReturn(lending) }
+                        onAddReturn = { onAddLendingReturn(lending) },
+                        onProfileClick = {
+                            profileDialogTarget = localPeople.firstOrNull { it.id == lending.personId || it.name.trim().equals(lending.person.trim(), ignoreCase = true) }
+                                ?: PersonProfile(id = lending.personId ?: java.util.UUID.randomUUID().toString(), name = lending.person.trim())
+                        }
                     )
                 }
             }
@@ -402,7 +446,8 @@ private fun LoanPremiumCard(
     onEditBorrowing: (LoanAccount, LoanBorrowing) -> Unit,
     onDeleteBorrowing: (LoanAccount, LoanBorrowing) -> Unit,
     onEditLoanPayment: (LoanPayment) -> Unit,
-    onDeleteLoanPayment: (LoanPayment) -> Unit
+    onDeleteLoanPayment: (LoanPayment) -> Unit,
+    onProfileClick: () -> Unit = {}
 ) {
     val paid = loanPayments.filter { it.loanId == loan.id }.sumOf { it.amount }
     val interest = loanInterestTerms.firstOrNull { it.loanId == loan.id }?.totalInterest ?: 0.0
@@ -416,7 +461,10 @@ private fun LoanPremiumCard(
                     Spacer(Modifier.width(10.dp))
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(loan.name.ifBlank { "ঋণ" }, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(loan.name.ifBlank { "ঋণ" }, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f, fill = false))
+                        if (loan.sourceType != "bank") IconButton(onClick = onProfileClick, modifier = Modifier.size(34.dp)) { Icon(Icons.Default.Person, contentDescription = "ব্যক্তির প্রোফাইল", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp)) }
+                    }
                     if (loan.note.isNotBlank()) Text(loan.note, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(if (loan.sourceType == "bank") "🏦 ব্যাংক ঋণ" else "👤 ব্যক্তিগত ঋণ", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -517,7 +565,8 @@ private fun LendingPremiumCard(
     onShare: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    onAddReturn: () -> Unit
+    onAddReturn: () -> Unit,
+    onProfileClick: () -> Unit = {}
 ) {
     val returned = lendingReturns.filter { it.lendingId == lending.id }.sumOf { it.amount }
     val remaining = (lending.amount - returned).coerceAtLeast(0.0)
@@ -530,7 +579,10 @@ private fun LendingPremiumCard(
                 PersonProfileAvatar(personId = lending.personId, people = people, tint = TealGreen)
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(lending.person.ifBlank { "ব্যক্তি" }, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(lending.person.ifBlank { "ব্যক্তি" }, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f, fill = false))
+                        IconButton(onClick = onProfileClick, modifier = Modifier.size(34.dp)) { Icon(Icons.Default.Person, contentDescription = "ব্যক্তির প্রোফাইল", tint = TealGreen, modifier = Modifier.size(20.dp)) }
+                    }
                     Text("ধার দেওয়া: ${displayLoanDate(lending.date)}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Column(horizontalAlignment = Alignment.End) {
