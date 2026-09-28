@@ -1,0 +1,73 @@
+name: One-time person profile refactor
+
+on:
+  push:
+    branches: [dev]
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    if: github.actor == 'mdeleyas040-ship-it'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - name: Apply safe profile-entry cleanup
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          loan = Path('app/src/main/java/com/eleyas/expensetracker/ui/components/PremiumLoanDialog.kt')
+          text = loan.read_text()
+
+          # Remove the old pre-transaction person/photo controls only.
+          text = re.sub(
+              r'\s*Row\(Modifier\.fillMaxWidth\(\), horizontalArrangement = Arrangement\.spacedBy\(7\.dp\)\) \{.*?\n\s*\}\n\s*if \(showPeople && people\.isNotEmpty\(\)\)',
+              '\n                    if (showPeople && people.isNotEmpty())',
+              text,
+              count=1,
+              flags=re.S,
+          )
+          loan.write_text(text)
+
+          dialogs = Path('app/src/main/java/com/eleyas/expensetracker/ui/components/Dialogs.kt')
+          text = dialogs.read_text()
+          text = re.sub(
+              r'\s*Row\(modifier = Modifier\.fillMaxWidth\(\), horizontalArrangement = Arrangement\.spacedBy\(8\.dp\)\) \{.*?\n\s*\}\n\s*if \(showPeople && people\.isNotEmpty\(\)\)',
+              '\n        if (showPeople && people.isNotEmpty())',
+              text,
+              count=1,
+              flags=re.S,
+          )
+          dialogs.write_text(text)
+
+          # Stable AH-1234 generator; keep existing UUID IDs valid for legacy data.
+          utils = Path('app/src/main/java/com/eleyas/expensetracker/util/PersonProfileUtils.kt')
+          u = utils.read_text()
+          if 'fun generatePersonUserId(' not in u:
+              u += '''\n\n/** Generates a permanent human-friendly Amar Hisab person ID. */\nfun generatePersonUserId(existing: List<com.eleyas.expensetracker.model.PersonProfile>): String {\n    val used = existing.mapNotNull {\n        Regex("^AH-(\\\\d{4})$").matchEntire(it.id)?.groupValues?.getOrNull(1)?.toIntOrNull()\n    }.toSet()\n    val seed = (System.currentTimeMillis() % 10000L).toInt()\n    for (offset in 0..9999) {\n        val n = (seed + offset) % 10000\n        if (n !in used) return "AH-%04d".format(n)\n    }\n    return "AH-%04d".format((System.currentTimeMillis() % 10000L).toInt())\n}\n'''
+              utils.write_text(u)
+
+          for p in [loan, dialogs]:
+              t = p.read_text()
+              t = t.replace('java.util.UUID.randomUUID().toString()', 'generatePersonUserId(people)')
+              p.write_text(t)
+          PY
+
+      - name: Commit changes and remove one-time workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/java/com/eleyas/expensetracker/ui/components/PremiumLoanDialog.kt \
+                  app/src/main/java/com/eleyas/expensetracker/ui/components/Dialogs.kt \
+                  app/src/main/java/com/eleyas/expensetracker/util/PersonProfileUtils.kt \
+                  .github/workflows/one-time-person-profile-refactor.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: clean person entry and add AH person IDs"
+          git push origin HEAD:dev
