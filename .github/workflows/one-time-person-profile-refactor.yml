@@ -17,7 +17,7 @@ jobs:
           ref: dev
           fetch-depth: 0
 
-      - name: Apply safe profile-entry cleanup
+      - name: Apply person profile entry and icon wiring
         run: |
           python3 <<'PY'
           from pathlib import Path
@@ -25,49 +25,57 @@ jobs:
 
           loan = Path('app/src/main/java/com/eleyas/expensetracker/ui/components/PremiumLoanDialog.kt')
           text = loan.read_text()
-
-          # Remove the old pre-transaction person/photo controls only.
           text = re.sub(
               r'\s*Row\(Modifier\.fillMaxWidth\(\), horizontalArrangement = Arrangement\.spacedBy\(7\.dp\)\) \{.*?\n\s*\}\n\s*if \(showPeople && people\.isNotEmpty\(\)',
-              '\n                    if (showPeople && people.isNotEmpty())',
-              text,
-              count=1,
-              flags=re.S,
-          )
+              '\n                    if (showPeople && people.isNotEmpty())', text, count=1, flags=re.S)
           loan.write_text(text)
 
           dialogs = Path('app/src/main/java/com/eleyas/expensetracker/ui/components/Dialogs.kt')
           text = dialogs.read_text()
           text = re.sub(
               r'\s*Row\(modifier = Modifier\.fillMaxWidth\(\), horizontalArrangement = Arrangement\.spacedBy\(8\.dp\)\) \{.*?\n\s*\}\n\s*if \(showPeople && people\.isNotEmpty\(\)',
-              '\n        if (showPeople && people.isNotEmpty())',
-              text,
-              count=1,
-              flags=re.S,
-          )
+              '\n        if (showPeople && people.isNotEmpty())', text, count=1, flags=re.S)
           dialogs.write_text(text)
 
-          # Stable AH-1234 generator; keep existing UUID IDs valid for legacy data.
           utils = Path('app/src/main/java/com/eleyas/expensetracker/util/PersonProfileUtils.kt')
           u = utils.read_text()
           if 'fun generatePersonUserId(' not in u:
-              u += '''\n\n/** Generates a permanent human-friendly Amar Hisab person ID. */\nfun generatePersonUserId(existing: List<com.eleyas.expensetracker.model.PersonProfile>): String {\n    val used = existing.mapNotNull {\n        Regex("^AH-(\\\\d{4})$").matchEntire(it.id)?.groupValues?.getOrNull(1)?.toIntOrNull()\n    }.toSet()\n    val seed = (System.currentTimeMillis() % 10000L).toInt()\n    for (offset in 0..9999) {\n        val n = (seed + offset) % 10000\n        if (n !in used) return "AH-%04d".format(n)\n    }\n    return "AH-%04d".format((System.currentTimeMillis() % 10000L).toInt())\n}\n'''
+              u += '''\n\n/** Generates a permanent human-friendly Amar Hisab person ID. */\nfun generatePersonUserId(existing: List<com.eleyas.expensetracker.model.PersonProfile>): String {\n    val used = existing.mapNotNull { Regex("^AH-(\\\\d{4})$").matchEntire(it.id)?.groupValues?.getOrNull(1)?.toIntOrNull() }.toSet()\n    val seed = (System.currentTimeMillis() % 10000L).toInt()\n    for (offset in 0..9999) {\n        val n = (seed + offset) % 10000\n        if (n !in used) return "AH-%04d".format(n)\n    }\n    return "AH-%04d".format(seed)\n}\n'''
               utils.write_text(u)
 
           for p in [loan, dialogs]:
-              t = p.read_text()
-              t = t.replace('java.util.UUID.randomUUID().toString()', 'generatePersonUserId(people)')
+              t = p.read_text().replace('java.util.UUID.randomUUID().toString()', 'generatePersonUserId(people)')
               p.write_text(t)
+
+          screen = Path('app/src/main/java/com/eleyas/expensetracker/ui/screens/LoansScreen.kt')
+          s = screen.read_text()
+          s = s.replace('import com.eleyas.expensetracker.util.formatMoney\n', 'import com.eleyas.expensetracker.util.formatMoney\nimport com.eleyas.expensetracker.util.savePersonProfiles\nimport com.eleyas.expensetracker.util.userIdForPerson\n')
+          s = s.replace('    var locallyDeletedLoanIds by remember { mutableStateOf<Set<Long>>(emptySet()) }', '    var locallyDeletedLoanIds by remember { mutableStateOf<Set<Long>>(emptySet()) }\n    var profileDialogTarget by remember { mutableStateOf<PersonProfile?>(null) }\n    var localPeople by remember(people) { mutableStateOf(people) }')
+          marker = '    if (shareOptionsLoan != null) {'
+          dialog = '''    if (profileDialogTarget != null) {\n        val target = profileDialogTarget!!\n        var phone by remember(target.id) { mutableStateOf(target.phone) }\n        var note by remember(target.id) { mutableStateOf(target.note) }\n        AlertDialog(\n            onDismissRequest = { profileDialogTarget = null },\n            title = { Text(if (target.phone.isBlank() && target.note.isBlank()) "ব্যক্তির প্রোফাইল যোগ করুন" else "ব্যক্তির প্রোফাইল এডিট") },\n            text = {\n                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {\n                    Text(target.name.ifBlank { "ব্যক্তি" }, fontSize = 17.sp, fontWeight = FontWeight.Bold)\n                    Text("AH User ID: ${userIdForPerson(AccountStorage.getPrefs(context, FirebaseAuth.getInstance().currentUser?.uid ?: "guest"), target)}", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)\n                    OutlinedTextField(value = phone, onValueChange = { phone = it }, modifier = Modifier.fillMaxWidth(), label = { Text("ফোন নম্বর") }, singleLine = true)\n                    OutlinedTextField(value = note, onValueChange = { note = it }, modifier = Modifier.fillMaxWidth(), label = { Text("নোট") }, minLines = 2)\n                }\n            },\n            confirmButton = {\n                Button(onClick = {\n                    val uid = FirebaseAuth.getInstance().currentUser?.uid ?: "guest"\n                    val prefs = AccountStorage.getPrefs(context, uid)\n                    val updated = target.copy(phone = phone.trim(), note = note.trim(), updatedAt = System.currentTimeMillis())\n                    val merged = localPeople.filterNot { it.id == updated.id } + updated\n                    savePersonProfiles(prefs, merged)\n                    localPeople = merged\n                    profileDialogTarget = null\n                }) { Text("সংরক্ষণ") }\n            },\n            dismissButton = { TextButton(onClick = { profileDialogTarget = null }) { Text("বাতিল") } }\n        )\n    }\n\n'''
+          if marker in s and 'if (profileDialogTarget != null)' not in s:
+              s = s.replace(marker, dialog + marker, 1)
+          s = s.replace('                        loan = loan,\n                        loanPayments = activeLoanPayments,', '                        loan = loan,\n                        people = localPeople,\n                        loanPayments = activeLoanPayments,')
+          s = s.replace('                        onDeleteLoanPayment = onDeleteLoanPayment\n                    )', '''                        onDeleteLoanPayment = onDeleteLoanPayment,\n                        onProfileClick = {\n                            profileDialogTarget = localPeople.firstOrNull { it.id == loan.personId || it.name.trim().equals(loan.name.trim(), ignoreCase = true) }\n                                ?: PersonProfile(id = loan.personId ?: java.util.UUID.randomUUID().toString(), name = loan.name.trim())\n                        }\n                    )''', 1)
+          s = s.replace('                        lending = lending,\n                        lendingReturns = lendingReturns,', '                        lending = lending,\n                        people = localPeople,\n                        lendingReturns = lendingReturns,')
+          s = s.replace('                        onAddReturn = { onAddLendingReturn(lending) }\n                    )', '''                        onAddReturn = { onAddLendingReturn(lending) },\n                        onProfileClick = {\n                            profileDialogTarget = localPeople.firstOrNull { it.id == lending.personId || it.name.trim().equals(lending.person.trim(), ignoreCase = true) }\n                                ?: PersonProfile(id = lending.personId ?: java.util.UUID.randomUUID().toString(), name = lending.person.trim())\n                        }\n                    )''', 1)
+          s = s.replace('    onDeleteLoanPayment: (LoanPayment) -> Unit\n) {', '    onDeleteLoanPayment: (LoanPayment) -> Unit,\n    onProfileClick: () -> Unit = {}\n) {')
+          s = s.replace('    onAddReturn: () -> Unit\n) {', '    onAddReturn: () -> Unit,\n    onProfileClick: () -> Unit = {}\n) {')
+          s = s.replace('                    Text(loan.name.ifBlank { "ঋণ" }, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)\n                    if (loan.note.isNotBlank())', '                    Row(verticalAlignment = Alignment.CenterVertically) {\n                        Text(loan.name.ifBlank { "ঋণ" }, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f, fill = false))\n                        if (loan.sourceType != "bank") IconButton(onClick = onProfileClick, modifier = Modifier.size(34.dp)) { Icon(Icons.Default.Person, contentDescription = "ব্যক্তির প্রোফাইল", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp)) }\n                    }\n                    if (loan.note.isNotBlank())', 1)
+          s = s.replace('                    Text(lending.person.ifBlank { "ব্যক্তি" }, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold)\n                    Text("ধার দেওয়া:', '                    Row(verticalAlignment = Alignment.CenterVertically) {\n                        Text(lending.person.ifBlank { "ব্যক্তি" }, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f, fill = false))\n                        IconButton(onClick = onProfileClick, modifier = Modifier.size(34.dp)) { Icon(Icons.Default.Person, contentDescription = "ব্যক্তির প্রোফাইল", tint = TealGreen, modifier = Modifier.size(20.dp)) }\n                    }\n                    Text("ধার দেওয়া:', 1)
+          screen.write_text(s)
           PY
 
-      - name: Commit changes and remove one-time workflow
+      - name: Commit changes and remove one-time workflows
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -f .github/workflows/one-time-person-profile-refactor.yml .github/workflows/one-time-wire-person-profile-icon.yml .github/profile-icon-patch-trigger.txt 2>/dev/null || true
           git add app/src/main/java/com/eleyas/expensetracker/ui/components/PremiumLoanDialog.kt \
                   app/src/main/java/com/eleyas/expensetracker/ui/components/Dialogs.kt \
-                  app/src/main/java/com/eleyas/expensetracker/util/PersonProfileUtils.kt \
-                  .github/workflows/one-time-person-profile-refactor.yml
+                  app/src/main/java/com/eleyas/expensetracker/ui/screens/LoansScreen.kt \
+                  app/src/main/java/com/eleyas/expensetracker/util/PersonProfileUtils.kt
+          git diff --cached --check
           git diff --cached --quiet && exit 0
-          git commit -m "feat: clean person entry and add AH person IDs"
+          git commit -m "fix: wire person profile icon actions"
           git push origin HEAD:dev
