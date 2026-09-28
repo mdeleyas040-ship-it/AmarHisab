@@ -17,7 +17,7 @@ jobs:
           ref: dev
           fetch-depth: 0
 
-      - name: Apply safe profile-entry cleanup and wire profile action
+      - name: Apply safe profile-entry cleanup
         run: |
           python3 <<'PY'
           from pathlib import Path
@@ -26,6 +26,7 @@ jobs:
           loan = Path('app/src/main/java/com/eleyas/expensetracker/ui/components/PremiumLoanDialog.kt')
           text = loan.read_text()
 
+          # Remove the old pre-transaction person/photo controls only.
           text = re.sub(
               r'\s*Row\(Modifier\.fillMaxWidth\(\), horizontalArrangement = Arrangement\.spacedBy\(7\.dp\)\) \{.*?\n\s*\}\n\s*if \(showPeople && people\.isNotEmpty\(\)',
               '\n                    if (showPeople && people.isNotEmpty())',
@@ -46,6 +47,7 @@ jobs:
           )
           dialogs.write_text(text)
 
+          # Stable AH-1234 generator; keep existing UUID IDs valid for legacy data.
           utils = Path('app/src/main/java/com/eleyas/expensetracker/util/PersonProfileUtils.kt')
           u = utils.read_text()
           if 'fun generatePersonUserId(' not in u:
@@ -56,81 +58,16 @@ jobs:
               t = p.read_text()
               t = t.replace('java.util.UUID.randomUUID().toString()', 'generatePersonUserId(people)')
               p.write_text(t)
-
-          # Wire a real, clickable profile action into saved loan/lending cards.
-          screen = Path('app/src/main/java/com/eleyas/expensetracker/ui/screens/LoansScreen.kt')
-          s = screen.read_text()
-          if 'var profileDialogTarget by remember' not in s:
-              s = s.replace('    var locallyDeletedLoanIds by remember { mutableStateOf<Set<Long>>(emptySet()) }', '    var locallyDeletedLoanIds by remember { mutableStateOf<Set<Long>>(emptySet()) }\n    var profileDialogTarget by remember { mutableStateOf<PersonProfile?>(null) }\n    var localPeople by remember(people) { mutableStateOf(people) }')
-          if 'import com.eleyas.expensetracker.util.savePersonProfiles' not in s:
-              s = s.replace('import com.eleyas.expensetracker.util.formatMoney\n', 'import com.eleyas.expensetracker.util.formatMoney\nimport com.eleyas.expensetracker.util.savePersonProfiles\nimport com.eleyas.expensetracker.util.userIdForPerson\n')
-
-          if 'if (profileDialogTarget != null)' not in s:
-              marker = '    if (shareOptionsLoan != null) {'
-              dialog = '''    if (profileDialogTarget != null) {
-          val target = profileDialogTarget!!
-          var phone by remember(target.id) { mutableStateOf(target.phone) }
-          var note by remember(target.id) { mutableStateOf(target.note) }
-          AlertDialog(
-              onDismissRequest = { profileDialogTarget = null },
-              title = { Text(if (target.phone.isBlank() && target.note.isBlank()) "ব্যক্তির প্রোফাইল যোগ করুন" else "ব্যক্তির প্রোফাইল এডিট") },
-              text = {
-                  Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                      Text(target.name.ifBlank { "ব্যক্তি" }, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                      Text("AH User ID: ${userIdForPerson(AccountStorage.getPrefs(context, FirebaseAuth.getInstance().currentUser?.uid ?: "guest"), target)}", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                      OutlinedTextField(value = phone, onValueChange = { phone = it }, modifier = Modifier.fillMaxWidth(), label = { Text("ফোন নম্বর") }, singleLine = true)
-                      OutlinedTextField(value = note, onValueChange = { note = it }, modifier = Modifier.fillMaxWidth(), label = { Text("নোট") }, minLines = 2)
-                  }
-              },
-              confirmButton = {
-                  Button(onClick = {
-                      val uid = FirebaseAuth.getInstance().currentUser?.uid ?: "guest"
-                      val prefs = AccountStorage.getPrefs(context, uid)
-                      val updated = target.copy(phone = phone.trim(), note = note.trim(), updatedAt = System.currentTimeMillis())
-                      val merged = localPeople.filterNot { it.id == updated.id } + updated
-                      savePersonProfiles(prefs, merged)
-                      localPeople = merged
-                      profileDialogTarget = null
-                  }) { Text("সংরক্ষণ") }
-              },
-              dismissButton = { TextButton(onClick = { profileDialogTarget = null }) { Text("বাতিল") } }
-          )
-      }
-
-'''
-              if marker not in s:
-                  raise SystemExit('profile dialog marker not found')
-              s = s.replace(marker, dialog + marker, 1)
-
-          s = s.replace('                        loan = loan,\n                        loanPayments = activeLoanPayments,', '                        loan = loan,\n                        people = localPeople,\n                        loanPayments = activeLoanPayments,')
-          s = s.replace('                        onDeleteLoanPayment = onDeleteLoanPayment\n                    )', '''                        onDeleteLoanPayment = onDeleteLoanPayment,
-                        onProfileClick = {
-                            profileDialogTarget = localPeople.firstOrNull { it.id == loan.personId || it.name.trim().equals(loan.name.trim(), ignoreCase = true) }
-                                ?: PersonProfile(id = loan.personId ?: java.util.UUID.randomUUID().toString(), name = loan.name.trim())
-                        }
-                    )''', 1)
-          s = s.replace('                        lending = lending,\n                        lendingReturns = lendingReturns,', '                        lending = lending,\n                        people = localPeople,\n                        lendingReturns = lendingReturns,')
-          s = s.replace('                        onAddReturn = { onAddLendingReturn(lending) }\n                    )', '''                        onAddReturn = { onAddLendingReturn(lending) },
-                        onProfileClick = {
-                            profileDialogTarget = localPeople.firstOrNull { it.id == lending.personId || it.name.trim().equals(lending.person.trim(), ignoreCase = true) }
-                                ?: PersonProfile(id = lending.personId ?: java.util.UUID.randomUUID().toString(), name = lending.person.trim())
-                        }
-                    )''', 1)
-          s = s.replace('    onDeleteLoanPayment: (LoanPayment) -> Unit\n) {', '    onDeleteLoanPayment: (LoanPayment) -> Unit,\n    onProfileClick: () -> Unit = {}\n) {')
-          s = s.replace('    onAddReturn: () -> Unit\n) {', '    onAddReturn: () -> Unit,\n    onProfileClick: () -> Unit = {}\n) {')
-          s = s.replace('                    Text(loan.name.ifBlank { "ঋণ" }, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)\n                    if (loan.note.isNotBlank())', '                    Row(verticalAlignment = Alignment.CenterVertically) {\n                        Text(loan.name.ifBlank { "ঋণ" }, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f, fill = false))\n                        if (loan.sourceType != "bank") IconButton(onClick = onProfileClick, modifier = Modifier.size(34.dp)) { Icon(Icons.Default.Person, contentDescription = "ব্যক্তির প্রোফাইল", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp)) }\n                    }\n                    if (loan.note.isNotBlank())', 1)
-          s = s.replace('                    Text(lending.person.ifBlank { "ব্যক্তি" }, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold)\n                    Text("ধার দেওয়া:', '                    Row(verticalAlignment = Alignment.CenterVertically) {\n                        Text(lending.person.ifBlank { "ব্যক্তি" }, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f, fill = false))\n                        IconButton(onClick = onProfileClick, modifier = Modifier.size(34.dp)) { Icon(Icons.Default.Person, contentDescription = "ব্যক্তির প্রোফাইল", tint = TealGreen, modifier = Modifier.size(20.dp)) }\n                    }\n                    Text("ধার দেওয়া:', 1)
-          screen.write_text(s)
           PY
 
-      - name: Commit changes
+      - name: Commit changes and remove one-time workflow
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add app/src/main/java/com/eleyas/expensetracker/ui/components/PremiumLoanDialog.kt \
                   app/src/main/java/com/eleyas/expensetracker/ui/components/Dialogs.kt \
                   app/src/main/java/com/eleyas/expensetracker/util/PersonProfileUtils.kt \
-                  app/src/main/java/com/eleyas/expensetracker/ui/screens/LoansScreen.kt
+                  .github/workflows/one-time-person-profile-refactor.yml
           git diff --cached --quiet && exit 0
-          git commit -m "fix: wire person profile icon"
+          git commit -m "feat: clean person entry and add AH person IDs"
           git push origin HEAD:dev
