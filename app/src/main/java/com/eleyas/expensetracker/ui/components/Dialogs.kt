@@ -3413,7 +3413,7 @@ fun LendingDialog(
         if (uri != null && person.isNotBlank()) {
             val path = persistPersonProfilePhoto(context, uri)
             if (path != null) {
-                val id = selectedPersonId ?: java.util.UUID.randomUUID().toString()
+                val id = selectedPersonId ?: generatePersonUserId(people)
                 selectedPersonId = id
                 onProfilePhotoSaved(PersonProfile(id = id, name = person.trim(), photoUri = path))
             }

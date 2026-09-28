@@ -27,3 +27,17 @@ fun deletePersonProfilePhoto(context: Context, photoPath: String?) {
         if (file.parentFile?.canonicalPath == root) file.delete()
     }
 }
+
+
+/** Generates a permanent human-friendly Amar Hisab person ID. */
+fun generatePersonUserId(existing: List<com.eleyas.expensetracker.model.PersonProfile>): String {
+    val used = existing.mapNotNull {
+        Regex("^AH-(\\d{4})$").matchEntire(it.id)?.groupValues?.getOrNull(1)?.toIntOrNull()
+    }.toSet()
+    val seed = (System.currentTimeMillis() % 10000L).toInt()
+    for (offset in 0..9999) {
+        val n = (seed + offset) % 10000
+        if (n !in used) return "AH-%04d".format(n)
+    }
+    return "AH-%04d".format((System.currentTimeMillis() % 10000L).toInt())
+}

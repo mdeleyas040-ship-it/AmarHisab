@@ -72,7 +72,7 @@ fun PremiumLoanDialog(
         if (uri != null && sourceType == "person" && name.isNotBlank()) {
             val path = persistPersonProfilePhoto(context, uri)
             if (path != null) {
-                val id = selectedPersonId ?: java.util.UUID.randomUUID().toString()
+                val id = selectedPersonId ?: generatePersonUserId(people)
                 selectedPersonId = id
                 onProfilePhotoSaved(PersonProfile(id = id, name = name.trim(), photoUri = path))
             }
@@ -143,11 +143,7 @@ fun PremiumLoanDialog(
                     OutlinedTextField(value = name, onValueChange = { name = it; if (sourceType == "person") { selectedPersonId = people.firstOrNull { p -> p.name.equals(it.trim(), true) }?.id; showPeople = true } }, Modifier.fillMaxWidth(), singleLine = true, label = { Text(if (sourceType == "bank") "ব্যাংকের নাম" else "ব্যক্তির নাম") }, placeholder = { Text(if (sourceType == "bank") "ব্যাংকের নাম লিখুন" else "ব্যক্তির নাম লিখুন") }, leadingIcon = { Icon(imageVector = if (sourceType == "bank") Icons.Default.AccountBalance else Icons.Default.Person, contentDescription = null, tint = accent) }, trailingIcon = if (existingLoan == null && existingNames.isNotEmpty()) ({ TextButton(onClick = { nameMenu = true }) { Text("আগের নাম", color = accent, fontSize = 10.sp) } }) else null, shape = RoundedCornerShape(16.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = accent, focusedLabelColor = accent, cursorColor = accent))
                     DropdownMenu(expanded = nameMenu, onDismissRequest = { nameMenu = false }) { existingNames.filter { it.isNotBlank() }.distinct().forEach { existingName -> DropdownMenuItem(text = { Text(existingName) }, onClick = { name = existingName; nameMenu = false }) } }
                     if (sourceType == "person") {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                            OutlinedButton(onClick = { showPeople = !showPeople }, Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) { Icon(imageVector = Icons.Default.Person, contentDescription = null, modifier = Modifier.size(17.dp)); Spacer(Modifier.width(4.dp)); Text("আগের ব্যক্তি", fontSize = 10.sp) }
-                            OutlinedButton(onClick = { photoPicker.launch("image/*") }, Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) { Icon(imageVector = Icons.Default.AddAPhoto, contentDescription = null, modifier = Modifier.size(17.dp)); Spacer(Modifier.width(4.dp)); Text("ছবি যোগ", fontSize = 10.sp) }
-                        }
-                        if (showPeople && people.isNotEmpty()) Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = softSurface)) { Column(Modifier.padding(6.dp)) { people.filter { name.isBlank() || it.name.contains(name, true) }.take(5).forEach { p -> TextButton(onClick = { name = p.name; selectedPersonId = p.id; showPeople = false }, Modifier.fillMaxWidth()) { Text(p.name, Modifier.fillMaxWidth()) } } } }
+                    if (showPeople && people.isNotEmpty()) Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = softSurface)) { Column(Modifier.padding(6.dp)) { people.filter { name.isBlank() || it.name.contains(name, true) }.take(5).forEach { p -> TextButton(onClick = { name = p.name; selectedPersonId = p.id; showPeople = false }, Modifier.fillMaxWidth()) { Text(p.name, Modifier.fillMaxWidth()) } } } }
                     }
 
                     Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = accent.copy(alpha = .10f)), border = BorderStroke(1.dp, accent.copy(alpha = .20f))) {
