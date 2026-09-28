@@ -35,6 +35,7 @@ import androidx.compose.ui.window.Dialog
 import com.eleyas.expensetracker.model.LoanAccount
 import com.eleyas.expensetracker.model.PersonProfile
 import com.eleyas.expensetracker.util.formatMoney
+import com.eleyas.expensetracker.util.generatePersonUserId
 import com.eleyas.expensetracker.util.persistPersonProfilePhoto
 import java.text.SimpleDateFormat
 import java.util.Calendar
