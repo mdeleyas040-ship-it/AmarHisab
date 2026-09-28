@@ -1,14 +1,10 @@
 package com.eleyas.expensetracker.ui.screens
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.eleyas.expensetracker.model.*
 
-/**
- * Compatibility overload for existing MainActivity positional call sites.
- * The main LoansScreen keeps the explicit onDeleteLoan callback; this overload
- * preserves the previous parameter order while the screen performs its own
- * persistent/local delete handling.
- */
+/** Compatibility overload for existing MainActivity positional call sites. */
 @Composable
 fun LoansScreen(
     modifier: Modifier,
@@ -27,6 +23,8 @@ fun LoansScreen(
     onAddLending: () -> Unit,
     onAddLendingReturn: (LendingAccount) -> Unit,
     loanInterestTerms: List<LoanInterestTerms>,
+    onEditLending: (LendingAccount) -> Unit = {},
+    onDeleteLending: (LendingAccount) -> Unit = {},
     onShowCalculator: () -> Unit = {},
     onShareLoan: (LoanAccount, Boolean) -> Unit = { _, _ -> },
     onShareLending: (LendingAccount, Boolean) -> Unit = { _, _ -> },
@@ -49,8 +47,8 @@ fun LoansScreen(
         onDeleteLoanPayment = onDeleteLoanPayment,
         onAddLending = onAddLending,
         onAddLendingReturn = onAddLendingReturn,
-        onEditLending = {},
-        onDeleteLending = {},
+        onEditLending = onEditLending,
+        onDeleteLending = onDeleteLending,
         loanInterestTerms = loanInterestTerms,
         onShowCalculator = onShowCalculator,
         onShareLoan = onShareLoan,
