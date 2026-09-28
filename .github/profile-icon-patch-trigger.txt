@@ -1,0 +1,1 @@
+Temporary trigger for the person profile icon wiring patch.
