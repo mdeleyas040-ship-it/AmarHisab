@@ -80,3 +80,4 @@ jobs:
           git add app/src/main/java/com/eleyas/expensetracker/ui/screens/LoansScreen.kt
           git commit -m "fix: wire person profile icon" || exit 0
           git push origin dev
+# v2 trigger
